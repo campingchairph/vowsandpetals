@@ -12,6 +12,8 @@ const WED = {
   activeTab: 'overview',
   customCardImage: null,
   _invitationImg: null,
+  _invitationImg2: null,
+  hashtag: '',
   guests:   [],
   expenses: [],
   checklist: [
@@ -78,7 +80,7 @@ const WED = {
   allTags: [],
   _nextPhotoId: 1,
   guestGroups: ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"],
-  inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false },
+  inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Bride's Attire", attireLabelB: "Groom's Attire" },
 };
 
 /* ── PER-GUEST INVITE STATE ──────────────────── */
@@ -99,8 +101,10 @@ function saveState() {
       date:   WED.date,
       venue:  WED.venue,
       budget: WED.budget,
-      customCardImage: WED.customCardImage,
-      _invitationImg:  WED._invitationImg,
+      customCardImage:  WED.customCardImage,
+      _invitationImg:   WED._invitationImg,
+      _invitationImg2:  WED._invitationImg2,
+      hashtag:          WED.hashtag,
       guests:    WED.guests,
       expenses:  WED.expenses,
       checklist: WED.checklist,
@@ -147,7 +151,11 @@ function loadState() {
     if (!WED.allTags)           WED.allTags           = [];
     if (!WED._nextPhotoId)      WED._nextPhotoId      = 1;
     if (!WED.guestGroups)       WED.guestGroups       = ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"];
-    if (!WED.inviteSettings)    WED.inviteSettings    = { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false };
+    if (!WED.inviteSettings)    WED.inviteSettings    = { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Bride's Attire", attireLabelB: "Groom's Attire" };
+    if (!WED.inviteSettings.attireLabelA) WED.inviteSettings.attireLabelA = "Bride's Attire";
+    if (!WED.inviteSettings.attireLabelB) WED.inviteSettings.attireLabelB = "Groom's Attire";
+    if (WED.hashtag === undefined)  WED.hashtag  = '';
+    if (WED._invitationImg2 === undefined) WED._invitationImg2 = null;
     WED.guests.forEach(g => { if (g.group === undefined) g.group = ''; });
   } catch(e) {}
 }
@@ -321,20 +329,101 @@ function renderOverview() {
       </div>
     </div>
 
-    <!-- Invitation -->
-    <div style="padding:16px;border-radius:18px" class="glass">
-      <span class="sec-title">Wedding Invitation</span>
-      ${(WED.customCardImage || WED._invitationImg) ? `<img src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:14px;margin-bottom:10px">` : `
-        <div style="padding:20px;border-radius:14px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);text-align:center;margin-bottom:10px">
-          <div style="font-size:28px;margin-bottom:6px">💌</div>
-          <div style="font-size:12.5px;color:var(--ink-3)">Upload your own invitation design</div>
-        </div>`}
-      <label style="display:block;width:100%;padding:10px;border-radius:14px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center;margin-bottom:8px">
-        📎 ${(WED.customCardImage || WED._invitationImg) ? 'Replace Invitation' : 'Upload Invitation'}
-        <input type="file" accept="image/*" style="display:none" onchange="uploadInvitation(event)">
-      </label>
-      <button onclick="showRSVPCard()" style="width:100%;padding:10px;border-radius:14px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:6px">💌 Generate Digital Invitation</button>
-      <button onclick="openModal('invite-customizer-modal');renderInviteCustomizer()" style="width:100%;padding:10px;border-radius:14px;background:rgba(232,245,237,0.65);border:1px solid rgba(106,142,112,0.25);font-size:13px;font-weight:700;color:var(--green-deep);cursor:pointer">✏️ Customize Invitation / RSVP Page</button>
+    <!-- Invitation Builder -->
+    <div style="padding:16px;border-radius:18px;margin-bottom:12px" class="glass">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span class="sec-title" style="margin-bottom:0">💌 Invitation Builder</span>
+        <button onclick="downloadInviteTemplate()" style="padding:5px 10px;border-radius:8px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⬇ Template</button>
+      </div>
+
+      <!-- ── PAGE 1 ── -->
+      <div style="padding:14px;border-radius:14px;background:rgba(252,232,238,0.25);border:1px solid rgba(224,120,152,0.2);margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;color:var(--pink-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 1 — Invitation Card</div>
+        ${(WED.customCardImage || WED._invitationImg)
+          ? `<img id="inv-page1-img" src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
+          : `<img id="inv-page1-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
+             <div id="inv-page1-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard1()">
+               <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">💌</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate invitation card</div></div>
+             </div>`}
+        <!-- Hashtag -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+          <span style="font-size:17px;color:var(--gold);font-weight:800;line-height:1">#</span>
+          <input type="text" id="inv-hashtag-input"
+                 value="${(WED.hashtag||'').replace(/^#/,'')}"
+                 placeholder="${(WED.couple.p1||'Name').replace(/\s/g,'')}And${(WED.couple.p2||'Name').replace(/\s/g,'')}"
+                 oninput="saveWedHashtag(this.value)"
+                 class="glass-input" style="flex:1;font-size:13px;padding:7px 10px">
+        </div>
+        <!-- Custom upload -->
+        <button onclick="toggleInvUploadSpec()" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center">
+          📎 ${WED.customCardImage ? 'Replace Custom Design' : 'Upload Custom Design'}
+        </button>
+        <div id="inv-upload-spec" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(255,248,238,0.9);border:1px solid rgba(201,169,110,0.3);font-size:11.5px;color:var(--ink-3)">
+          <div style="font-weight:700;color:var(--tan-dark);margin-bottom:6px">📐 Canvas Specifications</div>
+          <div style="line-height:1.7">Canvas size: <b>380 × 520 px</b><br>QR code zone: horizontally centered at <b>y = 408 px</b><br>QR size: <b>96 × 96 px</b> (+ 8px white padding around)</div>
+          <div style="margin-top:6px;color:var(--pink-deep);font-weight:600">⚠ Keep that area clear in your design — the QR is overlaid automatically when sharing to a guest.</div>
+          <label style="display:block;margin-top:10px;padding:8px;border-radius:8px;background:var(--pink-deep);color:white;font-size:12px;font-weight:700;cursor:pointer;text-align:center">
+            Choose File <input type="file" accept="image/*" style="display:none" onchange="uploadCustomCard(event)">
+          </label>
+          ${WED.customCardImage ? `<button onclick="clearCustomCard()" style="display:block;width:100%;margin-top:6px;padding:7px;border-radius:8px;background:transparent;border:1px solid rgba(224,120,152,0.4);color:var(--pink-deep);font-size:11.5px;cursor:pointer">✕ Remove Custom Design</button>` : ''}
+        </div>
+      </div>
+
+      <!-- ── PAGE 2 ── -->
+      <div style="padding:14px;border-radius:14px;background:rgba(232,245,237,0.25);border:1px solid rgba(106,142,112,0.2)">
+        <div style="font-size:10px;font-weight:700;color:var(--green-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 2 — Details Card</div>
+        ${WED._invitationImg2
+          ? `<img id="inv-page2-img" src="${WED._invitationImg2}" class="inv-card-img" style="border-radius:12px;margin-bottom:12px">`
+          : `<img id="inv-page2-img" style="display:none;border-radius:12px;margin-bottom:12px" class="inv-card-img">
+             <div id="inv-page2-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(106,142,112,0.4);background:rgba(232,245,237,0.3);margin-bottom:12px">
+               <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Fill in the details below to generate</div></div>
+             </div>`}
+        <!-- Dress Code -->
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Dress Code</div>
+          <input type="text" placeholder="e.g. Semi-Formal, Sage Green &amp; Gold"
+                 value="${(WED.inviteSettings.dressCode||'').replace(/"/g,'&quot;')}"
+                 oninput="saveInviteField('dressCode',this.value)"
+                 class="glass-input" style="width:100%;font-size:13px;padding:7px 10px;box-sizing:border-box">
+        </div>
+        <!-- Attire Photos -->
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Attire Reference Photos</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelA||"Bride's Attire"}</div>
+              ${WED.inviteSettings.attirePhotoA
+                ? `<img src="${WED.inviteSettings.attirePhotoA}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('A')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
+                : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(224,120,152,0.4);border-radius:8px;cursor:pointer;background:rgba(252,232,238,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'A')"></label>`}
+            </div>
+            <div>
+              <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelB||"Groom's Attire"}</div>
+              ${WED.inviteSettings.attirePhotoB
+                ? `<img src="${WED.inviteSettings.attirePhotoB}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('B')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
+                : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(106,142,112,0.4);border-radius:8px;cursor:pointer;background:rgba(232,245,237,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'B')"></label>`}
+            </div>
+          </div>
+        </div>
+        <!-- Gifts -->
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">🎁 Gifts &amp; Registry</div>
+          <textarea placeholder="e.g. Cash gifts via GCash 09XX-XXX-XXXX or our Lazada wishlist…"
+                    oninput="saveInviteField('giftsNote',this.value)"
+                    class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.giftsNote||''}</textarea>
+        </div>
+        <!-- Notes -->
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">📝 Special Notes</div>
+          <textarea placeholder="e.g. Strictly no children. Please RSVP by June 30…"
+                    oninput="saveInviteField('specialNote',this.value)"
+                    class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.specialNote||''}</textarea>
+        </div>
+        <!-- Program toggle -->
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" ${WED.inviteSettings.showProgram?'checked':''} onchange="saveInviteField('showProgram',this.checked)" style="width:16px;height:16px;accent-color:var(--gold)">
+          <span style="font-size:12.5px;font-weight:600;color:var(--ink)">Show program note on Details card</span>
+        </label>
+      </div>
     </div>
 
     ${typeof renderCloudSection === 'function' ? renderCloudSection() : `
@@ -342,13 +431,21 @@ function renderOverview() {
       <span class="sec-title">📦 Templates &amp; Backup</span>
       <div style="font-size:12px;color:var(--ink-4);margin-bottom:10px">Loading cloud features…</div>
     </div>`}`;
+
+  // Auto-generate cards if not yet saved
+  if (!WED._invitationImg && !WED.customCardImage) {
+    setTimeout(() => refreshCard1(), 60);
+  }
+  if (!WED._invitationImg2) {
+    setTimeout(() => refreshCard2(), 120);
+  }
 }
 
 function uploadInvitation(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (e) => { WED._invitationImg = e.target.result; saveState(); renderOverview(); showToast('💌 Invitation uploaded!'); };
+  reader.onload = (e) => { WED.customCardImage = e.target.result; saveState(); renderOverview(); showToast('💌 Invitation uploaded!'); };
   reader.readAsDataURL(file);
 }
 
@@ -675,6 +772,11 @@ function showRSVPCard(guestId, opts = {}) {
     if (!WED.customCardImage && !guest) {
       WED._invitationImg = dataUrl;
       saveState();
+      // also update the overview builder preview
+      const ovImg = document.getElementById('inv-page1-img');
+      if (ovImg) { ovImg.src = dataUrl; ovImg.style.display = 'block'; }
+      const p1ph = document.getElementById('inv-page1-placeholder');
+      if (p1ph) p1ph.style.display = 'none';
     }
   }
 
@@ -783,9 +885,10 @@ function showRSVPCard(guestId, opts = {}) {
 
   // QR code (guest-specific only) or straight to hashtag
   const hashtagY = guest ? 578 : 494;
+  const _hashtag = (WED.hashtag || '').replace(/^#/,'').trim() || `${cp1}And${cp2}`;
   const drawHashtagAndSync = () => {
     ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 13px Lora,serif'; ctx.textAlign = 'center';
-    ctx.fillText(`#${cp1}And${cp2}`, w/2, hashtagY);
+    ctx.fillText(`#${_hashtag}`, w/2, hashtagY);
     _syncPreview();
   };
 
@@ -825,7 +928,7 @@ function _generateRSVPQR() {
   new QRCode(qrEl, { text: rsvpUrl, width: 120, height: 120, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
 }
 
-/* 💌 Share personalised invite link / QR for a specific guest */
+/* 💌 Share personalised invite (Page 1 with QR + Page 2 details) for a specific guest */
 async function shareGuestInvite(guestId) {
   const guest = WED.guests.find(g => g.id === guestId);
   if (!guest) return;
@@ -837,32 +940,54 @@ async function shareGuestInvite(guestId) {
   const ck  = encodeURIComponent(_rsvpCoupleKey());
   const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
 
-  showToast('💌 Generating card…');
+  showToast('💌 Generating invitation…');
 
-  // Silently draw the guest card (with their QR) onto the canvas
+  // Page 1: draw the guest card with their QR code overlaid
   showRSVPCard(guestId, { silent: true });
   // Wait for async QR render (120ms inside _drawQROnCanvas + buffer)
-  await new Promise(r => setTimeout(r, 320));
+  await new Promise(r => setTimeout(r, 350));
 
   const canvas = document.getElementById('rsvp-canvas');
-  let shared = false;
+  const files = [];
 
-  // Try sharing with card image first
-  if (canvas && navigator.share) {
+  // Collect Page 1 file
+  if (canvas) {
     try {
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-      const file = new File([blob], `${(guest.name).replace(/\s+/g,'_')}_invite.jpg`, { type: 'image/jpeg' });
-      const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+      const blob1 = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+      const safe = guest.name.replace(/\s+/g,'_');
+      files.push(new File([blob1], `${safe}_invite_p1.jpg`, { type:'image/jpeg' }));
+    } catch(e) {}
+  }
+
+  // Collect Page 2 file — generate if not yet cached
+  const _getPage2Blob = () => new Promise(resolve => {
+    if (WED._invitationImg2) {
+      fetch(WED._invitationImg2).then(r => r.blob()).then(resolve).catch(() => resolve(null));
+    } else {
+      refreshCard2((dataUrl) => {
+        fetch(dataUrl).then(r => r.blob()).then(resolve).catch(() => resolve(null));
+      });
+    }
+  });
+  const blob2 = await _getPage2Blob();
+  if (blob2) {
+    const safe = guest.name.replace(/\s+/g,'_');
+    files.push(new File([blob2], `${safe}_invite_p2.jpg`, { type:'image/jpeg' }));
+  }
+
+  let shared = false;
+  if (navigator.share) {
+    try {
+      const canShareFiles = files.length > 0 && navigator.canShare && navigator.canShare({ files });
       await navigator.share({
         title: `Wedding Invitation — ${WED.couple.p1} & ${WED.couple.p2}`,
         text:  `Hi ${guest.name}! You're cordially invited to ${WED.couple.p1} & ${WED.couple.p2}'s wedding. RSVP here 💌`,
         url,
-        ...(canShareFiles ? { files: [file] } : {}),
+        ...(canShareFiles ? { files } : {}),
       });
       shared = true;
     } catch(e) {
       if (e.name === 'AbortError') return;
-      // fall through to clipboard
     }
   }
 
@@ -880,6 +1005,351 @@ async function shareGuestInvite(guestId) {
   saveState();
   renderGuests();
   if (shared) showToast('💌 Invitation sent to ' + guest.name);
+}
+
+/* ── TWO-PAGE INVITATION BUILDER ─────────────── */
+
+/* Wrap text on canvas */
+function _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = (text || '').split(' ');
+  let line = '';
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+      ctx.fillText(line.trim(), x, y);
+      line = words[i] + ' ';
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line.trim(), x, y);
+  return y;
+}
+
+/* Re-draw Page 1 clean card (no QR) and store in WED._invitationImg */
+function refreshCard1() {
+  // showRSVPCard with no guest draws the clean card and calls _syncPreview
+  // which updates WED._invitationImg and #inv-page1-img
+  showRSVPCard(null, { silent: true });
+  // For custom card, _syncPreview isn't updating _invitationImg, so update overview img manually
+  if (WED.customCardImage) {
+    const ovImg = document.getElementById('inv-page1-img');
+    if (ovImg) { ovImg.src = WED.customCardImage; ovImg.style.display = 'block'; }
+    const p1ph = document.getElementById('inv-page1-placeholder');
+    if (p1ph) p1ph.style.display = 'none';
+  }
+}
+
+/* Draw Page 2 details card on #invite-canvas2; store in WED._invitationImg2 */
+function refreshCard2(cb) {
+  const canvas2 = document.getElementById('invite-canvas2');
+  if (!canvas2) { if (cb) cb(); return; }
+  const ctx = canvas2.getContext('2d');
+  const w = canvas2.width = 380;
+  const h = canvas2.height = 520;
+  const is = WED.inviteSettings || {};
+  const cp1 = WED.couple.p1 || 'Partner 1';
+  const cp2 = WED.couple.p2 || 'Partner 2';
+
+  // gradient bg (inverted palette for variety)
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0,'#e8f5ed'); grad.addColorStop(0.5,'#fef6e8'); grad.addColorStop(1,'#fce8ee');
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 24); ctx.fill();
+
+  // deco circles
+  ctx.globalAlpha = 0.10;
+  ctx.fillStyle = '#6a8e70'; ctx.beginPath(); ctx.arc(40, 60, 80, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#c9a96e'; ctx.beginPath(); ctx.arc(340, 460, 70, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // border
+  ctx.strokeStyle = 'rgba(106,142,112,0.4)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(8, 8, w-16, h-16, 20); ctx.stroke();
+
+  // florals
+  ctx.font = '22px serif'; ctx.textAlign = 'left';
+  ctx.fillText('🌿', 14, 42); ctx.fillText('🌸', w-46, 42);
+  ctx.fillText('🌸', 14, h-18); ctx.fillText('🌿', w-46, h-18);
+
+  // header
+  ctx.fillStyle = '#6a8e70'; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`${cp1} & ${cp2}`, w/2, 40);
+  ctx.fillStyle = '#2c1f0e'; ctx.font = 'italic 600 20px Lora,serif';
+  ctx.fillText('Details & Information', w/2, 66);
+
+  // divider
+  ctx.strokeStyle = 'rgba(106,142,112,0.4)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, 78); ctx.lineTo(w-60, 78); ctx.stroke();
+
+  let yPos = 96;
+
+  // Dress Code
+  if (is.dressCode) {
+    ctx.fillStyle = '#6a8e70'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('DRESS CODE', w/2, yPos); yPos += 16;
+    ctx.fillStyle = '#2c1f0e'; ctx.font = '600 14px Figtree,sans-serif';
+    ctx.fillText(is.dressCode, w/2, yPos); yPos += 22;
+    ctx.strokeStyle = 'rgba(201,169,110,0.25)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(80, yPos); ctx.lineTo(w-80, yPos); ctx.stroke();
+    yPos += 10;
+  }
+
+  const _drawRest = () => {
+    // Gifts
+    if (is.giftsNote) {
+      ctx.fillStyle = '#c9a96e'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('🎁  GIFTS & REGISTRY', w/2, yPos); yPos += 15;
+      ctx.fillStyle = '#4a3520'; ctx.font = '400 11.5px Figtree,sans-serif';
+      yPos = _wrapText(ctx, is.giftsNote, w/2, yPos, w-80, 15) + 18;
+      ctx.strokeStyle = 'rgba(201,169,110,0.2)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(80, yPos-8); ctx.lineTo(w-80, yPos-8); ctx.stroke();
+    }
+    // Notes
+    if (is.specialNote) {
+      ctx.fillStyle = '#7a6045'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('📝  NOTES', w/2, yPos); yPos += 15;
+      ctx.fillStyle = '#4a3520'; ctx.font = '400 11.5px Figtree,sans-serif';
+      yPos = _wrapText(ctx, is.specialNote, w/2, yPos, w-80, 15) + 18;
+      ctx.strokeStyle = 'rgba(201,169,110,0.2)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(80, yPos-8); ctx.lineTo(w-80, yPos-8); ctx.stroke();
+    }
+    // Program
+    if (is.showProgram) {
+      ctx.fillStyle = '#4a3520'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('📋  PROGRAM', w/2, yPos); yPos += 15;
+      ctx.fillStyle = '#7a6045'; ctx.font = 'italic 400 11px Lora,serif';
+      ctx.fillText('Full program will be shared closer to the date', w/2, yPos);
+    }
+    // Hashtag footer
+    const tag = (WED.hashtag||'').replace(/^#/,'').trim() || `${cp1}And${cp2}`;
+    ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 12px Lora,serif'; ctx.textAlign = 'center';
+    ctx.fillText(`#${tag}`, w/2, h-28);
+
+    // Save & update preview
+    const dataUrl = canvas2.toDataURL('image/jpeg', 0.92);
+    WED._invitationImg2 = dataUrl;
+    saveState();
+    const img2 = document.getElementById('inv-page2-img');
+    if (img2) { img2.src = dataUrl; img2.style.display = 'block'; }
+    const p2ph = document.getElementById('inv-page2-placeholder');
+    if (p2ph) p2ph.style.display = 'none';
+    if (cb) cb(dataUrl);
+  };
+
+  // Attire photos (async image loading)
+  const photoY = yPos;
+  const photoH = 110, photoW = 140;
+  let hasPhotos = is.attirePhotoA || is.attirePhotoB;
+  if (!hasPhotos) { _drawRest(); return; }
+
+  ctx.fillStyle = '#6a8e70'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('ATTIRE', w/2, yPos); yPos += 14;
+
+  const imgY = yPos;
+  let loaded = 0;
+  const onDone = () => { loaded++; if (loaded >= 2) { yPos = imgY + photoH + 16; _drawRest(); } };
+
+  const _drawPhoto = (src, px, label) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(px, imgY, photoW, photoH, 8); ctx.clip();
+      ctx.drawImage(img, px, imgY, photoW, photoH);
+      ctx.restore();
+      // label bar
+      ctx.fillStyle = 'rgba(0,0,0,0.42)';
+      ctx.beginPath(); ctx.roundRect(px, imgY + photoH - 20, photoW, 20, [0,0,8,8]); ctx.fill();
+      ctx.fillStyle = 'white'; ctx.font = '600 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, px + photoW/2, imgY + photoH - 7);
+      onDone();
+    };
+    img.onerror = () => {
+      ctx.fillStyle = 'rgba(201,169,110,0.2)'; ctx.beginPath(); ctx.roundRect(px, imgY, photoW, photoH, 8); ctx.fill();
+      ctx.fillStyle = '#7a6045'; ctx.font = '500 10px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, px + photoW/2, imgY + photoH/2);
+      onDone();
+    };
+    img.src = src;
+  };
+  const _drawPhotoPlaceholder = (px, label) => {
+    ctx.fillStyle = 'rgba(201,169,110,0.2)'; ctx.beginPath(); ctx.roundRect(px, imgY, photoW, photoH, 8); ctx.fill();
+    ctx.fillStyle = '#7a6045'; ctx.font = '500 10px Figtree,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, px + photoW/2, imgY + photoH/2);
+    onDone();
+  };
+
+  const pxA = (w - 2*photoW - 8) / 2;
+  const pxB = pxA + photoW + 8;
+  if (is.attirePhotoA) _drawPhoto(is.attirePhotoA, pxA, is.attireLabelA || "Bride's Attire");
+  else _drawPhotoPlaceholder(pxA, is.attireLabelA || "Bride's Attire");
+  if (is.attirePhotoB) _drawPhoto(is.attirePhotoB, pxB, is.attireLabelB || "Groom's Attire");
+  else _drawPhotoPlaceholder(pxB, is.attireLabelB || "Groom's Attire");
+}
+
+/* Save hashtag and refresh card 1 */
+function saveWedHashtag(val) {
+  WED.hashtag = val.replace(/^#/,'').trim();
+  saveState();
+  // Debounced refresh so we don't hammer canvas on every keystroke
+  clearTimeout(saveWedHashtag._t);
+  saveWedHashtag._t = setTimeout(() => { refreshCard1(); refreshCard2(); }, 500);
+}
+
+/* Save an invite field and refresh card 2 */
+function saveInviteField(key, val) {
+  if (!WED.inviteSettings) WED.inviteSettings = {};
+  WED.inviteSettings[key] = val;
+  saveState();
+  if (typeof saveInvitePublic === 'function') saveInvitePublic();
+  clearTimeout(saveInviteField._t);
+  saveInviteField._t = setTimeout(() => refreshCard2(), 400);
+}
+
+/* Upload a custom Page-1 card (compressed) */
+async function uploadCustomCard(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  showToast('⏳ Compressing…');
+  try {
+    const dataUrl = await compressImage(file, 760, 0.88);
+    WED.customCardImage = dataUrl;
+    saveState();
+    renderOverview();
+    showToast('🖼 Custom design uploaded!');
+  } catch(e) { showToast('❌ Upload failed'); }
+}
+
+/* Upload attire photo A or B */
+async function uploadAttirePhoto(event, which) {
+  const file = event.target.files[0];
+  if (!file) return;
+  showToast('⏳ Compressing…');
+  try {
+    const dataUrl = await compressImage(file, 600, 0.82);
+    if (!WED.inviteSettings) WED.inviteSettings = {};
+    if (which === 'A') WED.inviteSettings.attirePhotoA = dataUrl;
+    else               WED.inviteSettings.attirePhotoB = dataUrl;
+    saveState();
+    renderOverview();
+    setTimeout(() => refreshCard2(), 80);
+    showToast('📷 Attire photo saved!');
+  } catch(e) { showToast('❌ Upload failed'); }
+}
+
+/* Remove an attire photo */
+function clearAttirePhoto(which) {
+  if (!WED.inviteSettings) WED.inviteSettings = {};
+  if (which === 'A') WED.inviteSettings.attirePhotoA = null;
+  else               WED.inviteSettings.attirePhotoB = null;
+  saveState();
+  refreshCard2();
+  renderOverview();
+}
+
+/* Toggle upload-spec panel visibility */
+function toggleInvUploadSpec() {
+  const spec = document.getElementById('inv-upload-spec');
+  if (!spec) return;
+  spec.style.display = spec.style.display === 'none' ? 'block' : 'none';
+}
+
+/* Download a wireframe template PNG showing both pages with QR zone */
+function downloadInviteTemplate() {
+  const PW = 380, PH = 520, GAP = 30, PAD = 16, TITLE = 36;
+  const c = document.createElement('canvas');
+  c.width  = PAD*2 + PW*2 + GAP;
+  c.height = PAD*2 + TITLE + PH + 20;
+  const ctx = c.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#f8f2e8'; ctx.fillRect(0, 0, c.width, c.height);
+
+  // Main title
+  ctx.fillStyle = '#4a3520'; ctx.font = '700 13px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Vows & Petals — Invitation Template Guide', c.width/2, 22);
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 10px Figtree,sans-serif';
+  ctx.fillText('Use as a base in Canva or Photoshop. Keep the QR zone clear on Page 1.', c.width/2, 34);
+
+  const p1x = PAD, p2x = PAD + PW + GAP, py = PAD + TITLE;
+
+  // ── Page 1 ──
+  ctx.fillStyle = '#fef9f4';
+  ctx.beginPath(); ctx.roundRect(p1x, py, PW, PH, 16); ctx.fill();
+  ctx.strokeStyle = '#c9a96e'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(p1x, py, PW, PH, 16); ctx.stroke();
+
+  ctx.fillStyle = '#c9a96e'; ctx.font = '700 11px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('PAGE 1 — INVITATION CARD', p1x + PW/2, py + 22);
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 9px Figtree,sans-serif';
+  ctx.fillText('380 × 520 px', p1x + PW/2, py + 35);
+
+  // Zone: names
+  ctx.fillStyle = 'rgba(201,169,110,0.12)'; ctx.beginPath(); ctx.roundRect(p1x+20, py+44, PW-40, 180, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(201,169,110,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.roundRect(p1x+20, py+44, PW-40, 180, 6); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 9px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Couple Names & Invite Text', p1x + PW/2, py + 138);
+
+  // Zone: date/rsvp
+  ctx.fillStyle = 'rgba(201,169,110,0.08)'; ctx.beginPath(); ctx.roundRect(p1x+20, py+234, PW-40, 164, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(201,169,110,0.35)'; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.roundRect(p1x+20, py+234, PW-40, 164, 6); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 9px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Date, Venue & RSVP Button', p1x + PW/2, py + 320);
+
+  // QR zone (exact position)
+  const qrX = (PW - 96) / 2, qrY = 408;
+  ctx.fillStyle = 'rgba(224,120,152,0.12)'; ctx.beginPath(); ctx.roundRect(p1x+qrX-8, py+qrY-8, 112, 112, 8); ctx.fill();
+  ctx.strokeStyle = '#e07898'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.roundRect(p1x+qrX-8, py+qrY-8, 112, 112, 8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#e07898'; ctx.font = '700 9px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('⚠ QR ZONE', p1x + PW/2, py+qrY+42);
+  ctx.fillStyle = '#e07898'; ctx.font = '400 8px Figtree,sans-serif';
+  ctx.fillText('96×96 px · centered · y=408', p1x + PW/2, py+qrY+54);
+  ctx.fillText('Keep this area clear in your design', p1x + PW/2, py+qrY+65);
+
+  ctx.fillStyle = '#7a6045'; ctx.font = 'italic 400 9px Lora,serif'; ctx.textAlign = 'center';
+  ctx.fillText('#YourHashtag', p1x + PW/2, py + PH - 14);
+
+  // ── Page 2 ──
+  ctx.fillStyle = '#f4f9f5';
+  ctx.beginPath(); ctx.roundRect(p2x, py, PW, PH, 16); ctx.fill();
+  ctx.strokeStyle = '#6a8e70'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(p2x, py, PW, PH, 16); ctx.stroke();
+
+  ctx.fillStyle = '#6a8e70'; ctx.font = '700 11px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('PAGE 2 — DETAILS CARD', p2x + PW/2, py + 22);
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 9px Figtree,sans-serif';
+  ctx.fillText('380 × 520 px', p2x + PW/2, py + 35);
+
+  const zones2 = [
+    { y:44, h:54, col:'rgba(106,142,112,0.12)', bc:'rgba(106,142,112,0.3)', lbl:'Dress Code' },
+    { y:108, h:124, col:'rgba(201,169,110,0.10)', bc:'rgba(201,169,110,0.3)', lbl:'Attire Photos (A + B)' },
+    { y:242, h:82, col:'rgba(224,120,152,0.08)', bc:'rgba(224,120,152,0.25)', lbl:'Gifts & Registry Info' },
+    { y:334, h:82, col:'rgba(106,142,112,0.08)', bc:'rgba(106,142,112,0.25)', lbl:'Special Notes' },
+    { y:426, h:56, col:'rgba(201,169,110,0.08)', bc:'rgba(201,169,110,0.25)', lbl:'Program (optional)' },
+  ];
+  zones2.forEach(z => {
+    ctx.fillStyle = z.col; ctx.beginPath(); ctx.roundRect(p2x+20, py+z.y, PW-40, z.h, 6); ctx.fill();
+    ctx.strokeStyle = z.bc; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.roundRect(p2x+20, py+z.y, PW-40, z.h, 6); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#4a3520'; ctx.font = '400 9px Figtree,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(z.lbl, p2x + PW/2, py + z.y + z.h/2 + 3);
+  });
+
+  // Download
+  try {
+    const a = document.createElement('a');
+    a.download = 'vows-and-petals-invite-template.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+    showToast('⬇ Template downloaded!');
+  } catch(e) { showToast('❌ Could not download'); }
 }
 
 /* ⬇ Download invitation image (desktop / Android) */
@@ -912,12 +1382,11 @@ window.loadCustomCard = function(input) {
 
 window.clearCustomCard = function() {
   WED.customCardImage = null;
+  WED._invitationImg  = null; // force re-generation of default card
   saveState();
-  const inp = document.getElementById('custom-card-upload');
-  if (inp) inp.value = '';
   showToast('↩ Showing default invitation card');
-  showRSVPCard();
   renderOverview();
+  setTimeout(() => refreshCard1(), 80);
 };
 
 /* ═══════════════════════════════════════════════
@@ -3580,3 +4049,12 @@ window.renderInviteCustomizer     = renderInviteCustomizer;
 window.renderGuestGroupModal      = renderGuestGroupModal;
 window.addGuestGroup              = addGuestGroup;
 window.removeGuestGroup           = removeGuestGroup;
+window.refreshCard1               = refreshCard1;
+window.refreshCard2               = refreshCard2;
+window.saveWedHashtag             = saveWedHashtag;
+window.saveInviteField            = saveInviteField;
+window.uploadCustomCard           = uploadCustomCard;
+window.uploadAttirePhoto          = uploadAttirePhoto;
+window.clearAttirePhoto           = clearAttirePhoto;
+window.toggleInvUploadSpec        = toggleInvUploadSpec;
+window.downloadInviteTemplate     = downloadInviteTemplate;
