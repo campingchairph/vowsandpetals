@@ -3,6 +3,19 @@
    Self-contained; no dependency on AnoTara
    ═══════════════════════════════════════════════ */
 
+/* ── INVITATION DESIGN THEMES ───────────────── */
+const INVITE_THEMES = [
+  { name:'Ivory & Gold',  swatch:['#fef6e8','#c9a96e'], bg:['#fef6e8','#fce8ee','#e8f5ed'], border:'rgba(201,169,110,0.35)', accent:'#c9a96e', ink:'#2c1f0e', sub:'#7a6045', dark:'#4a3520', circleA:'#c9a96e', circleB:'#e07898', btn:['#c9a96e','#a07840'], florals:['🌸','🌿'], div:'rgba(201,169,110,0.4)', bg2:['#e8f5ed','#fef6e8','#fce8ee'], border2:'rgba(106,142,112,0.4)', accent2:'#6a8e70' },
+  { name:'Rose Garden',   swatch:['#fff0f5','#d4457a'], bg:['#fff0f5','#fde8f0','#fad5e8'], border:'rgba(212,69,122,0.22)', accent:'#d4457a', ink:'#1e0614', sub:'#8c2050', dark:'#5a0a30', circleA:'#e87aaa', circleB:'#c23068', btn:['#d4457a','#8c2050'], florals:['🌹','💐'], div:'rgba(212,69,122,0.35)', bg2:['#fad5e8','#fff0f5','#fde0ec'], border2:'rgba(212,69,122,0.28)', accent2:'#8c2050' },
+  { name:'Sage & White',  swatch:['#f0f5ee','#4a7055'], bg:['#f5f8f4','#eef4ec','#e8f0e6'], border:'rgba(106,142,112,0.3)', accent:'#4a7055', ink:'#0e1f14', sub:'#3d6048', dark:'#1a3820', circleA:'#6a9e70', circleB:'#4a7055', btn:['#5a8e68','#3d6048'], florals:['🌿','🍃'], div:'rgba(74,112,85,0.4)', bg2:['#e8f0e6','#f5f8f4','#eaefea'], border2:'rgba(74,112,85,0.35)', accent2:'#3d6048' },
+  { name:'Navy & Gold',   swatch:['#eaeff8','#1a2a6e'], bg:['#eaeff8','#e0e8f5','#dce5f2'], border:'rgba(26,42,110,0.22)', accent:'#2c3e9e', ink:'#0a0e28', sub:'#1a2a6e', dark:'#0a1450', circleA:'#3a5abf', circleB:'#c9a96e', btn:['#2c3e9e','#1a2a6e'], florals:['✨','🌟'], div:'rgba(44,62,158,0.35)', bg2:['#dce5f2','#eaeff8','#e4eaf5'], border2:'rgba(44,62,158,0.3)', accent2:'#c9a96e' },
+  { name:'Lavender',      swatch:['#f5eeff','#7c4da8'], bg:['#fdf7ff','#f5eeff','#ede0fa'], border:'rgba(124,77,168,0.22)', accent:'#9b5dc8', ink:'#1e0832', sub:'#7c4da8', dark:'#4a1e78', circleA:'#b880e8', circleB:'#7c4da8', btn:['#9b5dc8','#7c4da8'], florals:['💜','🌸'], div:'rgba(124,77,168,0.35)', bg2:['#ede0fa','#fdf7ff','#f0e5fd'], border2:'rgba(124,77,168,0.3)', accent2:'#7c4da8' },
+  { name:'Terracotta',    swatch:['#fdf4ec','#b5522b'], bg:['#fdf4ec','#f5e8d8','#f0dfc8'], border:'rgba(181,82,43,0.25)', accent:'#b5522b', ink:'#280e00', sub:'#8b3a1a', dark:'#5c2008', circleA:'#d4622e', circleB:'#c9a96e', btn:['#c45c30','#8b3a1a'], florals:['🌾','🍂'], div:'rgba(181,82,43,0.38)', bg2:['#f0dfc8','#fdf4ec','#f5e8d8'], border2:'rgba(181,82,43,0.3)', accent2:'#8b3a1a' },
+  { name:'Emerald',       swatch:['#e4f4e8','#1b5e20'], bg:['#ecf8ee','#e4f4e8','#ddf0e2'], border:'rgba(27,94,32,0.25)', accent:'#2e7d32', ink:'#061409', sub:'#1b5e20', dark:'#0a3210', circleA:'#388e3c', circleB:'#c9a96e', btn:['#2e7d32','#1b5e20'], florals:['🌳','🍃'], div:'rgba(46,125,50,0.4)', bg2:['#ddf0e2','#ecf8ee','#e0f2e4'], border2:'rgba(46,125,50,0.3)', accent2:'#1b5e20' },
+  { name:'Blush & Berry', swatch:['#fdeef4','#7b1040'], bg:['#fff5f8','#fdeef4','#fbdfe9'], border:'rgba(123,16,64,0.2)', accent:'#c0315a', ink:'#1e0010', sub:'#7b1040', dark:'#480020', circleA:'#e05888', circleB:'#7b1040', btn:['#c0315a','#7b1040'], florals:['🌷','🫐'], div:'rgba(192,49,90,0.38)', bg2:['#fbdfe9','#fff5f8','#f8d8e8'], border2:'rgba(123,16,64,0.28)', accent2:'#7b1040' },
+];
+function _getInviteTheme() { return INVITE_THEMES[WED.inviteTheme || 0] || INVITE_THEMES[0]; }
+
 /* ── STATE ───────────────────────────────────── */
 const WED = {
   couple:   { p1: '', p2: '' },
@@ -81,6 +94,7 @@ const WED = {
   _nextPhotoId: 1,
   guestGroups: ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"],
   inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Bride's Attire", attireLabelB: "Groom's Attire" },
+  inviteTheme: 0,
 };
 
 /* ── PER-GUEST INVITE STATE ──────────────────── */
@@ -105,6 +119,7 @@ function saveState() {
       _invitationImg:   WED._invitationImg,
       _invitationImg2:  WED._invitationImg2,
       hashtag:          WED.hashtag,
+      inviteTheme:      WED.inviteTheme,
       guests:    WED.guests,
       expenses:  WED.expenses,
       checklist: WED.checklist,
@@ -156,6 +171,7 @@ function loadState() {
     if (!WED.inviteSettings.attireLabelB) WED.inviteSettings.attireLabelB = "Groom's Attire";
     if (WED.hashtag === undefined)  WED.hashtag  = '';
     if (WED._invitationImg2 === undefined) WED._invitationImg2 = null;
+    if (WED.inviteTheme === undefined) WED.inviteTheme = 0;
     WED.guests.forEach(g => { if (g.group === undefined) g.group = ''; });
   } catch(e) {}
 }
@@ -288,142 +304,172 @@ function renderOverview() {
       <button onclick="exportWeddingPlan()" style="padding:6px 12px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Export Plan</button>
       <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
     </div>
-    <!-- Elegant stats strip — no boxes -->
-    <div class="hero-stats-strip" style="margin-bottom:16px">
-      <div class="hss-item">
-        <span class="hss-val">${getCountdown().replace(' to go','').replace(' days','d').replace(' months,','mo')}</span>
-        <span class="hss-lbl">To the Day</span>
-      </div>
-      <div class="hss-item">
-        <span class="hss-val">${attending} / ${WED.guests.length}</span>
-        <span class="hss-lbl">Guests</span>
-      </div>
-      <div class="hss-item">
-        <span class="hss-val">₱${totalSpent >= 1000 ? (totalSpent/1000).toFixed(0)+'k' : totalSpent.toLocaleString()}</span>
-        <span class="hss-lbl">Committed</span>
-      </div>
-      <div class="hss-item">
-        <span class="hss-val">${pct}%</span>
-        <span class="hss-lbl">Planned</span>
-      </div>
-    </div>
 
-    <div style="margin-bottom:16px;padding:16px;border-radius:18px" class="glass">
-      <span class="sec-title">Planning Progress</span>
-      <div style="display:flex;align-items:center;gap:10px">
+    <!-- ── COMBINED EVENT OVERVIEW CARD ── -->
+    <div style="padding:20px;border-radius:20px;margin-bottom:16px" class="glass">
+      <!-- Couple names + date/venue headline -->
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-family:var(--f2);font-size:28px;font-style:italic;font-weight:600;color:var(--ink);line-height:1.15">${WED.couple.p1} &amp; ${WED.couple.p2}</div>
+        ${WED.date ? `<div style="font-size:13px;font-weight:600;color:var(--tan-dark);margin-top:4px">📅 ${new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>` : ''}
+        ${WED.venue ? `<div style="font-size:12px;color:var(--ink-3);margin-top:2px">📍 ${WED.venue}</div>` : ''}
+      </div>
+
+      <!-- 4-stat row -->
+      <div class="ev-stat-row">
+        <div class="ev-stat">
+          <span class="ev-stat-val">${getCountdown().replace(' to go','').replace(/ days?/,'d').replace(/ months?,\s*/,'mo ')}</span>
+          <span class="ev-stat-lbl">To the Day</span>
+        </div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">${attending} / ${WED.guests.length}</span>
+          <span class="ev-stat-lbl">Guests</span>
+        </div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">₱${totalSpent >= 1000 ? (totalSpent/1000).toFixed(0)+'k' : totalSpent.toLocaleString()}</span>
+          <span class="ev-stat-lbl">Committed</span>
+        </div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">${pct}%</span>
+          <span class="ev-stat-lbl">Planned</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div class="progress-bar-wrap" style="flex:1">
           <div class="progress-bar-fill" style="width:${pct}%"></div>
         </div>
-        <span style="font-size:13px;font-weight:700;color:var(--tan-dark)">${pct}%</span>
+        <span style="font-size:12px;font-weight:700;color:var(--tan-dark);white-space:nowrap">${totalDone}/${totalItems} tasks</span>
       </div>
-      <div style="font-size:11.5px;color:var(--ink-4);margin-top:6px">${totalDone} of ${totalItems} tasks complete</div>
+
+      <!-- Budget row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,252,247,0.65);border:1px solid rgba(184,145,106,0.18)">
+        <div>
+          <div style="font-size:11px;color:var(--ink-4);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Budget</div>
+          <div style="font-family:var(--f2);font-size:19px;font-style:italic;font-weight:600;color:var(--ink)">₱${WED.budget.toLocaleString()}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink-4)">Committed: <b style="color:var(--ink)">₱${totalSpent.toLocaleString()}</b></div>
+          <div style="font-size:11px;margin-top:2px;font-weight:700;color:${(WED.budget-totalSpent)>=0?'var(--green-deep)':'var(--pink-deep)'}">
+            ${(WED.budget-totalSpent)>=0?'₱'+(WED.budget-totalSpent).toLocaleString()+' remaining':'₱'+Math.abs(WED.budget-totalSpent).toLocaleString()+' over budget'}
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- ── INVITATION BUILDER ── -->
     <div style="padding:16px;border-radius:18px;margin-bottom:12px" class="glass">
-      <span class="sec-title">Event Details</span>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;gap:10px;align-items:center"><span style="font-size:16px">💑</span><div><div style="font-size:13px;font-weight:700;color:var(--ink)">${WED.couple.p1} &amp; ${WED.couple.p2}</div><div style="font-size:11px;color:var(--ink-4)">Couple</div></div></div>
-        ${WED.date?`<div style="display:flex;gap:10px;align-items:center"><span style="font-size:16px">📅</span><div><div style="font-size:13px;font-weight:700;color:var(--ink)">${new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div><div style="font-size:11px;color:var(--ink-4)">Wedding Date</div></div></div>`:''}
-        ${WED.venue?`<div style="display:flex;gap:10px;align-items:center"><span style="font-size:16px">📍</span><div><div style="font-size:13px;font-weight:700;color:var(--ink)">${WED.venue}</div><div style="font-size:11px;color:var(--ink-4)">Venue</div></div></div>`:''}
-        <div style="display:flex;gap:10px;align-items:center"><span style="font-size:16px">💰</span><div><div style="font-size:13px;font-weight:700;color:var(--ink)">₱${WED.budget.toLocaleString()}</div><div style="font-size:11px;color:var(--ink-4)">Total Budget</div></div></div>
-      </div>
-    </div>
-
-    <!-- Invitation Builder -->
-    <div style="padding:16px;border-radius:18px;margin-bottom:12px" class="glass">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <span class="sec-title" style="margin-bottom:0">💌 Invitation Builder</span>
         <button onclick="downloadInviteTemplate()" style="padding:5px 10px;border-radius:8px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⬇ Template</button>
       </div>
 
-      <!-- ── PAGE 1 ── -->
-      <div style="padding:14px;border-radius:14px;background:rgba(252,232,238,0.25);border:1px solid rgba(224,120,152,0.2);margin-bottom:14px">
-        <div style="font-size:10px;font-weight:700;color:var(--pink-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 1 — Invitation Card</div>
-        ${(WED.customCardImage || WED._invitationImg)
-          ? `<img id="inv-page1-img" src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
-          : `<img id="inv-page1-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
-             <div id="inv-page1-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard1()">
-               <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">💌</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate invitation card</div></div>
-             </div>`}
-        <!-- Hashtag -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-          <span style="font-size:17px;color:var(--gold);font-weight:800;line-height:1">#</span>
-          <input type="text" id="inv-hashtag-input"
-                 value="${(WED.hashtag||'').replace(/^#/,'')}"
-                 placeholder="${(WED.couple.p1||'Name').replace(/\s/g,'')}And${(WED.couple.p2||'Name').replace(/\s/g,'')}"
-                 oninput="saveWedHashtag(this.value)"
-                 class="glass-input" style="flex:1;font-size:13px;padding:7px 10px">
+      <!-- Theme picker -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Design Theme</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+          ${INVITE_THEMES.map((t, i) => {
+            const active = (WED.inviteTheme||0) === i;
+            return `<button class="inv-theme-swatch" onclick="selectInviteTheme(${i})" title="${t.name}"
+              style="flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:2.5px solid ${active ? t.accent : 'transparent'};box-shadow:${active ? `0 0 0 2px ${t.accent}55` : 'none'};background:linear-gradient(135deg,${t.swatch[0]} 50%,${t.swatch[1]} 50%);cursor:pointer;padding:0;transition:border 0.15s,box-shadow 0.15s" title="${t.name}"></button>`;
+          }).join('')}
         </div>
-        <!-- Custom upload -->
-        <button onclick="toggleInvUploadSpec()" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center">
-          📎 ${WED.customCardImage ? 'Replace Custom Design' : 'Upload Custom Design'}
-        </button>
-        <div id="inv-upload-spec" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(255,248,238,0.9);border:1px solid rgba(201,169,110,0.3);font-size:11.5px;color:var(--ink-3)">
-          <div style="font-weight:700;color:var(--tan-dark);margin-bottom:6px">📐 Canvas Specifications</div>
-          <div style="line-height:1.7">Canvas size: <b>380 × 520 px</b><br>QR code zone: horizontally centered at <b>y = 408 px</b><br>QR size: <b>96 × 96 px</b> (+ 8px white padding around)</div>
-          <div style="margin-top:6px;color:var(--pink-deep);font-weight:600">⚠ Keep that area clear in your design — the QR is overlaid automatically when sharing to a guest.</div>
-          <label style="display:block;margin-top:10px;padding:8px;border-radius:8px;background:var(--pink-deep);color:white;font-size:12px;font-weight:700;cursor:pointer;text-align:center">
-            Choose File <input type="file" accept="image/*" style="display:none" onchange="uploadCustomCard(event)">
-          </label>
-          ${WED.customCardImage ? `<button onclick="clearCustomCard()" style="display:block;width:100%;margin-top:6px;padding:7px;border-radius:8px;background:transparent;border:1px solid rgba(224,120,152,0.4);color:var(--pink-deep);font-size:11.5px;cursor:pointer">✕ Remove Custom Design</button>` : ''}
-        </div>
+        <div style="font-size:11px;color:var(--tan-dark);font-weight:600;margin-top:4px">${INVITE_THEMES[WED.inviteTheme||0].name}</div>
       </div>
 
-      <!-- ── PAGE 2 ── -->
-      <div style="padding:14px;border-radius:14px;background:rgba(232,245,237,0.25);border:1px solid rgba(106,142,112,0.2)">
-        <div style="font-size:10px;font-weight:700;color:var(--green-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 2 — Details Card</div>
-        ${WED._invitationImg2
-          ? `<img id="inv-page2-img" src="${WED._invitationImg2}" class="inv-card-img" style="border-radius:12px;margin-bottom:12px">`
-          : `<img id="inv-page2-img" style="display:none;border-radius:12px;margin-bottom:12px" class="inv-card-img">
-             <div id="inv-page2-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(106,142,112,0.4);background:rgba(232,245,237,0.3);margin-bottom:12px">
-               <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Fill in the details below to generate</div></div>
-             </div>`}
-        <!-- Dress Code -->
-        <div style="margin-bottom:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Dress Code</div>
-          <input type="text" placeholder="e.g. Semi-Formal, Sage Green &amp; Gold"
-                 value="${(WED.inviteSettings.dressCode||'').replace(/"/g,'&quot;')}"
-                 oninput="saveInviteField('dressCode',this.value)"
-                 class="glass-input" style="width:100%;font-size:13px;padding:7px 10px;box-sizing:border-box">
-        </div>
-        <!-- Attire Photos -->
-        <div style="margin-bottom:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Attire Reference Photos</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div>
-              <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelA||"Bride's Attire"}</div>
-              ${WED.inviteSettings.attirePhotoA
-                ? `<img src="${WED.inviteSettings.attirePhotoA}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('A')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
-                : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(224,120,152,0.4);border-radius:8px;cursor:pointer;background:rgba(252,232,238,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'A')"></label>`}
-            </div>
-            <div>
-              <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelB||"Groom's Attire"}</div>
-              ${WED.inviteSettings.attirePhotoB
-                ? `<img src="${WED.inviteSettings.attirePhotoB}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('B')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
-                : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(106,142,112,0.4);border-radius:8px;cursor:pointer;background:rgba(232,245,237,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'B')"></label>`}
-            </div>
+      <!-- Two-column page grid -->
+      <div class="inv-builder-grid">
+
+        <!-- ── PAGE 1 ── -->
+        <div style="padding:14px;border-radius:14px;background:rgba(252,232,238,0.25);border:1px solid rgba(224,120,152,0.2)">
+          <div style="font-size:10px;font-weight:700;color:var(--pink-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 1 — Invitation Card</div>
+          ${(WED.customCardImage || WED._invitationImg)
+            ? `<img id="inv-page1-img" src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
+            : `<img id="inv-page1-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
+               <div id="inv-page1-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard1()">
+                 <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">💌</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate invitation card</div></div>
+               </div>`}
+          <!-- Hashtag -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <span style="font-size:17px;color:var(--gold);font-weight:800;line-height:1">#</span>
+            <input type="text" id="inv-hashtag-input"
+                   value="${(WED.hashtag||'').replace(/^#/,'')}"
+                   placeholder="${(WED.couple.p1||'Name').replace(/\s/g,'')}And${(WED.couple.p2||'Name').replace(/\s/g,'')}"
+                   oninput="saveWedHashtag(this.value)"
+                   class="glass-input" style="flex:1;font-size:13px;padding:7px 10px">
+          </div>
+          <!-- Custom upload -->
+          <button onclick="toggleInvUploadSpec()" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center">
+            📎 ${WED.customCardImage ? 'Replace Custom Design' : 'Upload Custom Design'}
+          </button>
+          <div id="inv-upload-spec" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(255,248,238,0.9);border:1px solid rgba(201,169,110,0.3);font-size:11.5px;color:var(--ink-3)">
+            <div style="font-weight:700;color:var(--tan-dark);margin-bottom:6px">📐 Canvas Specifications</div>
+            <div style="line-height:1.7">Canvas size: <b>380 × 520 px</b><br>QR code zone: horizontally centered at <b>y = 408 px</b><br>QR size: <b>96 × 96 px</b> (+ 8px white padding around)</div>
+            <div style="margin-top:6px;color:var(--pink-deep);font-weight:600">⚠ Keep that area clear in your design — the QR is overlaid automatically when sharing to a guest.</div>
+            <label style="display:block;margin-top:10px;padding:8px;border-radius:8px;background:var(--pink-deep);color:white;font-size:12px;font-weight:700;cursor:pointer;text-align:center">
+              Choose File <input type="file" accept="image/*" style="display:none" onchange="uploadCustomCard(event)">
+            </label>
+            ${WED.customCardImage ? `<button onclick="clearCustomCard()" style="display:block;width:100%;margin-top:6px;padding:7px;border-radius:8px;background:transparent;border:1px solid rgba(224,120,152,0.4);color:var(--pink-deep);font-size:11.5px;cursor:pointer">✕ Remove Custom Design</button>` : ''}
           </div>
         </div>
-        <!-- Gifts -->
-        <div style="margin-bottom:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">🎁 Gifts &amp; Registry</div>
-          <textarea placeholder="e.g. Cash gifts via GCash 09XX-XXX-XXXX or our Lazada wishlist…"
-                    oninput="saveInviteField('giftsNote',this.value)"
-                    class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.giftsNote||''}</textarea>
+
+        <!-- ── PAGE 2 ── -->
+        <div style="padding:14px;border-radius:14px;background:rgba(232,245,237,0.25);border:1px solid rgba(106,142,112,0.2)">
+          <div style="font-size:10px;font-weight:700;color:var(--green-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 2 — Details Card</div>
+          ${WED._invitationImg2
+            ? `<img id="inv-page2-img" src="${WED._invitationImg2}" class="inv-card-img" style="border-radius:12px;margin-bottom:12px">`
+            : `<img id="inv-page2-img" style="display:none;border-radius:12px;margin-bottom:12px" class="inv-card-img">
+               <div id="inv-page2-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(106,142,112,0.4);background:rgba(232,245,237,0.3);margin-bottom:12px">
+                 <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Fill in the details below to generate</div></div>
+               </div>`}
+          <!-- Dress Code -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Dress Code</div>
+            <input type="text" placeholder="e.g. Semi-Formal, Sage Green &amp; Gold"
+                   value="${(WED.inviteSettings.dressCode||'').replace(/"/g,'&quot;')}"
+                   oninput="saveInviteField('dressCode',this.value)"
+                   class="glass-input" style="width:100%;font-size:13px;padding:7px 10px;box-sizing:border-box">
+          </div>
+          <!-- Attire Photos -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Attire Reference Photos</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelA||"Bride's Attire"}</div>
+                ${WED.inviteSettings.attirePhotoA
+                  ? `<img src="${WED.inviteSettings.attirePhotoA}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('A')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
+                  : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(224,120,152,0.4);border-radius:8px;cursor:pointer;background:rgba(252,232,238,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'A')"></label>`}
+              </div>
+              <div>
+                <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelB||"Groom's Attire"}</div>
+                ${WED.inviteSettings.attirePhotoB
+                  ? `<img src="${WED.inviteSettings.attirePhotoB}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('B')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
+                  : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(106,142,112,0.4);border-radius:8px;cursor:pointer;background:rgba(232,245,237,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'B')"></label>`}
+              </div>
+            </div>
+          </div>
+          <!-- Gifts -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">🎁 Gifts &amp; Registry</div>
+            <textarea placeholder="e.g. Cash gifts via GCash 09XX-XXX-XXXX or our Lazada wishlist…"
+                      oninput="saveInviteField('giftsNote',this.value)"
+                      class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.giftsNote||''}</textarea>
+          </div>
+          <!-- Notes -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">📝 Special Notes</div>
+            <textarea placeholder="e.g. Strictly no children. Please RSVP by June 30…"
+                      oninput="saveInviteField('specialNote',this.value)"
+                      class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.specialNote||''}</textarea>
+          </div>
+          <!-- Program toggle -->
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" ${WED.inviteSettings.showProgram?'checked':''} onchange="saveInviteField('showProgram',this.checked)" style="width:16px;height:16px;accent-color:var(--gold)">
+            <span style="font-size:12.5px;font-weight:600;color:var(--ink)">Show program note on Details card</span>
+          </label>
         </div>
-        <!-- Notes -->
-        <div style="margin-bottom:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">📝 Special Notes</div>
-          <textarea placeholder="e.g. Strictly no children. Please RSVP by June 30…"
-                    oninput="saveInviteField('specialNote',this.value)"
-                    class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.specialNote||''}</textarea>
-        </div>
-        <!-- Program toggle -->
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" ${WED.inviteSettings.showProgram?'checked':''} onchange="saveInviteField('showProgram',this.checked)" style="width:16px;height:16px;accent-color:var(--gold)">
-          <span style="font-size:12.5px;font-weight:600;color:var(--ink)">Show program note on Details card</span>
-        </label>
-      </div>
+
+      </div><!-- /.inv-builder-grid -->
     </div>
 
     ${typeof renderCloudSection === 'function' ? renderCloudSection() : `
@@ -623,7 +669,10 @@ function _guestCard(g) {
           <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
           <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
         </select>
-        <button onclick="shareGuestInvite(${g.id})" style="padding:4px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>
+        ${chair
+          ? `<button onclick="shareGuestInvite(${g.id})" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>`
+          : `<button onclick="showToast('🪑 Assign a seat first in the Seating tab')" title="Assign a seat before sending" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(184,145,106,0.2);background:rgba(245,230,200,0.3);font-size:11px;font-weight:700;color:var(--ink-4);cursor:not-allowed;white-space:nowrap;opacity:0.5">💌 Send</button>`}
+        <button onclick="copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>
         <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
       </div>
     </div>
@@ -795,10 +844,16 @@ function showRSVPCard(guestId, opts = {}) {
         ctx.fillStyle = 'rgba(255,255,255,0.88)';
         ctx.beginPath(); ctx.roundRect(qrX - 8, qrY - 8, sz + 16, sz + 16, 10); ctx.fill();
         ctx.drawImage(qrCanvas, qrX, qrY, sz, sz);
-        // guest name label
+        // guest name + seat label
         if (guest) {
-          ctx.fillStyle = '#7a6045'; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+          const _t = _getInviteTheme();
+          ctx.fillStyle = _t.sub; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
           ctx.fillText(`for ${guest.name}`, w / 2, qrY + sz + 18);
+          const guestChair = WED.furniture.find(f => f.id === guest._chairId);
+          if (guestChair) {
+            ctx.fillStyle = _t.accent2 || _t.accent; ctx.font = '700 10px Figtree,sans-serif';
+            ctx.fillText(`🪑 ${guestChair.label}`, w / 2, qrY + sz + 32);
+          }
         }
       }
       document.body.removeChild(tmpDiv);
@@ -818,66 +873,69 @@ function showRSVPCard(guestId, opts = {}) {
     return;
   }
 
+  // Apply theme
+  const t = _getInviteTheme();
+
   // gradient bg
   const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0,'#fef6e8'); grad.addColorStop(0.5,'#fce8ee'); grad.addColorStop(1,'#e8f5ed');
-  ctx.fillStyle = grad; ctx.roundRect(0, 0, w, h, 24); ctx.fill();
+  grad.addColorStop(0, t.bg[0]); grad.addColorStop(0.5, t.bg[1]); grad.addColorStop(1, t.bg[2]);
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 24); ctx.fill();
 
   // deco circles
   ctx.globalAlpha = 0.12;
-  ctx.fillStyle = '#c9a96e'; ctx.beginPath(); ctx.arc(340, 60, 90, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#e07898'; ctx.beginPath(); ctx.arc(40, guest ? 540 : 460, 70, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = t.circleA; ctx.beginPath(); ctx.arc(340, 60, 90, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = t.circleB; ctx.beginPath(); ctx.arc(40, guest ? 540 : 460, 70, 0, Math.PI*2); ctx.fill();
   ctx.globalAlpha = 1;
 
   // border
-  ctx.strokeStyle = 'rgba(201,169,110,0.35)'; ctx.lineWidth = 1.5;
-  ctx.roundRect(8, 8, w-16, h-16, 20); ctx.stroke();
+  ctx.strokeStyle = t.border; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(8, 8, w-16, h-16, 20); ctx.stroke();
 
   // florals
   ctx.font = '28px serif'; ctx.textAlign = 'left';
-  ctx.fillText('🌸', 18, 50); ctx.fillText('🌸', w-52, 50);
-  ctx.fillText('🌿', 12, h-22); ctx.fillText('🌿', w-44, h-22);
+  ctx.fillText(t.florals[0], 18, 50); ctx.fillText(t.florals[0], w-52, 50);
+  ctx.fillText(t.florals[1], 12, h-22); ctx.fillText(t.florals[1], w-44, h-22);
 
   // header
-  ctx.fillStyle = '#7a6045'; ctx.font = '500 12.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = t.sub; ctx.font = '500 12.5px Figtree,sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('YOU ARE CORDIALLY INVITED TO THE WEDDING OF', w/2, 80);
 
   // names
   const cp1 = WED.couple.p1 || 'Partner 1';
   const cp2 = WED.couple.p2 || 'Partner 2';
-  ctx.fillStyle = '#2c1f0e'; ctx.font = 'italic 600 38px Lora,serif';
+  ctx.fillStyle = t.ink; ctx.font = 'italic 600 38px Lora,serif';
   ctx.fillText(cp1, w/2, 130);
-  ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 22px Lora,serif';
+  ctx.fillStyle = t.accent; ctx.font = 'italic 400 22px Lora,serif';
   ctx.fillText('&', w/2, 162);
-  ctx.fillStyle = '#2c1f0e'; ctx.font = 'italic 600 38px Lora,serif';
+  ctx.fillStyle = t.ink; ctx.font = 'italic 600 38px Lora,serif';
   ctx.fillText(cp2, w/2, 200);
 
   // divider
-  ctx.strokeStyle = 'rgba(201,169,110,0.4)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = t.div; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(60, 220); ctx.lineTo(w-60, 220); ctx.stroke();
 
   // date / time / venue
   const dateStr = WED.date
     ? new Date(WED.date).toLocaleDateString('en-PH', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
     : '(Date TBD)';
-  ctx.fillStyle = '#4a3520'; ctx.font = '600 15px Figtree,sans-serif';
+  ctx.fillStyle = t.dark; ctx.font = '600 15px Figtree,sans-serif';
   ctx.fillText(dateStr, w/2, 252);
-  ctx.fillStyle = '#7a6045'; ctx.font = '400 13px Figtree,sans-serif';
+  ctx.fillStyle = t.sub; ctx.font = '400 13px Figtree,sans-serif';
   ctx.fillText('3:00 PM', w/2, 275);
-  ctx.fillStyle = '#4a3520'; ctx.font = '600 14px Figtree,sans-serif';
+  ctx.fillStyle = t.dark; ctx.font = '600 14px Figtree,sans-serif';
   ctx.fillText(WED.venue || '(Venue TBD)', w/2, 300);
 
   // divider 2
-  ctx.strokeStyle = 'rgba(201,169,110,0.3)';
+  ctx.strokeStyle = t.border;
   ctx.beginPath(); ctx.moveTo(60, 318); ctx.lineTo(w-60, 318); ctx.stroke();
 
   // rsvp section
-  ctx.fillStyle = '#7a6045'; ctx.font = '500 12px Figtree,sans-serif';
+  ctx.fillStyle = t.sub; ctx.font = '500 12px Figtree,sans-serif';
   ctx.fillText('KINDLY CONFIRM YOUR ATTENDANCE', w/2, 342);
 
   // rsvp button visual
   const btnGrad = ctx.createLinearGradient(w/2-80, 358, w/2+80, 396);
-  btnGrad.addColorStop(0,'#c9a96e'); btnGrad.addColorStop(1,'#a07840');
+  btnGrad.addColorStop(0, t.btn[0]); btnGrad.addColorStop(1, t.btn[1]);
   ctx.fillStyle = btnGrad;
   ctx.beginPath(); ctx.roundRect(w/2-80, 358, 160, 38, 10); ctx.fill();
   ctx.fillStyle = 'white'; ctx.font = '700 14px Figtree,sans-serif';
@@ -887,7 +945,7 @@ function showRSVPCard(guestId, opts = {}) {
   const hashtagY = guest ? 578 : 494;
   const _hashtag = (WED.hashtag || '').replace(/^#/,'').trim() || `${cp1}And${cp2}`;
   const drawHashtagAndSync = () => {
-    ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 13px Lora,serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = t.accent; ctx.font = 'italic 400 13px Lora,serif'; ctx.textAlign = 'center';
     ctx.fillText(`#${_hashtag}`, w/2, hashtagY);
     _syncPreview();
   };
@@ -1051,46 +1109,47 @@ function refreshCard2(cb) {
   const is = WED.inviteSettings || {};
   const cp1 = WED.couple.p1 || 'Partner 1';
   const cp2 = WED.couple.p2 || 'Partner 2';
+  const t = _getInviteTheme();
 
   // gradient bg (inverted palette for variety)
   const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0,'#e8f5ed'); grad.addColorStop(0.5,'#fef6e8'); grad.addColorStop(1,'#fce8ee');
+  grad.addColorStop(0, t.bg2[0]); grad.addColorStop(0.5, t.bg2[1]); grad.addColorStop(1, t.bg2[2]);
   ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 24); ctx.fill();
 
   // deco circles
   ctx.globalAlpha = 0.10;
-  ctx.fillStyle = '#6a8e70'; ctx.beginPath(); ctx.arc(40, 60, 80, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#c9a96e'; ctx.beginPath(); ctx.arc(340, 460, 70, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = t.accent2 || t.accent; ctx.beginPath(); ctx.arc(40, 60, 80, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = t.circleA; ctx.beginPath(); ctx.arc(340, 460, 70, 0, Math.PI*2); ctx.fill();
   ctx.globalAlpha = 1;
 
   // border
-  ctx.strokeStyle = 'rgba(106,142,112,0.4)'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = t.border2 || t.border; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(8, 8, w-16, h-16, 20); ctx.stroke();
 
-  // florals
+  // florals (page 2 reverses the order)
   ctx.font = '22px serif'; ctx.textAlign = 'left';
-  ctx.fillText('🌿', 14, 42); ctx.fillText('🌸', w-46, 42);
-  ctx.fillText('🌸', 14, h-18); ctx.fillText('🌿', w-46, h-18);
+  ctx.fillText(t.florals[1], 14, 42); ctx.fillText(t.florals[0], w-46, 42);
+  ctx.fillText(t.florals[0], 14, h-18); ctx.fillText(t.florals[1], w-46, h-18);
 
   // header
-  ctx.fillStyle = '#6a8e70'; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = t.accent2 || t.accent; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
   ctx.fillText(`${cp1} & ${cp2}`, w/2, 40);
-  ctx.fillStyle = '#2c1f0e'; ctx.font = 'italic 600 20px Lora,serif';
+  ctx.fillStyle = t.ink; ctx.font = 'italic 600 20px Lora,serif';
   ctx.fillText('Details & Information', w/2, 66);
 
   // divider
-  ctx.strokeStyle = 'rgba(106,142,112,0.4)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = t.border2 || t.border; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(60, 78); ctx.lineTo(w-60, 78); ctx.stroke();
 
   let yPos = 96;
 
   // Dress Code
   if (is.dressCode) {
-    ctx.fillStyle = '#6a8e70'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = t.accent2 || t.accent; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('DRESS CODE', w/2, yPos); yPos += 16;
-    ctx.fillStyle = '#2c1f0e'; ctx.font = '600 14px Figtree,sans-serif';
+    ctx.fillStyle = t.ink; ctx.font = '600 14px Figtree,sans-serif';
     ctx.fillText(is.dressCode, w/2, yPos); yPos += 22;
-    ctx.strokeStyle = 'rgba(201,169,110,0.25)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = t.border2 || t.border; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(80, yPos); ctx.lineTo(w-80, yPos); ctx.stroke();
     yPos += 10;
   }
@@ -1098,32 +1157,32 @@ function refreshCard2(cb) {
   const _drawRest = () => {
     // Gifts
     if (is.giftsNote) {
-      ctx.fillStyle = '#c9a96e'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = t.accent; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('🎁  GIFTS & REGISTRY', w/2, yPos); yPos += 15;
-      ctx.fillStyle = '#4a3520'; ctx.font = '400 11.5px Figtree,sans-serif';
+      ctx.fillStyle = t.dark; ctx.font = '400 11.5px Figtree,sans-serif';
       yPos = _wrapText(ctx, is.giftsNote, w/2, yPos, w-80, 15) + 18;
-      ctx.strokeStyle = 'rgba(201,169,110,0.2)'; ctx.lineWidth = 1;
+      ctx.strokeStyle = t.border2 || t.border; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(80, yPos-8); ctx.lineTo(w-80, yPos-8); ctx.stroke();
     }
     // Notes
     if (is.specialNote) {
-      ctx.fillStyle = '#7a6045'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = t.sub; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('📝  NOTES', w/2, yPos); yPos += 15;
-      ctx.fillStyle = '#4a3520'; ctx.font = '400 11.5px Figtree,sans-serif';
+      ctx.fillStyle = t.dark; ctx.font = '400 11.5px Figtree,sans-serif';
       yPos = _wrapText(ctx, is.specialNote, w/2, yPos, w-80, 15) + 18;
-      ctx.strokeStyle = 'rgba(201,169,110,0.2)'; ctx.lineWidth = 1;
+      ctx.strokeStyle = t.border2 || t.border; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(80, yPos-8); ctx.lineTo(w-80, yPos-8); ctx.stroke();
     }
     // Program
     if (is.showProgram) {
-      ctx.fillStyle = '#4a3520'; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = t.dark; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('📋  PROGRAM', w/2, yPos); yPos += 15;
-      ctx.fillStyle = '#7a6045'; ctx.font = 'italic 400 11px Lora,serif';
+      ctx.fillStyle = t.sub; ctx.font = 'italic 400 11px Lora,serif';
       ctx.fillText('Full program will be shared closer to the date', w/2, yPos);
     }
     // Hashtag footer
     const tag = (WED.hashtag||'').replace(/^#/,'').trim() || `${cp1}And${cp2}`;
-    ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 12px Lora,serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = t.accent; ctx.font = 'italic 400 12px Lora,serif'; ctx.textAlign = 'center';
     ctx.fillText(`#${tag}`, w/2, h-28);
 
     // Save & update preview
@@ -1185,6 +1244,40 @@ function refreshCard2(cb) {
   else _drawPhotoPlaceholder(pxA, is.attireLabelA || "Bride's Attire");
   if (is.attirePhotoB) _drawPhoto(is.attirePhotoB, pxB, is.attireLabelB || "Groom's Attire");
   else _drawPhotoPlaceholder(pxB, is.attireLabelB || "Groom's Attire");
+}
+
+/* Select an invitation design theme and refresh both cards */
+function selectInviteTheme(idx) {
+  WED.inviteTheme = idx;
+  WED._invitationImg  = null; // force redraw
+  WED._invitationImg2 = null;
+  saveState();
+  refreshCard1();
+  setTimeout(() => refreshCard2(), 80);
+  // Update swatch selection highlights without full re-render
+  document.querySelectorAll('.inv-theme-swatch').forEach((el, i) => {
+    const t = INVITE_THEMES[i];
+    el.style.border = `2.5px solid ${i === idx ? t.accent : 'transparent'}`;
+    el.style.boxShadow = i === idx ? `0 0 0 2px ${t.accent}55` : 'none';
+  });
+}
+
+/* Copy RSVP link for a specific guest to clipboard */
+async function copyGuestLink(guestId) {
+  const guest = WED.guests.find(g => g.id === guestId);
+  if (!guest) return;
+  const p1 = encodeURIComponent(WED.couple.p1 || '');
+  const p2 = encodeURIComponent(WED.couple.p2 || '');
+  const dt = encodeURIComponent(WED.date || '');
+  const vn = encodeURIComponent(WED.venue || '');
+  const ck = encodeURIComponent(_rsvpCoupleKey());
+  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('🔗 RSVP link copied for ' + guest.name);
+  } catch(e) {
+    showToast('Link: ' + url);
+  }
 }
 
 /* Save hashtag and refresh card 1 */
@@ -4058,3 +4151,5 @@ window.uploadAttirePhoto          = uploadAttirePhoto;
 window.clearAttirePhoto           = clearAttirePhoto;
 window.toggleInvUploadSpec        = toggleInvUploadSpec;
 window.downloadInviteTemplate     = downloadInviteTemplate;
+window.selectInviteTheme          = selectInviteTheme;
+window.copyGuestLink              = copyGuestLink;

@@ -1663,3 +1663,56 @@ textarea.glass-input {
   letter-spacing: 0.06em;
   border-bottom: 1px solid rgba(184,145,106,0.18);
 }
+
+/* ── INVITATION BUILDER TWO-COLUMN ───────────── */
+.inv-builder-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 600px) {
+  .inv-builder-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+}
+
+/* ── EVENT OVERVIEW CARD STATS ───────────────── */
+.ev-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid rgba(184,145,106,0.18);
+  margin-bottom: 12px;
+}
+.ev-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  background: rgba(255,252,247,0.7);
+  border-right: 1px solid rgba(184,145,106,0.14);
+}
+.ev-stat:last-child { border-right: none; }
+.ev-stat-val {
+  font-family: var(--f2);
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+  text-align: center;
+}
+.ev-stat-lbl {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
