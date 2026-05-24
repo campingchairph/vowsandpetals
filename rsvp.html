@@ -252,6 +252,62 @@
       cursor: default !important;
       border-color: rgba(201,169,110,0.20) !important;
     }
+
+    /* Seat chip */
+    .seat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(90,171,122,0.14);
+      border: 1px solid rgba(90,171,122,0.32);
+      font-size: 12px;
+      font-weight: 700;
+      color: #3a7a4a;
+      margin: 8px 0 0;
+    }
+
+    /* View invitation section */
+    .view-invite-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(201,169,110,0.32);
+      background: rgba(253,246,232,0.8);
+      font-family: var(--f);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-3);
+      cursor: pointer;
+      margin-bottom: 0;
+      transition: background 0.15s;
+    }
+    .view-invite-btn:hover { background: rgba(245,230,200,0.7); }
+
+    #invite-cards-panel {
+      display: none;
+      padding: 14px 16px 6px;
+      border-top: 1px solid rgba(201,169,110,0.12);
+    }
+    .invite-card-scroller {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .invite-card-scroller img {
+      flex: 0 0 auto;
+      width: 240px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(44,24,16,0.12);
+      border: 1px solid rgba(201,169,110,0.18);
+    }
   </style>
 </head>
 <body>
@@ -276,10 +332,25 @@
       <div id="hero-date"></div>
       <div id="hero-venue" class="venue-text"></div>
     </div>
+    <!-- Seat chip — shown only when seat param is present -->
+    <div id="hero-seat" style="display:none;margin-top:10px">
+      <span class="seat-chip">🪑 <span id="hero-seat-label"></span></span>
+    </div>
   </div>
 
   <!-- ── Invite details (dress code, gifts, notes, program) — populated from Firestore ── -->
   <div id="invite-details" style="display:none;padding:0 20px 4px;border-bottom:1px solid rgba(201,169,110,0.10)"></div>
+
+  <!-- ── View Invitation cards ── -->
+  <div id="view-invite-section" style="display:none;padding:14px 20px 14px;border-bottom:1px solid rgba(201,169,110,0.10)">
+    <button class="view-invite-btn" onclick="toggleInviteCards(this)">
+      💌 View Your Invitation <span id="view-invite-chevron">▼</span>
+    </button>
+    <div id="invite-cards-panel">
+      <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Your Invitation Cards</div>
+      <div class="invite-card-scroller" id="invite-card-scroller"></div>
+    </div>
+  </div>
 
   <!-- ── Form ── -->
   <div id="rsvp-form-section">
@@ -364,6 +435,7 @@ const DATE       = params.get('date')       || '';
 const VENUE      = params.get('venue')      || '';
 const GUEST_ID   = params.get('guestId')   || '';
 const GUEST_NAME = params.get('guestName') || '';
+const SEAT       = params.get('seat')       || '';
 const COUPLE_KEY = params.get('coupleKey') || ((P1 || 'unknown') + '_' + (P2 || 'unknown')).toLowerCase().replace(/[^a-z0-9_]/g, '');
 
 /* ── Populate hero ── */
@@ -376,6 +448,13 @@ if (DATE) {
     d.toLocaleDateString('en-PH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
 if (VENUE) document.getElementById('hero-venue').textContent = VENUE;
+
+/* ── Seat chip ── */
+if (SEAT) {
+  const seatEl = document.getElementById('hero-seat');
+  const seatLbl = document.getElementById('hero-seat-label');
+  if (seatEl && seatLbl) { seatLbl.textContent = SEAT; seatEl.style.display = 'block'; }
+}
 
 document.title = P1 && P2 ? `RSVP — ${P1} & ${P2}'s Wedding` : 'RSVP — Wedding Invitation';
 
@@ -412,7 +491,31 @@ if (DB && COUPLE_KEY) {
       if (s.specialNote)  html += `<div class="invite-detail-block"><div class="invite-detail-label">📌 Notes</div><div class="invite-detail-text">${s.specialNote}</div></div>`;
       if (html) { details.innerHTML = html; details.style.display = 'block'; }
     }
+
+    // Invitation card images — show "View Invitation" section
+    const hasCards = s.card1Img || s.card2Img;
+    if (hasCards) {
+      const viewSection = document.getElementById('view-invite-section');
+      const scroller    = document.getElementById('invite-card-scroller');
+      if (viewSection && scroller) {
+        let cardsHtml = '';
+        if (s.card1Img) cardsHtml += `<img src="${s.card1Img}" alt="Invitation Page 1" loading="lazy">`;
+        if (s.card2Img) cardsHtml += `<img src="${s.card2Img}" alt="Invitation Page 2" loading="lazy">`;
+        scroller.innerHTML = cardsHtml;
+        viewSection.style.display = 'block';
+      }
+    }
   }).catch(() => {});
+}
+
+/* ── Toggle invitation cards panel ── */
+function toggleInviteCards(btn) {
+  const panel   = document.getElementById('invite-cards-panel');
+  const chevron = document.getElementById('view-invite-chevron');
+  const open    = panel.style.display !== 'none' && panel.style.display !== '';
+  panel.style.display   = open ? 'none' : 'block';
+  if (chevron) chevron.textContent = open ? '▼' : '▲';
+  if (btn) btn.style.background = open ? '' : 'rgba(245,230,200,0.7)';
 }
 
 /* ── Form state ── */

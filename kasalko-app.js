@@ -635,6 +635,7 @@ function deleteExpense(i) {
 
 /* ── GUESTS ──────────────────────────────────── */
 let _guestSearch = '';
+let _guestFilter = 'all'; // 'all' | 'attending' | 'pending' | 'not-sent'
 
 function updateGuestSearch(val) {
   _guestSearch = (val || '').toLowerCase();
@@ -642,6 +643,11 @@ function updateGuestSearch(val) {
   // Restore focus + value after re-render
   const inp = document.getElementById('guest-search-input');
   if (inp) { inp.value = val || _guestSearch; inp.focus(); }
+}
+
+function setGuestFilter(val) {
+  _guestFilter = val;
+  renderGuests();
 }
 
 function _guestCard(g) {
@@ -672,7 +678,9 @@ function _guestCard(g) {
         ${chair
           ? `<button onclick="shareGuestInvite(${g.id})" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>`
           : `<button onclick="showToast('🪑 Assign a seat first in the Seating tab')" title="Assign a seat before sending" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(184,145,106,0.2);background:rgba(245,230,200,0.3);font-size:11px;font-weight:700;color:var(--ink-4);cursor:not-allowed;white-space:nowrap;opacity:0.5">💌 Send</button>`}
-        <button onclick="copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>
+        ${chair
+          ? `<button onclick="copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>`
+          : `<button onclick="showToast('🪑 Assign a seat first in the Seating tab')" title="Assign a seat before copying link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(184,145,106,0.18);background:rgba(245,230,200,0.25);font-size:11px;font-weight:700;color:var(--ink-4);cursor:not-allowed;opacity:0.45">🔗</button>`}
         <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
       </div>
     </div>
@@ -687,7 +695,14 @@ function renderGuests() {
   const declined  = WED.guests.filter(g => g.rsvp === 'declined').length;
 
   const q = _guestSearch.toLowerCase();
-  const filtered = q ? WED.guests.filter(g => g.name.toLowerCase().includes(q) || (g.group||'').toLowerCase().includes(q)) : WED.guests;
+  // Apply status filter first, then text search
+  const preFiltered = WED.guests.filter(g => {
+    if (_guestFilter === 'attending')  return g.rsvp === 'attending';
+    if (_guestFilter === 'pending')    return g.rsvp === 'pending';
+    if (_guestFilter === 'not-sent')   return !g._inviteSent;
+    return true;
+  });
+  const filtered = q ? preFiltered.filter(g => g.name.toLowerCase().includes(q) || (g.group||'').toLowerCase().includes(q)) : preFiltered;
 
   // Group filtered guests
   const groups = {};
@@ -741,12 +756,27 @@ function renderGuests() {
       <button onclick="openModal('wed-add-guest-modal')" style="flex:1;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Guest</button>
       <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.22);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer" title="Manage Groups">👥 Groups</button>
     </div>
-    <div style="position:relative;margin-bottom:12px">
+    <div style="position:relative;margin-bottom:8px">
       <input id="guest-search-input" type="search" placeholder="🔍 Search guests or groups…" value="${_guestSearch}"
         oninput="updateGuestSearch(this.value)"
         style="width:100%;padding:9px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.9);font-size:13px;color:var(--ink);font-family:var(--f);outline:none">
     </div>
-    ${filtered.length ? guestHTML : `<div style="text-align:center;padding:28px 16px;font-size:13px;color:var(--ink-4)">${q ? 'No guests match "'+_guestSearch+'"' : 'No guests yet — click "+ Add Guest" to start.'}</div>`}`;
+    <!-- Filter pills -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      ${[
+        { val:'all',       label:'All',            count: WED.guests.length,                                       col:'var(--tan-dark)',   bg:'rgba(245,230,200,0.6)',  bd:'rgba(201,169,110,0.32)' },
+        { val:'attending', label:'✅ Attending',   count: WED.guests.filter(g=>g.rsvp==='attending').length,       col:'var(--green-deep)', bg:'rgba(90,171,122,0.15)',  bd:'rgba(90,171,122,0.35)'  },
+        { val:'pending',   label:'⏳ Pending',     count: WED.guests.filter(g=>g.rsvp==='pending').length,         col:'var(--tan-dark)',   bg:'rgba(245,230,200,0.5)',  bd:'rgba(201,169,110,0.28)' },
+        { val:'not-sent',  label:'💌 Not Sent',    count: WED.guests.filter(g=>!g._inviteSent).length,             col:'var(--pink-deep)',  bg:'rgba(252,232,238,0.6)',  bd:'rgba(224,120,152,0.32)' },
+      ].map(f => {
+        const active = _guestFilter === f.val;
+        return `<button onclick="setGuestFilter('${f.val}')"
+          style="padding:5px 11px;border-radius:20px;border:1.5px solid ${active ? f.bd : 'rgba(201,169,110,0.18)'};background:${active ? f.bg : 'rgba(255,253,248,0.7)'};font-size:11px;font-weight:${active?'700':'600'};color:${active ? f.col : 'var(--ink-4)'};cursor:pointer;transition:all 0.15s;white-space:nowrap">
+          ${f.label} <span style="opacity:0.75">${f.count}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    ${filtered.length ? guestHTML : `<div style="text-align:center;padding:28px 16px;font-size:13px;color:var(--ink-4)">${q || _guestFilter!=='all' ? 'No guests match this filter.' : 'No guests yet — click "+ Add Guest" to start.'}</div>`}`;
 }
 
 let _newGuestMeal = 'chicken';
@@ -821,6 +851,7 @@ function showRSVPCard(guestId, opts = {}) {
     if (!WED.customCardImage && !guest) {
       WED._invitationImg = dataUrl;
       saveState();
+      if (typeof saveInvitePublic === 'function') saveInvitePublic();
       // also update the overview builder preview
       const ovImg = document.getElementById('inv-page1-img');
       if (ovImg) { ovImg.src = dataUrl; ovImg.style.display = 'block'; }
@@ -991,12 +1022,14 @@ async function shareGuestInvite(guestId) {
   const guest = WED.guests.find(g => g.id === guestId);
   if (!guest) return;
 
+  const chair = WED.furniture.find(f => f.id === guest._chairId);
   const p1  = encodeURIComponent(WED.couple.p1 || '');
   const p2  = encodeURIComponent(WED.couple.p2 || '');
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
   const ck  = encodeURIComponent(_rsvpCoupleKey());
-  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+  const seatParam = chair ? `&seat=${encodeURIComponent(chair.label)}` : '';
+  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
 
   showToast('💌 Generating invitation…');
 
@@ -1189,6 +1222,7 @@ function refreshCard2(cb) {
     const dataUrl = canvas2.toDataURL('image/jpeg', 0.92);
     WED._invitationImg2 = dataUrl;
     saveState();
+    if (typeof saveInvitePublic === 'function') saveInvitePublic();
     const img2 = document.getElementById('inv-page2-img');
     if (img2) { img2.src = dataUrl; img2.style.display = 'block'; }
     const p2ph = document.getElementById('inv-page2-placeholder');
@@ -1266,12 +1300,14 @@ function selectInviteTheme(idx) {
 async function copyGuestLink(guestId) {
   const guest = WED.guests.find(g => g.id === guestId);
   if (!guest) return;
+  const chair = WED.furniture.find(f => f.id === guest._chairId);
   const p1 = encodeURIComponent(WED.couple.p1 || '');
   const p2 = encodeURIComponent(WED.couple.p2 || '');
   const dt = encodeURIComponent(WED.date || '');
   const vn = encodeURIComponent(WED.venue || '');
   const ck = encodeURIComponent(_rsvpCoupleKey());
-  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+  const seatParam = chair ? `&seat=${encodeURIComponent(chair.label)}` : '';
+  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
   try {
     await navigator.clipboard.writeText(url);
     showToast('🔗 RSVP link copied for ' + guest.name);
@@ -4153,3 +4189,4 @@ window.toggleInvUploadSpec        = toggleInvUploadSpec;
 window.downloadInviteTemplate     = downloadInviteTemplate;
 window.selectInviteTheme          = selectInviteTheme;
 window.copyGuestLink              = copyGuestLink;
+window.setGuestFilter             = setGuestFilter;

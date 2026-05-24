@@ -472,6 +472,8 @@ function saveInvitePublic() {
     ...WED.inviteSettings,
     p1: WED.couple?.p1 || '',
     p2: WED.couple?.p2 || '',
+    card1Img: WED._invitationImg  || null,
+    card2Img: WED._invitationImg2 || null,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   }).catch(() => {});
 }
