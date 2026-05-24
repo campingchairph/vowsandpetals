@@ -73,6 +73,10 @@ const WED = {
   entourage: [],
   _nextEntourageId: 1,
   notes: { general: '', budget: '', venue: '', vendors: '', themes: '' },
+  noteCategories: [],
+  notePhotos: [],
+  allTags: [],
+  _nextPhotoId: 1,
 };
 
 /* ── PER-GUEST INVITE STATE ──────────────────── */
@@ -109,6 +113,10 @@ function saveState() {
       entourage:        WED.entourage,
       _nextEntourageId: WED._nextEntourageId,
       notes:            WED.notes,
+      noteCategories:   WED.noteCategories,
+      notePhotos:       WED.notePhotos,
+      allTags:          WED.allTags,
+      _nextPhotoId:     WED._nextPhotoId,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(snapshot));
   } catch(e) {}
@@ -130,6 +138,10 @@ function loadState() {
     if (!WED.entourage)         WED.entourage         = [];
     if (!WED._nextEntourageId)  WED._nextEntourageId  = 1;
     if (!WED.notes)             WED.notes             = { general: '', budget: '', venue: '', vendors: '', themes: '' };
+    if (!WED.noteCategories)    WED.noteCategories    = [];
+    if (!WED.notePhotos)        WED.notePhotos        = [];
+    if (!WED.allTags)           WED.allTags           = [];
+    if (!WED._nextPhotoId)      WED._nextPhotoId      = 1;
   } catch(e) {}
 }
 
@@ -171,7 +183,7 @@ function getCountdown() {
 /* ── TAB SWITCH ──────────────────────────────── */
 function wedTab(name) {
   WED.activeTab = name;
-  ['overview','budget','guests','suppliers','seating','checklist','schedule','entourage','notes'].forEach(t => {
+  ['overview','budget','guests','suppliers','seating','checklist','schedule','entourage','notes','gallery'].forEach(t => {
     const panel = document.getElementById('panel-'+t);
     const tab   = document.getElementById('tab-'+t);
     if (panel) panel.style.display = t === name ? 'block' : 'none';
@@ -186,6 +198,7 @@ function wedTab(name) {
   if (name === 'suppliers') renderSuppliers();
   if (name === 'entourage') renderEntourage();
   if (name === 'notes')     renderNotes();
+  if (name === 'gallery')   renderGallery();
 }
 
 /* ── HERO UPDATE ─────────────────────────────── */
@@ -398,20 +411,20 @@ function renderBudget() {
 
     ${Object.keys(byCat).length ? `
     <span class="sec-title">By Category</span>
-    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px">
+    <div class="budget-cat-grid" data-cols="${Object.keys(byCat).length >= 4 ? 4 : Object.keys(byCat).length === 3 ? 3 : 1}">
       ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
         const catPct = totalSpent ? Math.round((amt/totalSpent)*100) : 0;
         const budPct = WED.budget  ? Math.min(Math.round((amt/WED.budget)*100),100) : 0;
         return `
-        <div class="${CAT_COLORS[cat]||'glass-cream'}" style="padding:10px 12px;border-radius:var(--r-md)">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:16px">${CAT_EMOJIS[cat]||'📦'}</span>
-            <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1">${cat}</span>
-            <span style="font-size:12px;font-weight:700;color:var(--ink)">₱${amt.toLocaleString()}</span>
-            <span style="font-size:10.5px;color:var(--ink-4);font-weight:600">${catPct}%</span>
+        <div class="${CAT_COLORS[cat]||'glass-cream'} bcat-card" style="padding:10px 12px;border-radius:var(--r-md)">
+          <div class="bcat-row" style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+            <span style="font-size:15px">${CAT_EMOJIS[cat]||'📦'}</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat}</span>
+            <span style="font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0">₱${amt.toLocaleString()}</span>
+            <span style="font-size:10px;color:var(--ink-4);font-weight:600;flex-shrink:0">${catPct}%</span>
           </div>
           <div style="height:4px;border-radius:2px;background:rgba(44,31,14,0.08);overflow:hidden">
-            <div style="height:100%;width:${budPct}%;background:linear-gradient(90deg,var(--green-accent),var(--tan));border-radius:2px;transition:width 0.4s"></div>
+            <div style="height:100%;width:${budPct}%;background:linear-gradient(90deg,var(--green-accent),var(--tan));border-radius:2px"></div>
           </div>
         </div>`;}).join('')}
     </div>` : ''}
@@ -431,8 +444,8 @@ function renderBudget() {
           <div style="font-size:14px;font-weight:700;color:var(--ink)">₱${e.amount.toLocaleString()}</div>
           <div style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:2px;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.12)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'};">${e.paid?'Paid':'Pending'}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          <button onclick="toggleExpensePaid(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer">${e.paid?'Unpay':'Mark Paid'}</button>
+        <div class="expense-actions">
+          <button onclick="toggleExpensePaid(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer;white-space:nowrap">${e.paid?'Unpay':'Mark Paid'}</button>
           <button onclick="openEditExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(184,145,106,0.25);background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
           <button onclick="deleteExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
         </div>
@@ -2799,38 +2812,78 @@ function renderEntourage() {
     }).join('')}`;
 }
 
-let _entourageEditingRole = null;
-let _entourageEditingId   = null;
+let _entouragePickedGuest = null;
+let _entouragePresetRole  = '';
 
 function openEntourageMemberModal(presetRole) {
-  _entourageEditingId = null;
-  document.getElementById('entourage-modal-title').textContent = 'Add Member';
-  document.getElementById('entourage-member-submit-btn').textContent = 'Add Member →';
-  document.getElementById('entourage-member-name').value = '';
-  document.getElementById('entourage-member-note').value = '';
-  if (presetRole) {
-    const sel = document.getElementById('entourage-member-role');
-    if (sel) sel.value = presetRole;
-  }
+  _entouragePickedGuest = null;
+  _entouragePresetRole  = presetRole || '';
+  const content = document.getElementById('entourage-picker-content');
+  if (content) content.innerHTML = _buildEntouragePickerUI('');
   openModal('wed-entourage-member-modal');
-  setTimeout(() => document.getElementById('entourage-member-name')?.focus(), 200);
+  setTimeout(() => document.getElementById('entourage-guest-search')?.focus(), 220);
+}
+
+function _buildEntouragePickerUI(searchVal) {
+  const alreadyIn = new Set(WED.entourage.map(m => m.guestId).filter(Boolean));
+  const q = searchVal.toLowerCase();
+  const filtered = WED.guests.filter(g => g.name.toLowerCase().includes(q));
+  const pickedId  = _entouragePickedGuest?.id;
+
+  const rows = filtered.length
+    ? filtered.map(g => {
+        const inE    = alreadyIn.has(g.id);
+        const picked = pickedId === g.id;
+        const dot    = g.rsvp==='attending'?'var(--green-accent)':g.rsvp==='declined'?'var(--rose)':'var(--tan)';
+        return `<div onclick="pickEntourageGuest(${g.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);cursor:pointer;margin-bottom:5px;background:${picked?'rgba(90,171,122,0.18)':'rgba(255,252,247,0.85)'};border:1.5px solid ${picked?'rgba(58,122,84,0.38)':'rgba(255,255,255,0.5)'}">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(184,145,106,0.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink-3);flex-shrink:0">${g.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--ink)">${g.name}</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:2px"><div style="width:6px;height:6px;border-radius:50%;background:${dot};flex-shrink:0"></div><span style="font-size:10.5px;color:var(--ink-4)">${g.rsvp==='attending'?'Attending':g.rsvp==='declined'?'Declined':'Pending'}${inE?' · already in entourage':''}</span></div>
+          </div>
+          ${picked?'<span style="font-size:16px;color:var(--green-deep)">✓</span>':''}
+        </div>`;
+      }).join('')
+    : `<div style="text-align:center;padding:20px;font-size:13px;color:var(--ink-4)">${WED.guests.length?'No guests match.':'Add guests in the Guests tab first.'}</div>`;
+
+  const roleOpts = ENTOURAGE_ROLES.map(r => `<option value="${r.role}" ${r.role===_entouragePresetRole?'selected':''}>${r.emoji} ${r.role}</option>`).join('');
+
+  const roleSection = _entouragePickedGuest ? `
+    <div style="margin-top:10px;padding:12px;border-radius:var(--r-md);background:rgba(245,230,200,0.42);border:1px solid rgba(201,169,110,0.2)">
+      <div style="font-size:11.5px;font-weight:700;color:var(--ink-3);margin-bottom:8px">Role for <em>${_entouragePickedGuest.name}</em>:</div>
+      <select id="entourage-member-role" class="glass-input" style="margin-bottom:8px">${roleOpts}</select>
+      <input type="text" id="entourage-member-note" class="glass-input" placeholder="Note — e.g. travelling from Cebu…" style="margin-bottom:10px">
+      <button onclick="submitEntourageMember()" class="cta-btn pink" style="margin:0">Add to Entourage →</button>
+    </div>` : '';
+
+  return `
+    <input type="search" id="entourage-guest-search" class="glass-input" placeholder="Search guests…" oninput="refreshEntouragePicker(this.value)" style="margin-bottom:8px">
+    <div style="max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch">${rows}</div>
+    ${roleSection}`;
+}
+
+function pickEntourageGuest(guestId) {
+  _entouragePickedGuest = WED.guests.find(g => g.id === guestId) || null;
+  const search  = document.getElementById('entourage-guest-search');
+  const content = document.getElementById('entourage-picker-content');
+  if (content) content.innerHTML = _buildEntouragePickerUI(search?.value || '');
+}
+
+function refreshEntouragePicker(val) {
+  const content = document.getElementById('entourage-picker-content');
+  if (content) content.innerHTML = _buildEntouragePickerUI(val);
 }
 
 function submitEntourageMember() {
-  const name = (document.getElementById('entourage-member-name')?.value || '').trim();
-  if (!name) { showToast('⚠️ Enter a name'); return; }
+  if (!_entouragePickedGuest) { showToast('⚠️ Select a guest first'); return; }
   const role = document.getElementById('entourage-member-role')?.value || 'Other';
   const note = (document.getElementById('entourage-member-note')?.value || '').trim();
-  if (_entourageEditingId !== null) {
-    const m = WED.entourage.find(m => m.id === _entourageEditingId);
-    if (m) { m.name = name; m.role = role; m.note = note; }
-  } else {
-    WED.entourage.push({ id: WED._nextEntourageId++, role, name, note });
-  }
+  WED.entourage.push({ id: WED._nextEntourageId++, guestId: _entouragePickedGuest.id, name: _entouragePickedGuest.name, role, note });
+  _entouragePickedGuest = null;
   saveState();
   closeModal('wed-entourage-member-modal');
   renderEntourage();
-  showToast(_entourageEditingId ? '✅ Member updated!' : '🎉 ' + name + ' added!');
+  showToast('🎉 Added to entourage!');
 }
 
 function removeEntourageMember(id) {
@@ -2858,7 +2911,7 @@ function exportEntourage() {
 }
 
 /* ═══════════════════════════════════════════════
-   NOTES / MOOD BOARD
+   NOTES / MOOD BOARD  &  GALLERY
 ═══════════════════════════════════════════════ */
 const NOTE_SECTIONS = [
   { key:'general',  label:'General Notes',    emoji:'📝', placeholder:'Ideas, reminders, anything you don\'t want to forget…' },
@@ -2868,30 +2921,90 @@ const NOTE_SECTIONS = [
   { key:'themes',   label:'Theme & Mood',     emoji:'🌸', placeholder:'Color palette, inspiration, décor ideas, mood board links…' },
 ];
 
+function compressImage(file, maxDim = 1200, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else        { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function _allNoteSections() {
+  return [...NOTE_SECTIONS, ...(WED.noteCategories || [])];
+}
+
 function renderNotes() {
   const el = document.getElementById('wed-notes-content');
   if (!el) return;
-  const totalChars = NOTE_SECTIONS.reduce((a,s) => a + (WED.notes[s.key]||'').length, 0);
+  const sections = _allNoteSections();
+  const totalChars = sections.reduce((a, s) => a + (WED.notes[s.key] || '').length, 0);
+
+  const sectionHTML = sections.map(s => {
+    const sectionPhotos = (WED.notePhotos || []).filter(p => p.sectionKey === s.key);
+    let photoArea;
+    if (sectionPhotos.length) {
+      photoArea = `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px">
+        ${sectionPhotos.map(p => `
+          <div onclick="openPhotoTagEditor(${p.id})" style="width:54px;height:54px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;border:1.5px solid rgba(184,145,106,0.2)">
+            <img src="${p.dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">
+            ${p.tags && p.tags.length ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(44,24,16,0.55);font-size:8px;color:#fff;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.tags.join(' ')}</div>` : ''}
+          </div>`).join('')}
+        <label style="width:54px;height:54px;border-radius:var(--r-sm);border:1.5px dashed rgba(184,145,106,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:rgba(245,235,215,0.4)">
+          <span style="font-size:22px;color:var(--gold-dark);line-height:1">+</span>
+          <input type="file" accept="image/*" style="display:none" onchange="addNotePhoto(event,'${s.key}')">
+        </label>
+      </div>`;
+    } else {
+      photoArea = `<div style="padding:0 14px 12px">
+        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:11.5px;color:var(--ink-4);border:1.5px dashed rgba(184,145,106,0.4);border-radius:var(--r-sm);padding:5px 10px;background:rgba(245,235,215,0.35)">
+          📷 Add photo
+          <input type="file" accept="image/*" style="display:none" onchange="addNotePhoto(event,'${s.key}')">
+        </label>
+      </div>`;
+    }
+    return `
+    <div class="glass" style="border-radius:var(--r-md);margin-bottom:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:11px 14px 8px;border-bottom:1px solid rgba(184,145,106,0.10)">
+        <span style="font-size:16px">${s.emoji}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${s.label}</span>
+      </div>
+      <textarea
+        style="width:100%;padding:12px 14px;border:none;background:transparent;font-size:13px;color:var(--ink);line-height:1.65;resize:vertical;min-height:90px;font-family:var(--f);outline:none"
+        placeholder="${s.placeholder || 'Write your notes here…'}"
+        oninput="saveNoteField('${s.key}',this.value)"
+      >${WED.notes[s.key] || ''}</textarea>
+      ${photoArea}
+    </div>`;
+  }).join('');
+
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div>
         <span class="sec-title" style="margin-bottom:0">Notes &amp; Mood Board</span>
-        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${totalChars ? totalChars.toLocaleString()+' characters saved' : 'Write freely — auto-saved'}</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${totalChars ? totalChars.toLocaleString() + ' characters saved' : 'Write freely — auto-saved'}</div>
       </div>
       <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
     </div>
-    ${NOTE_SECTIONS.map(s => `
-      <div class="glass" style="border-radius:var(--r-md);margin-bottom:12px;overflow:hidden">
-        <div style="display:flex;align-items:center;gap:8px;padding:11px 14px 8px;border-bottom:1px solid rgba(184,145,106,0.10)">
-          <span style="font-size:16px">${s.emoji}</span>
-          <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${s.label}</span>
-        </div>
-        <textarea
-          style="width:100%;padding:12px 14px;border:none;background:transparent;font-size:13px;color:var(--ink);line-height:1.65;resize:vertical;min-height:90px;font-family:var(--f);outline:none"
-          placeholder="${s.placeholder}"
-          oninput="saveNoteField('${s.key}',this.value)"
-        >${WED.notes[s.key]||''}</textarea>
-      </div>`).join('')}`;
+    ${sectionHTML}
+    <div style="text-align:center;padding:4px 0 16px">
+      <button onclick="openModal('add-note-category-modal')" style="padding:8px 18px;border-radius:var(--r-md);border:1.5px dashed rgba(184,145,106,0.45);background:rgba(245,235,215,0.4);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Note Section</button>
+    </div>`;
 }
 
 function saveNoteField(key, value) {
@@ -2900,12 +3013,159 @@ function saveNoteField(key, value) {
 }
 
 function exportNotes() {
-  const sections = NOTE_SECTIONS
-    .filter(s => (WED.notes[s.key]||'').trim())
+  const allSections = _allNoteSections();
+  const sections = allSections
+    .filter(s => (WED.notes[s.key] || '').trim())
     .map(s => `<h3 style="margin:0 0 8px;color:#5c3a24;font-size:15px">${s.emoji} ${s.label}</h3><div style="white-space:pre-wrap;font-size:13px;line-height:1.7;color:#2c1810;padding:12px 16px;border-radius:10px;background:#faf0e0;border:1px solid #e8d8c0;margin-bottom:20px">${WED.notes[s.key]}</div>`).join('');
   const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>Notes — ${WED.couple.p1||''} &amp; ${WED.couple.p2||''}</title><style>body{font-family:Georgia,serif;background:#fdfaf4;color:#2c1810;padding:32px;max-width:680px;margin:0 auto}h1{font-size:26px;text-align:center;margin-bottom:4px}p{text-align:center;color:#8c6848;margin-bottom:28px}@media print{button{display:none}}</style></head><body><h1>${WED.couple.p1||'—'} &amp; ${WED.couple.p2||'—'}</h1><p>Wedding Notes${WED.date?' · '+new Date(WED.date).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'}):''}</p>${sections||'<p style="text-align:center;color:#b89870">No notes saved yet.</p>'}<div style="text-align:center;margin-top:24px"><button onclick="window.print()" style="padding:10px 24px;background:#8c6640;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">🖨 Print</button></div></body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><title>Notes — ${WED.couple.p1 || ''} &amp; ${WED.couple.p2 || ''}</title><style>body{font-family:Georgia,serif;background:#fdfaf4;color:#2c1810;padding:32px;max-width:680px;margin:0 auto}h1{font-size:26px;text-align:center;margin-bottom:4px}p{text-align:center;color:#8c6848;margin-bottom:28px}@media print{button{display:none}}</style></head><body><h1>${WED.couple.p1 || '—'} &amp; ${WED.couple.p2 || '—'}</h1><p>Wedding Notes${WED.date ? ' · ' + new Date(WED.date).toLocaleDateString('en-PH', {month:'long',day:'numeric',year:'numeric'}) : ''}</p>${sections || '<p style="text-align:center;color:#b89870">No notes saved yet.</p>'}<div style="text-align:center;margin-top:24px"><button onclick="window.print()" style="padding:10px 24px;background:#8c6640;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">🖨 Print</button></div></body></html>`);
   win.document.close();
+}
+
+function submitNoteCategory() {
+  const label = (document.getElementById('new-note-cat-label')?.value || '').trim();
+  const emoji = (document.getElementById('new-note-cat-emoji')?.value || '').trim() || '📌';
+  if (!label) { showToast('⚠️ Enter a section name'); return; }
+  const key = 'custom_' + Date.now();
+  if (!WED.noteCategories) WED.noteCategories = [];
+  WED.noteCategories.push({ key, label, emoji, placeholder: 'Write your notes here…' });
+  if (!WED.notes) WED.notes = {};
+  WED.notes[key] = '';
+  saveState();
+  closeModal('add-note-category-modal');
+  document.getElementById('new-note-cat-label').value = '';
+  document.getElementById('new-note-cat-emoji').value = '';
+  renderNotes();
+  showToast('✅ Section added!');
+}
+
+async function addNotePhoto(event, sectionKey) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  showToast('📷 Compressing…');
+  try {
+    const dataUrl = await compressImage(file);
+    if (!WED.notePhotos) WED.notePhotos = [];
+    WED.notePhotos.push({ id: WED._nextPhotoId++, sectionKey, dataUrl, caption: '', tags: [], addedAt: new Date().toISOString() });
+    saveState();
+    renderNotes();
+    if (WED.activeTab === 'gallery') renderGallery();
+    showToast('✅ Photo added!');
+  } catch (_) {
+    showToast('⚠️ Could not read image');
+  }
+}
+
+let _editingPhotoId   = null;
+let _editingPhotoTags = [];
+
+function openPhotoTagEditor(photoId) {
+  const photo = (WED.notePhotos || []).find(p => p.id === photoId);
+  if (!photo) return;
+  _editingPhotoId   = photoId;
+  _editingPhotoTags = [...(photo.tags || [])];
+  document.getElementById('photo-tag-id').value        = photoId;
+  document.getElementById('photo-tag-preview').src     = photo.dataUrl;
+  document.getElementById('photo-tag-caption').value   = photo.caption || '';
+  document.getElementById('photo-tag-input').value     = '';
+  _renderPhotoTagChips();
+  openModal('photo-tag-modal');
+}
+
+function _renderPhotoTagChips() {
+  const el = document.getElementById('photo-tag-chips');
+  if (!el) return;
+  el.innerHTML = _editingPhotoTags.map((tag, i) =>
+    `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;background:rgba(184,145,106,0.2);font-size:11.5px;font-weight:600;color:var(--tan-dark)">
+      #${tag}<span onclick="_removePhotoTag(${i})" style="cursor:pointer;color:var(--pink-deep);font-weight:700;font-size:13px;padding-left:2px;line-height:1">×</span>
+    </span>`).join('');
+}
+window._removePhotoTag = function(i) {
+  _editingPhotoTags.splice(i, 1);
+  _renderPhotoTagChips();
+};
+
+function addPhotoTagOnEnter(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  const raw = event.target.value.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_À-ɏ-]/gi, '');
+  if (!raw || _editingPhotoTags.includes(raw)) { event.target.value = ''; return; }
+  _editingPhotoTags.push(raw);
+  event.target.value = '';
+  _renderPhotoTagChips();
+}
+
+function savePhotoTags() {
+  const photo = (WED.notePhotos || []).find(p => p.id === _editingPhotoId);
+  if (!photo) { closeModal('photo-tag-modal'); return; }
+  photo.caption = (document.getElementById('photo-tag-caption')?.value || '').trim();
+  photo.tags    = [..._editingPhotoTags];
+  if (!WED.allTags) WED.allTags = [];
+  _editingPhotoTags.forEach(t => { if (!WED.allTags.includes(t)) WED.allTags.push(t); });
+  saveState();
+  closeModal('photo-tag-modal');
+  renderNotes();
+  if (WED.activeTab === 'gallery') renderGallery();
+  showToast('✅ Photo saved!');
+}
+
+function deletePhoto() {
+  const idx = (WED.notePhotos || []).findIndex(p => p.id === _editingPhotoId);
+  if (idx !== -1) WED.notePhotos.splice(idx, 1);
+  saveState();
+  closeModal('photo-tag-modal');
+  renderNotes();
+  if (WED.activeTab === 'gallery') renderGallery();
+  showToast('🗑 Photo removed');
+}
+
+function renderGallery() {
+  const el = document.getElementById('wed-gallery-content');
+  if (!el) return;
+  const photos = WED.notePhotos || [];
+  if (!photos.length) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:52px 24px">
+        <div style="font-size:40px;margin-bottom:12px">📷</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink-2);margin-bottom:6px">No photos yet</div>
+        <div style="font-size:12px;color:var(--ink-4)">Add photos from the Notes tab, then tag them to group them here.</div>
+      </div>`;
+    return;
+  }
+
+  const tagged   = {};
+  const untagged = [];
+  photos.forEach(p => {
+    if (p.tags && p.tags.length) {
+      p.tags.forEach(tag => { (tagged[tag] = tagged[tag] || []).push(p); });
+    } else {
+      untagged.push(p);
+    }
+  });
+
+  const renderGroup = (title, gPhotos) => `
+    <div style="margin-bottom:22px">
+      <div style="font-size:11.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(184,145,106,0.15)">${title} <span style="font-weight:400;color:var(--ink-4)">(${gPhotos.length})</span></div>
+      <div class="gallery-grid">
+        ${gPhotos.map(p => `
+          <div class="gallery-thumb" onclick="openPhotoTagEditor(${p.id})">
+            <img src="${p.dataUrl}" alt="${p.caption || ''}">
+            ${p.caption ? `<div class="gallery-thumb-overlay">${p.caption}</div>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  const tagHTML = Object.entries(tagged)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([tag, gp]) => renderGroup('#' + tag, gp)).join('');
+
+  el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <span class="sec-title" style="margin-bottom:0">Gallery</span>
+      <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${photos.length} photo${photos.length !== 1 ? 's' : ''} · tap to edit tags</div>
+    </div>
+    ${tagHTML}
+    ${untagged.length ? renderGroup('Untagged', untagged) : ''}`;
 }
 
 /* ═══════════════════════════════════════════════
@@ -3084,6 +3344,15 @@ window.exportEntourage            = exportEntourage;
 window.renderNotes                = renderNotes;
 window.saveNoteField              = saveNoteField;
 window.exportNotes                = exportNotes;
+window.submitNoteCategory         = submitNoteCategory;
+window.addNotePhoto               = addNotePhoto;
+window.openPhotoTagEditor         = openPhotoTagEditor;
+window.addPhotoTagOnEnter         = addPhotoTagOnEnter;
+window.savePhotoTags              = savePhotoTags;
+window.deletePhoto                = deletePhoto;
+window.renderGallery              = renderGallery;
+window.pickEntourageGuest         = pickEntourageGuest;
+window.refreshEntouragePicker     = refreshEntouragePicker;
 window.openEditExpense            = openEditExpense;
 window.submitEditExpense          = submitEditExpense;
 window.exportWeddingPlan          = exportWeddingPlan;

@@ -157,13 +157,15 @@
         <div class="logo-text">Vows &amp; Petals</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-      <span id="cloud-save-indicator" style="font-size:10px;font-weight:700;transition:opacity 0.4s;opacity:0;white-space:nowrap"></span>
-      <button id="auth-header-btn" onclick="openAuthModal()"
-        style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.55);cursor:pointer;font-family:var(--f);flex-shrink:0">
-        <span class="auth-btn-icon">&#9685;</span> <span style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>
-      </button>
-      <button class="btn-edit-details" onclick="openSetupModal()">Edit Details</button>
+    <div class="header-actions">
+      <span id="cloud-save-indicator" class="cloud-indicator"></span>
+      <div class="header-btn-row">
+        <button id="auth-header-btn" onclick="openAuthModal()"
+          style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.55);cursor:pointer;font-family:var(--f)">
+          <span class="auth-btn-icon">&#9685;</span> <span style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>
+        </button>
+        <button class="btn-edit-details" onclick="openSetupModal()">Edit Details</button>
+      </div>
     </div>
   </header>
 
@@ -193,7 +195,8 @@
     <button class="wed-tab"        id="tab-checklist"  role="tab" aria-selected="false" onclick="wedTab('checklist')" >Checklist</button>
     <button class="wed-tab"        id="tab-schedule"   role="tab" aria-selected="false" onclick="wedTab('schedule')"  >Program</button>
     <button class="wed-tab"        id="tab-entourage"  role="tab" aria-selected="false" onclick="wedTab('entourage')">Entourage</button>
-    <button class="wed-tab"        id="tab-notes"      role="tab" aria-selected="false" onclick="wedTab('notes')"    >Notes</button>
+    <button class="wed-tab"        id="tab-notes"      role="tab" aria-selected="false" onclick="wedTab('notes')"   >Notes</button>
+    <button class="wed-tab"        id="tab-gallery"    role="tab" aria-selected="false" onclick="wedTab('gallery')" >Gallery</button>
   </nav>
 
   <!-- Desktop sidebar footer -->
@@ -290,6 +293,11 @@
   <!-- Notes -->
   <div id="panel-notes" class="panel" style="display:none">
     <div id="wed-notes-content"></div>
+  </div>
+
+  <!-- Gallery -->
+  <div id="panel-gallery" class="panel" style="display:none">
+    <div id="wed-gallery-content"></div>
   </div>
 
   <!-- Footer -->
@@ -411,7 +419,7 @@
 
     <!-- Long-pressable image — populated from canvas after drawing -->
     <img id="rsvp-preview-img"
-      style="width:100%;border-radius:var(--r-lg);display:block"
+      style="width:100%;max-width:320px;display:block;margin:0 auto;border-radius:var(--r-lg)"
       alt="Wedding Invitation">
 
     <!-- Save hint -->
@@ -644,41 +652,52 @@
   </div>
 </div>
 
-<!-- Add / Edit Entourage Member -->
+<!-- Add to Entourage (guest picker) -->
 <div id="wed-entourage-member-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-entourage-member-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="entourage-modal-title">Add Member</div>
-    <div class="input-group">
-      <div class="input-label">Full Name</div>
-      <input type="text" id="entourage-member-name" class="glass-input" placeholder="e.g. Maria Santos">
+    <div class="modal-title">Add to Entourage</div>
+    <div id="entourage-picker-content"></div>
+  </div>
+</div>
+
+<!-- Photo Tag / Caption Editor -->
+<div id="photo-tag-modal" class="modal-overlay" onclick="closeModalOutside(event,'photo-tag-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Photo</div>
+    <input type="hidden" id="photo-tag-id">
+    <div style="text-align:center;margin-bottom:12px">
+      <img id="photo-tag-preview" style="max-height:160px;border-radius:var(--r-md);max-width:100%;object-fit:contain" alt="">
     </div>
     <div class="input-group">
-      <div class="input-label">Role</div>
-      <select id="entourage-member-role" class="glass-input">
-        <option value="Principal Sponsors (Ninong)">💍 Principal Sponsors — Ninong</option>
-        <option value="Principal Sponsors (Ninang)">💍 Principal Sponsors — Ninang</option>
-        <option value="Best Man">🤵 Best Man</option>
-        <option value="Maid of Honor">👰 Maid of Honor</option>
-        <option value="Groomsmen">🤵 Groomsmen</option>
-        <option value="Bridesmaids">💐 Bridesmaids</option>
-        <option value="Flower Girls">🌸 Flower Girls</option>
-        <option value="Ring Bearer">💍 Ring Bearer</option>
-        <option value="Bible Bearer">📖 Bible Bearer</option>
-        <option value="Cord Sponsors">🪢 Cord Sponsors</option>
-        <option value="Veil Sponsors">🤍 Veil Sponsors</option>
-        <option value="Coin Sponsors">🪙 Coin Sponsors</option>
-        <option value="Candle Sponsors">🕯️ Candle Sponsors</option>
-        <option value="Parents of the Groom">👨‍👩‍👦 Parents of the Groom</option>
-        <option value="Parents of the Bride">👨‍👩‍👦 Parents of the Bride</option>
-        <option value="Other">🎀 Other</option>
-      </select>
+      <div class="input-label">Caption (optional)</div>
+      <input type="text" id="photo-tag-caption" class="glass-input" placeholder="e.g. Venue inspo, Bouquet idea…">
     </div>
     <div class="input-group">
-      <div class="input-label">Note (optional)</div>
-      <input type="text" id="entourage-member-note" class="glass-input" placeholder="e.g. Tito Bert's side, travelling from Cebu…">
+      <div class="input-label">Tags — press Enter to add</div>
+      <div id="photo-tag-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;min-height:24px"></div>
+      <input type="text" id="photo-tag-input" class="glass-input" placeholder="Type a tag and press Enter…" onkeydown="addPhotoTagOnEnter(event)">
     </div>
-    <button class="cta-btn pink" id="entourage-member-submit-btn" onclick="submitEntourageMember()">Add Member →</button>
+    <button class="cta-btn green" onclick="savePhotoTags()">Save →</button>
+    <button onclick="deletePhoto()" style="display:block;width:100%;padding:10px;border:none;background:none;font-size:12.5px;color:var(--pink-deep);cursor:pointer;margin-top:2px;font-family:var(--f)">🗑 Delete photo</button>
+  </div>
+</div>
+
+<!-- Add Custom Note Section -->
+<div id="add-note-category-modal" class="modal-overlay" onclick="closeModalOutside(event,'add-note-category-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Note Section</div>
+    <div class="input-group">
+      <div class="input-label">Section Name</div>
+      <input type="text" id="new-note-cat-label" class="glass-input" placeholder="e.g. Honeymoon Plans, Ceremony Ideas…">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Emoji</div>
+      <input type="text" id="new-note-cat-emoji" class="glass-input" placeholder="e.g. ✈️ 🎶 🌿" style="max-width:100px">
+    </div>
+    <button class="cta-btn" onclick="submitNoteCategory()">Add Section →</button>
   </div>
 </div>
 
