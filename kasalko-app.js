@@ -95,6 +95,7 @@ const WED = {
   guestGroups: ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"],
   inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Bride's Attire", attireLabelB: "Groom's Attire" },
   inviteTheme: 0,
+  expenseCategories: [], // custom categories: [{key, icon, label}]
 };
 
 /* ── PER-GUEST INVITE STATE ──────────────────── */
@@ -119,7 +120,8 @@ function saveState() {
       _invitationImg:   WED._invitationImg,
       _invitationImg2:  WED._invitationImg2,
       hashtag:          WED.hashtag,
-      inviteTheme:      WED.inviteTheme,
+      inviteTheme:        WED.inviteTheme,
+      expenseCategories:  WED.expenseCategories,
       guests:    WED.guests,
       expenses:  WED.expenses,
       checklist: WED.checklist,
@@ -172,6 +174,7 @@ function loadState() {
     if (WED.hashtag === undefined)  WED.hashtag  = '';
     if (WED._invitationImg2 === undefined) WED._invitationImg2 = null;
     if (WED.inviteTheme === undefined) WED.inviteTheme = 0;
+    if (!WED.expenseCategories) WED.expenseCategories = [];
     WED.guests.forEach(g => { if (g.group === undefined) g.group = ''; });
   } catch(e) {}
 }
@@ -301,7 +304,6 @@ function renderOverview() {
 
   el.innerHTML = `
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
-      <button onclick="exportWeddingPlan()" style="padding:6px 12px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Export Plan</button>
       <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
     </div>
 
@@ -518,8 +520,19 @@ function submitSetup() {
 }
 
 /* ── BUDGET ──────────────────────────────────── */
-const CAT_COLORS = { venue:'glass-cream', catering:'glass-green', florals:'glass-pink', photography:'glass-cream', attire:'glass-pink', music:'glass-cream', cake:'glass-cream', invites:'glass-green', other:'glass-cream' };
-const CAT_EMOJIS = { venue:'🏛️', catering:'🍽️', florals:'💐', photography:'📸', attire:'👗', music:'🎵', cake:'🎂', invites:'💌', other:'📦' };
+const CAT_COLORS = { venue:'glass-cream', catering:'glass-green', florals:'glass-pink', photography:'glass-cream', attire:'glass-pink', music:'glass-cream', cake:'glass-cream', invites:'glass-green' };
+const CAT_EMOJIS = { venue:'🏛️', catering:'🍽️', florals:'💐', photography:'📸', attire:'👗', music:'🎵', cake:'🎂', invites:'💌' };
+// Dynamic category helpers — merges built-ins with WED.expenseCategories
+function allExpenseCats() {
+  const builtIn = Object.keys(CAT_EMOJIS).map(k => ({ key:k, icon: CAT_EMOJIS[k], label: k.charAt(0).toUpperCase()+k.slice(1) }));
+  return [...builtIn, ...(WED.expenseCategories||[])];
+}
+function catIcon(key) {
+  if (CAT_EMOJIS[key]) return CAT_EMOJIS[key];
+  const c = (WED.expenseCategories||[]).find(c=>c.key===key);
+  return c ? c.icon : '🏷️';
+}
+function catColor(key) { return CAT_COLORS[key] || 'glass-cream'; }
 
 function renderBudget() {
   const el = document.getElementById('wed-budget-content');
@@ -561,35 +574,43 @@ function renderBudget() {
     </div>
 
     ${Object.keys(byCat).length ? `
-    <span class="sec-title">By Category</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="sec-title" style="margin-bottom:0">By Category</span>
+      <button onclick="openManageCategories()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage</button>
+    </div>
     <div class="budget-cat-grid" data-cols="${Object.keys(byCat).length >= 4 ? 4 : Object.keys(byCat).length === 3 ? 3 : 1}">
       ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
         const catPct = totalSpent ? Math.round((amt/totalSpent)*100) : 0;
         const budPct = WED.budget  ? Math.min(Math.round((amt/WED.budget)*100),100) : 0;
+        const catLbl = allExpenseCats().find(c=>c.key===cat)?.label || cat;
         return `
-        <div class="${CAT_COLORS[cat]||'glass-cream'} bcat-card" style="padding:10px 12px;border-radius:var(--r-md)">
+        <div class="${catColor(cat)} bcat-card" style="padding:10px 12px;border-radius:var(--r-md)">
           <div class="bcat-row" style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-            <span style="font-size:15px">${CAT_EMOJIS[cat]||'📦'}</span>
-            <span style="font-size:11.5px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat}</span>
+            <span style="font-size:15px">${catIcon(cat)}</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${catLbl}</span>
             <span style="font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0">₱${amt.toLocaleString()}</span>
             <span style="font-size:10px;color:var(--ink-4);font-weight:600;flex-shrink:0">${catPct}%</span>
           </div>
-          <div style="height:4px;border-radius:2px;background:rgba(44,31,14,0.08);overflow:hidden">
+          <div style="height:4px;border-radius:2px;background:rgba(44,31,14,0.08);overflow:hidden;margin-bottom:6px">
             <div style="height:100%;width:${budPct}%;background:linear-gradient(90deg,var(--green-accent),var(--tan));border-radius:2px"></div>
           </div>
+          <button onclick="generateCategoryReceipt('${cat}')" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(201,169,110,0.22);background:rgba(255,252,247,0.7);font-size:10px;font-weight:700;color:var(--tan-dark);cursor:pointer">🧾 Receipt</button>
         </div>`;}).join('')}
-    </div>` : ''}
+    </div>` : `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button onclick="openManageCategories()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage Categories</button>
+    </div>`}
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <span class="sec-title" style="margin-bottom:0">All Expenses</span>
-      <button onclick="openModal('wed-add-expense-modal')" class="icon-btn">+ Add</button>
+      <button onclick="populateExpenseCatSelect();openModal('wed-add-expense-modal')" class="icon-btn">+ Add</button>
     </div>
     ${WED.expenses.length ? WED.expenses.map((e,i)=>`
       <div class="glass" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);margin-bottom:7px">
-        <div style="width:36px;height:36px;border-radius:var(--r-sm);background:rgba(245,230,200,0.6);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${CAT_EMOJIS[e.category]||'📦'}</div>
+        <div style="width:36px;height:36px;border-radius:var(--r-sm);background:rgba(245,230,200,0.6);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${catIcon(e.category)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--ink)">${e.label}</div>
-          <div style="font-size:11px;color:var(--ink-4);text-transform:capitalize">${e.category}</div>
+          <div style="font-size:11px;color:var(--ink-4);text-transform:capitalize">${allExpenseCats().find(c=>c.key===e.category)?.label||e.category}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:14px;font-weight:700;color:var(--ink)">₱${e.amount.toLocaleString()}</div>
@@ -601,7 +622,20 @@ function renderBudget() {
           <button onclick="deleteExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
         </div>
       </div>`).join('') : `<div style="text-align:center;padding:24px;font-size:13px;color:var(--ink-4)">No expenses yet — click "+ Add" to start tracking.</div>`}
-    <button onclick="openModal('wed-add-expense-modal')" class="cta-btn" style="margin-top:8px">+ Add Expense</button>`;
+    <button onclick="populateExpenseCatSelect();openModal('wed-add-expense-modal')" class="cta-btn" style="margin-top:8px">+ Add Expense</button>`;
+}
+
+function populateExpenseCatSelect() {
+  const sel = document.getElementById('wed-exp-category');
+  if (!sel) return;
+  // Remove custom options (keep built-ins which are static in HTML)
+  [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove());
+  // Append custom categories
+  (WED.expenseCategories||[]).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.key; opt.textContent = `${c.icon} ${c.label}`; opt.dataset.custom = '1';
+    sel.appendChild(opt);
+  });
 }
 
 function addWedExpense() {
@@ -633,9 +667,133 @@ function deleteExpense(i) {
   showToast('🗑 Expense removed');
 }
 
+/* ── CUSTOM EXPENSE CATEGORIES ───────────────── */
+function openManageCategories() {
+  document.getElementById('manage-cat-modal')?.remove();
+  const el = document.createElement('div');
+  el.id = 'manage-cat-modal';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">⚙️ Manage Categories</div>
+      <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:12px">Built-in categories cannot be removed. Add your own below.</div>
+      <div id="cat-list-built" style="margin-bottom:10px">
+        ${Object.keys(CAT_EMOJIS).map(k=>
+          `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:rgba(245,230,200,0.3);margin-bottom:4px">
+            <span style="font-size:16px">${CAT_EMOJIS[k]}</span>
+            <span style="font-size:12.5px;font-weight:600;color:var(--ink);flex:1;text-transform:capitalize">${k}</span>
+            <span style="font-size:10px;font-weight:700;color:var(--ink-4);padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.12)">Built-in</span>
+          </div>`).join('')}
+      </div>
+      <div id="cat-list-custom">
+        ${(WED.expenseCategories||[]).map((c,i)=>
+          `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:rgba(90,171,122,0.1);margin-bottom:4px;border:1px solid rgba(90,171,122,0.18)">
+            <span style="font-size:16px">${c.icon}</span>
+            <span style="font-size:12.5px;font-weight:600;color:var(--ink);flex:1">${c.label}</span>
+            <button onclick="removeExpenseCat(${i})" style="font-size:11px;border:none;background:none;color:var(--pink-deep);cursor:pointer;padding:4px">✕</button>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:14px;border-top:1px solid rgba(201,169,110,0.14);padding-top:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Add New Category</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="new-cat-icon" class="glass-input" placeholder="🎪" style="width:60px;text-align:center;font-size:20px;padding:6px 8px">
+          <input id="new-cat-label" class="glass-input" placeholder="Category name" style="flex:1" onkeydown="if(event.key==='Enter')addExpenseCat()">
+        </div>
+        <button class="cta-btn" onclick="addExpenseCat()">+ Add Category</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function addExpenseCat() {
+  const icon  = (document.getElementById('new-cat-icon')?.value  || '').trim() || '🏷️';
+  const label = (document.getElementById('new-cat-label')?.value || '').trim();
+  if (!label) { showToast('⚠️ Enter a category name'); return; }
+  const key = 'custom_' + label.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now();
+  if (!WED.expenseCategories) WED.expenseCategories = [];
+  WED.expenseCategories.push({ key, icon, label });
+  saveState();
+  document.getElementById('manage-cat-modal')?.remove();
+  renderBudget();
+  openManageCategories();
+  showToast('✅ Category added: ' + label);
+}
+
+function removeExpenseCat(i) {
+  const cat = WED.expenseCategories[i];
+  if (!cat) return;
+  // Don't delete if expenses exist in this category
+  const inUse = WED.expenses.some(e => e.category === cat.key);
+  if (inUse) { showToast('⚠️ Cannot remove — expenses exist in "' + cat.label + '"'); return; }
+  WED.expenseCategories.splice(i, 1);
+  saveState();
+  document.getElementById('manage-cat-modal')?.remove();
+  renderBudget();
+  openManageCategories();
+  showToast('🗑 Category removed');
+}
+
+function generateCategoryReceipt(catKey) {
+  const catInfo  = allExpenseCats().find(c => c.key === catKey);
+  const catLabel = catInfo?.label || catKey;
+  const catEmoji = catInfo?.icon  || '🏷️';
+  const expenses = WED.expenses.filter(e => e.category === catKey);
+  if (!expenses.length) { showToast('No expenses in this category'); return; }
+  const total   = expenses.reduce((a,e) => a+e.amount, 0);
+  const paid    = expenses.filter(e=>e.paid).reduce((a,e) => a+e.amount, 0);
+  const pending = total - paid;
+  const d       = new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+
+  document.getElementById('receipt-modal')?.remove();
+  const el = document.createElement('div');
+  el.id = 'receipt-modal';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div style="text-align:center;padding:16px 0 12px">
+        <div style="font-size:32px;margin-bottom:4px">${catEmoji}</div>
+        <div style="font-family:var(--f2);font-size:20px;font-style:italic;font-weight:600;color:var(--ink)">${catLabel}</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Expense Receipt · ${d}</div>
+        ${WED.couple.p1 && WED.couple.p2 ? `<div style="font-size:11.5px;font-weight:700;color:var(--tan-dark);margin-top:4px">${WED.couple.p1} &amp; ${WED.couple.p2}</div>` : ''}
+      </div>
+      <div style="border-top:1px dashed rgba(201,169,110,0.3);margin:0 0 12px"></div>
+      ${expenses.map(e => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(201,169,110,0.1)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:600;color:var(--ink)">${e.label}</div>
+            <div style="font-size:10.5px;font-weight:700;color:${e.paid?'var(--green-deep)':'var(--pink-deep)'};margin-top:1px">${e.paid?'✅ Paid':'⏳ Pending'}</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0">₱${e.amount.toLocaleString()}</div>
+        </div>`).join('')}
+      <div style="border-top:1.5px solid rgba(201,169,110,0.3);margin-top:8px;padding-top:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11.5px;color:var(--green-deep);font-weight:700">✅ Paid</span>
+          <span style="font-size:11.5px;color:var(--green-deep);font-weight:700">₱${paid.toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">⏳ Pending</span>
+          <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">₱${pending.toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.22)">
+          <span style="font-size:14px;font-weight:700;color:var(--ink)">Total</span>
+          <span style="font-size:14px;font-weight:700;color:var(--ink)">₱${total.toLocaleString()}</span>
+        </div>
+      </div>
+      <button onclick="window.print()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.3);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print Receipt</button>
+      <button onclick="document.getElementById('receipt-modal').remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;background:none;border:none;font-size:13px;color:var(--ink-4);cursor:pointer">Close</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
 /* ── GUESTS ──────────────────────────────────── */
 let _guestSearch = '';
-let _guestFilter = 'all'; // 'all' | 'attending' | 'pending' | 'not-sent'
+let _guestFilter = 'all'; // 'all' | 'attending' | 'pending' | 'declined' | 'not-sent'
 
 function updateGuestSearch(val) {
   _guestSearch = (val || '').toLowerCase();
@@ -681,6 +839,7 @@ function _guestCard(g) {
         ${chair
           ? `<button onclick="copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>`
           : `<button onclick="showToast('🪑 Assign a seat first in the Seating tab')" title="Assign a seat before copying link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(184,145,106,0.18);background:rgba(245,230,200,0.25);font-size:11px;font-weight:700;color:var(--ink-4);cursor:not-allowed;opacity:0.45">🔗</button>`}
+        <button onclick="openEditGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
         <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
       </div>
     </div>
@@ -699,6 +858,7 @@ function renderGuests() {
   const preFiltered = WED.guests.filter(g => {
     if (_guestFilter === 'attending')  return g.rsvp === 'attending';
     if (_guestFilter === 'pending')    return g.rsvp === 'pending';
+    if (_guestFilter === 'declined')   return g.rsvp === 'declined';
     if (_guestFilter === 'not-sent')   return !g._inviteSent;
     return true;
   });
@@ -767,6 +927,7 @@ function renderGuests() {
         { val:'all',       label:'All',            count: WED.guests.length,                                       col:'var(--tan-dark)',   bg:'rgba(245,230,200,0.6)',  bd:'rgba(201,169,110,0.32)' },
         { val:'attending', label:'✅ Attending',   count: WED.guests.filter(g=>g.rsvp==='attending').length,       col:'var(--green-deep)', bg:'rgba(90,171,122,0.15)',  bd:'rgba(90,171,122,0.35)'  },
         { val:'pending',   label:'⏳ Pending',     count: WED.guests.filter(g=>g.rsvp==='pending').length,         col:'var(--tan-dark)',   bg:'rgba(245,230,200,0.5)',  bd:'rgba(201,169,110,0.28)' },
+        { val:'declined',  label:'❌ Declined',    count: WED.guests.filter(g=>g.rsvp==='declined').length,        col:'var(--pink-deep)',  bg:'rgba(252,232,238,0.5)',  bd:'rgba(224,120,152,0.28)' },
         { val:'not-sent',  label:'💌 Not Sent',    count: WED.guests.filter(g=>!g._inviteSent).length,             col:'var(--pink-deep)',  bg:'rgba(252,232,238,0.6)',  bd:'rgba(224,120,152,0.32)' },
       ].map(f => {
         const active = _guestFilter === f.val;
@@ -790,9 +951,10 @@ function selectGuestMeal(btn, val) {
 function submitAddGuest() {
   const name    = (document.getElementById('new-guest-name')?.value    || '').trim();
   if (!name) { showToast('⚠️ Enter a guest name'); return; }
+  const group   = (document.getElementById('new-guest-group')?.value   || '').trim();
+  if (!group) { showToast('⚠️ Please select a group for this guest'); return; }
   const phone   = (document.getElementById('new-guest-phone')?.value   || '').trim();
   const dietary = (document.getElementById('new-guest-dietary')?.value || '').trim();
-  const group   = (document.getElementById('new-guest-group')?.value   || '').trim();
   WED.guests.push({ id: WED.nextGuestId++, name, rsvp:'pending', meal:_newGuestMeal, dietary, phone, group, _inviteSent: false, _inviteSentAt: null });
   document.getElementById('new-guest-name').value    = '';
   document.getElementById('new-guest-phone').value   = '';
@@ -822,6 +984,77 @@ function removeGuest(id) {
   renderSeatAssignments();
   drawCanvas();
   showToast('🗑 '+g.name+' removed');
+}
+
+let _editGuestId = null;
+function openEditGuest(id) {
+  const g = WED.guests.find(g => g.id === id);
+  if (!g) return;
+  _editGuestId = id;
+  // Build group options from WED.guestGroups
+  const groupOpts = [...(WED.guestGroups || ['Bride\'s Side','Groom\'s Side','Friends','Colleagues','VIP','Others'])]
+    .map(grp => `<option value="${grp}" ${g.group===grp?'selected':''}>${grp}</option>`).join('');
+  // Meal options
+  const meals = [['chicken','🍗 Chicken'],['fish','🐟 Fish'],['beef','🥩 Beef'],['vegetarian','🥦 Vegetarian']];
+  // Remove existing modal if any
+  document.getElementById('edit-guest-modal')?.remove();
+  const el = document.createElement('div');
+  el.id = 'edit-guest-modal';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Edit Guest</div>
+      <div class="input-group">
+        <div class="input-label">Full Name *</div>
+        <input id="edit-guest-name" class="glass-input" value="${g.name.replace(/"/g,'&quot;')}" placeholder="Full name">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Group *</div>
+        <select id="edit-guest-group" class="glass-input">
+          <option value="" ${!g.group?'selected':''} disabled>-- Select group --</option>
+          ${groupOpts}
+        </select>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Meal Preference</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${meals.map(([val,lbl])=>`<button class="split-btn${g.meal===val?' active':''}" style="flex:none;min-width:auto;padding:7px 12px" onclick="this.parentNode.querySelectorAll('.split-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');document.getElementById('edit-guest-meal').value='${val}'">${lbl}</button>`).join('')}
+        </div>
+        <input type="hidden" id="edit-guest-meal" value="${g.meal||'chicken'}">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Phone (optional)</div>
+        <input id="edit-guest-phone" class="glass-input" type="tel" value="${(g.phone||'').replace(/"/g,'&quot;')}" placeholder="+63 912 345 6789">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Dietary Notes (optional)</div>
+        <input id="edit-guest-dietary" class="glass-input" value="${(g.dietary||'').replace(/"/g,'&quot;')}" placeholder="e.g. Nut allergy">
+      </div>
+      <button class="cta-btn" onclick="submitEditGuest()">Save Changes ✓</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function submitEditGuest() {
+  const g = WED.guests.find(g => g.id === _editGuestId);
+  if (!g) return;
+  const name  = (document.getElementById('edit-guest-name')?.value  || '').trim();
+  const group = (document.getElementById('edit-guest-group')?.value || '').trim();
+  if (!name)  { showToast('⚠️ Name is required');  return; }
+  if (!group) { showToast('⚠️ Group is required'); return; }
+  g.name    = name;
+  g.group   = group;
+  g.meal    = document.getElementById('edit-guest-meal')?.value    || g.meal;
+  g.phone   = (document.getElementById('edit-guest-phone')?.value   || '').trim();
+  g.dietary = (document.getElementById('edit-guest-dietary')?.value || '').trim();
+  saveState();
+  document.getElementById('edit-guest-modal')?.remove();
+  renderGuests();
+  renderSeatAssignments();
+  showToast('✅ ' + g.name + ' updated!');
 }
 
 /* ── RSVP / INVITATION CARD ──────────────────── */
@@ -1537,57 +1770,115 @@ const SUGGESTED_SUPPLIERS = [
 const VENDOR_EMOJI = { venue:'🏛️',catering:'🍽️',photography:'📸',videography:'🎬',florals:'💐',attire:'👗',music:'🎵',coordination:'📋',cake:'🎂',invites:'💌',hair:'💄','photo-booth':'🖼️',other:'📦' };
 function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
 
-// Partner suppliers per category — populated when partnership agreements are in place
-const PARTNER_SUPPLIERS = {
-  venue:[], catering:[], photography:[], videography:[], florals:[],
-  attire:[], music:[], coordination:[], cake:[], invites:[], hair:[], 'photo-booth':[],
-};
+/* ═══════════════════════════════════════════════
+   SUPPLIER MARKETPLACE — inline browse within the Suppliers tab
+   View states: 'main' | 'browse' | { cat, catLabel } | { profile: supplierId, suppData }
+═══════════════════════════════════════════════ */
+let _supplierView = 'main';
+let _marketplaceCache = null; // { cat: [supplier,...] }
 
-function openPartnerBrowse(cat, label) {
-  const partners = PARTNER_SUPPLIERS[cat] || [];
-  const titleEl   = document.getElementById('partner-browse-title');
-  const contentEl = document.getElementById('partner-browse-content');
-  if (titleEl)   titleEl.textContent = label + ' — Featured Partners';
-  if (contentEl) {
-    contentEl.innerHTML = partners.length
-      ? partners.map(p => `
-          <a href="${p.link}" target="_blank" rel="noopener"
-             style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.5);border:1px solid rgba(184,145,106,0.22);margin-bottom:8px;text-decoration:none">
-            <div style="flex:1">
-              <div style="font-size:13px;font-weight:700;color:var(--ink)">${p.name}</div>
-              <div style="font-size:11px;color:var(--ink-4)">${p.area}</div>
-            </div>
-            <span style="font-size:11px;font-weight:700;color:var(--gold-dark)">View →</span>
-          </a>`).join('')
-      : `<div style="text-align:center;padding:32px 16px">
-           <div style="font-size:32px;margin-bottom:12px">◇</div>
-           <div style="font-size:14px;font-weight:700;color:var(--ink-2);margin-bottom:8px">Partner suppliers coming soon</div>
-           <div style="font-size:12.5px;color:var(--ink-4);line-height:1.6;margin-bottom:16px">
-             We're curating the best vetted ${label.toLowerCase()} suppliers<br>for Philippine weddings.
-           </div>
-           <div style="font-size:11.5px;color:var(--gold-dark);font-weight:600">Are you a ${label.toLowerCase()} supplier?<br>
-             <a href="mailto:hello@anotara.com" style="color:var(--gold-dark)">Reach out to be featured →</a>
-           </div>
-         </div>`;
-  }
-  openModal('partner-browse-modal');
+function setSupplierView(view) {
+  _supplierView = view;
+  renderSuppliers();
+  // scroll tab to top
+  const el = document.getElementById('wed-suppliers-content');
+  if (el) el.scrollTop = 0;
+}
+
+async function _loadMarketplaceCat(cat) {
+  if (_marketplaceCache && _marketplaceCache[cat] !== undefined) return _marketplaceCache[cat];
+  if (!_marketplaceCache) _marketplaceCache = {};
+  try {
+    if (typeof DB !== 'undefined' && DB) {
+      const snap = await DB.collection('kasalko_marketplace')
+        .where('category', '==', cat)
+        .orderBy('pro', 'desc')
+        .orderBy('verified', 'desc')
+        .limit(30)
+        .get();
+      _marketplaceCache[cat] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } else {
+      _marketplaceCache[cat] = [];
+    }
+  } catch(e) { _marketplaceCache[cat] = []; }
+  return _marketplaceCache[cat];
+}
+
+async function _loadSupplierProfile(id) {
+  try {
+    if (typeof DB !== 'undefined' && DB) {
+      const doc = await DB.collection('kasalko_marketplace').doc(id).get();
+      if (!doc.exists) return null;
+      const data = { id: doc.id, ...doc.data() };
+      // Load reviews
+      const revSnap = await DB.collection('kasalko_marketplace').doc(id)
+        .collection('reviews').orderBy('date','desc').limit(10).get();
+      data._reviews = revSnap.docs.map(r => r.data());
+      return data;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function _supplierCard(s) {
+  const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 6px">✔ Verified</span>` : '';
+  const proBadge      = s.pro      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#b5522b;background:rgba(181,82,43,0.1);border:1px solid rgba(181,82,43,0.22);border-radius:6px;padding:2px 6px">⭐ Featured</span>` : '';
+  const stars = s.rating_avg ? '★'.repeat(Math.round(s.rating_avg)) + '☆'.repeat(5-Math.round(s.rating_avg)) : '';
+  const priceStr = s.price_from ? `₱${Number(s.price_from).toLocaleString()}${s.price_to?' – ₱'+Number(s.price_to).toLocaleString():'+'} ` : '';
+  return `
+    <div onclick="openSupplierProfile('${s.id}')" class="glass" style="border-radius:var(--r-md);overflow:hidden;cursor:pointer;margin-bottom:10px">
+      ${s.cover_photo ? `<div style="height:130px;background:url('${s.cover_photo}') center/cover no-repeat;position:relative">
+        <div style="position:absolute;top:7px;right:7px;display:flex;gap:4px">${proBadge}${verifiedBadge}</div>
+      </div>` : `<div style="height:80px;background:linear-gradient(135deg,rgba(245,230,200,0.5),rgba(232,245,237,0.5));display:flex;align-items:center;justify-content:center;position:relative">
+        <span style="font-size:36px">${getSupplierEmoji(s.category)}</span>
+        <div style="position:absolute;top:7px;right:7px;display:flex;gap:4px">${proBadge}${verifiedBadge}</div>
+      </div>`}
+      <div style="padding:10px 12px">
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">${s.name}</div>
+        ${s.location ? `<div style="font-size:11px;color:var(--ink-4);margin-top:1px">📍 ${s.location}</div>` : ''}
+        ${priceStr ? `<div style="font-size:11px;font-weight:700;color:var(--tan-dark);margin-top:2px">${priceStr}</div>` : ''}
+        ${stars ? `<div style="font-size:11px;color:#c9a96e;letter-spacing:1px;margin-top:2px">${stars} <span style="color:var(--ink-4);font-size:10px">(${s.review_count||0})</span></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function openSupplierProfile(id) {
+  setSupplierView({ type: 'profile', id });
+}
+
+function openPartnerBrowse(cat, catLabel) {
+  setSupplierView({ type: 'category', cat, catLabel });
 }
 
 function renderSuppliers() {
   const el = document.getElementById('wed-suppliers-content');
   if (!el) return;
 
-  // Index my vendors by category
+  // Dispatcher
+  if (_supplierView === 'main')   { _renderSuppliersMain(el); return; }
+  if (_supplierView === 'browse') { _renderSuppliersBrowse(el); return; }
+  if (_supplierView?.type === 'category') { _renderSuppliersCategory(el, _supplierView.cat, _supplierView.catLabel); return; }
+  if (_supplierView?.type === 'profile')  { _renderSupplierProfileView(el, _supplierView.id); return; }
+}
+
+function _renderSuppliersMain(el) {
   const byCategory = {};
   WED.vendors.forEach(v => { (byCategory[v.category] = byCategory[v.category]||[]).push(v); });
 
   el.innerHTML = `
-    <div class="glass-pink" style="padding:16px;border-radius:var(--r-lg);margin-bottom:16px;text-align:center">
-      <div style="font-size:26px;margin-bottom:6px">🤝</div>
-      <div style="font-size:14px;font-weight:700;color:var(--ink)">Suggested Wedding Suppliers</div>
-      <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">Curated for Philippine weddings · tap Browse to explore</div>
+    <!-- Marketplace banner -->
+    <div onclick="setSupplierView('browse')" class="glass" style="padding:18px 16px;border-radius:var(--r-lg);margin-bottom:16px;cursor:pointer;background:linear-gradient(135deg,rgba(245,230,200,0.5),rgba(232,245,237,0.5));border:1.5px solid rgba(201,169,110,0.3)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:36px">🏪</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink)">Browse Supplier Marketplace</div>
+          <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">Find verified wedding suppliers for Philippine weddings</div>
+        </div>
+        <div style="font-size:18px;color:var(--tan-dark);margin-left:auto">›</div>
+      </div>
     </div>
 
+    <!-- Category quick-access -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       ${SUGGESTED_SUPPLIERS.map(s => {
         const mine = byCategory[s.cat] || [];
@@ -1598,7 +1889,7 @@ function renderSuppliers() {
             <span style="font-size:11.5px;font-weight:700;color:var(--ink)">${s.label}</span>
           </div>
           <div style="font-size:9.5px;color:var(--ink-4);margin-bottom:8px;line-height:1.4">${s.tip}</div>
-              ${mine.map(v => `
+          ${mine.map(v => `
             <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.18);margin-bottom:4px">
               <span style="font-size:10.5px;font-weight:700;color:var(--green-deep);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.name}</span>
               ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="font-size:11px;font-weight:700;text-decoration:none;color:var(--green-deep)" title="${v.phone}">Call</a>`:''}
@@ -1618,9 +1909,8 @@ function renderSuppliers() {
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <span class="sec-title" style="margin-bottom:0">My Vendors</span>
-      <button onclick="openAddVendorModal('','other')" class="icon-btn">+ Add Vendor</button>
+      <button onclick="openAddVendorModal('','')" class="icon-btn">+ Add Vendor</button>
     </div>
-
     ${WED.vendors.length ? WED.vendors.map(v => `
       <div class="glass" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);margin-bottom:7px">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${getSupplierEmoji(v.category)}</div>
@@ -1638,6 +1928,204 @@ function renderSuppliers() {
       </div>`).join('')
     : `<div style="text-align:center;padding:28px;font-size:13px;color:var(--ink-4)">No vendors saved yet — click <b>+ Add</b> next to any category above.</div>`}
   `;
+}
+
+function _renderSuppliersBrowse(el) {
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="setSupplierView('main')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--ink)">Supplier Marketplace</div>
+        <div style="font-size:11px;color:var(--ink-4)">Browse verified Philippine wedding suppliers</div>
+      </div>
+    </div>
+
+    <!-- List your business CTA -->
+    <div style="padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(201,169,110,0.15),rgba(181,82,43,0.1));border:1px solid rgba(201,169,110,0.28);margin-bottom:16px;text-align:center">
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px">Are you a wedding supplier?</div>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:10px">List your business and reach couples planning their dream wedding.</div>
+      <a href="mailto:hello@vowsandpetals.app?subject=List My Business" style="display:inline-block;padding:8px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">📋 List My Business</a>
+    </div>
+
+    <!-- Category grid -->
+    <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Browse by Category</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${SUGGESTED_SUPPLIERS.map(s => `
+        <div onclick="openPartnerBrowse('${s.cat}','${s.label}')" class="glass"
+             style="padding:14px 12px;border-radius:var(--r-md);cursor:pointer;display:flex;align-items:center;gap:10px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${s.emoji}</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${s.label}</div>
+            <div style="font-size:10px;color:var(--ink-4);margin-top:1px">Browse →</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function _renderSuppliersCategory(el, cat, catLabel) {
+  // Show loading skeleton immediately, load from Firestore async
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="setSupplierView('browse')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--ink)">${catLabel}</div>
+        <div style="font-size:11px;color:var(--ink-4)">Verified suppliers · featured first</div>
+      </div>
+    </div>
+    <div id="supplier-cat-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="glass" style="border-radius:var(--r-md);height:160px;background:rgba(245,235,215,0.4)"></div>
+      <div class="glass" style="border-radius:var(--r-md);height:160px;background:rgba(245,235,215,0.4)"></div>
+    </div>`;
+
+  _loadMarketplaceCat(cat).then(suppliers => {
+    const listEl = document.getElementById('supplier-cat-list');
+    if (!listEl) return;
+    if (!suppliers.length) {
+      listEl.style.display = 'block';
+      listEl.innerHTML = `
+        <div style="text-align:center;padding:40px 16px">
+          <div style="font-size:36px;margin-bottom:12px">${getSupplierEmoji(cat)}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">No suppliers listed yet</div>
+          <div style="font-size:12px;color:var(--ink-4);line-height:1.6;margin-bottom:16px">We're curating verified ${catLabel.toLowerCase()} suppliers for Philippine weddings.</div>
+          <a href="mailto:hello@vowsandpetals.app?subject=List My Business - ${catLabel}" style="display:inline-block;padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">🤝 Get Listed Here</a>
+        </div>`;
+    } else {
+      listEl.innerHTML = suppliers.map(s => _supplierCard(s)).join('');
+    }
+  });
+}
+
+function _renderSupplierProfileView(el, supplierId) {
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="history.back ? setSupplierView('browse') : setSupplierView('main')" onclick="setSupplierView('browse')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+    </div>
+    <div id="supplier-profile-content" style="text-align:center;padding:30px 0;color:var(--ink-4)">Loading profile…</div>`;
+
+  _loadSupplierProfile(supplierId).then(s => {
+    const profileEl = document.getElementById('supplier-profile-content');
+    if (!profileEl) return;
+    if (!s) { profileEl.innerHTML = '<div style="padding:30px;color:var(--ink-4)">Supplier not found.</div>'; return; }
+
+    const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 8px">✔ Verified</span>` : '';
+    const proBadge      = s.pro      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#b5522b;background:rgba(181,82,43,0.1);border:1px solid rgba(181,82,43,0.22);border-radius:6px;padding:2px 8px">⭐ Featured Pro</span>` : '';
+    const stars = s.rating_avg ? '★'.repeat(Math.round(s.rating_avg)) + '☆'.repeat(5-Math.round(s.rating_avg)) : '';
+
+    profileEl.style.textAlign = 'left';
+    profileEl.innerHTML = `
+      <!-- Cover + avatar -->
+      ${s.cover_photo ? `<div style="height:180px;border-radius:16px;overflow:hidden;margin-bottom:-24px"><img src="${s.cover_photo}" style="width:100%;height:100%;object-fit:cover"></div>` : ''}
+      <div class="glass" style="border-radius:var(--r-lg);padding:20px;margin-bottom:12px;${s.cover_photo?'padding-top:36px':''}">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${proBadge}${verifiedBadge}</div>
+        <div style="font-family:var(--f2);font-size:22px;font-style:italic;font-weight:600;color:var(--ink)">${s.name}</div>
+        ${s.category ? `<div style="font-size:11.5px;color:var(--ink-4);text-transform:capitalize;margin-top:3px">${getSupplierEmoji(s.category)} ${s.category}</div>` : ''}
+        ${s.location  ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px">📍 ${s.location}</div>` : ''}
+        ${stars ? `<div style="font-size:13px;color:#c9a96e;letter-spacing:1.5px;margin-top:4px">${stars} <span style="font-size:11px;color:var(--ink-4)">${s.review_count||0} review${(s.review_count||0)!==1?'s':''}</span></div>` : ''}
+        ${s.price_from ? `<div style="font-size:13px;font-weight:700;color:var(--tan-dark);margin-top:6px">₱${Number(s.price_from).toLocaleString()}${s.price_to?' – ₱'+Number(s.price_to).toLocaleString():'+'}</div>` : ''}
+        ${s.description ? `<div style="font-size:12.5px;color:var(--ink-3);line-height:1.65;margin-top:10px">${s.description}</div>` : ''}
+
+        <!-- Contact row -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          ${s.phone   ? `<a href="tel:${s.phone.replace(/\s/g,'')}" style="padding:8px 14px;border-radius:10px;background:rgba(90,171,122,0.15);border:1px solid rgba(90,171,122,0.28);font-size:12px;font-weight:700;color:var(--green-deep);text-decoration:none">📞 Call</a>` : ''}
+          ${s.fb      ? `<a href="${s.fb}" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:10px;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);font-size:12px;font-weight:700;color:#1a73e8;text-decoration:none">Facebook</a>` : ''}
+          ${s.ig      ? `<a href="${s.ig}" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:10px;background:rgba(181,63,137,0.1);border:1px solid rgba(181,63,137,0.22);font-size:12px;font-weight:700;color:#b53f89;text-decoration:none">Instagram</a>` : ''}
+          ${s.website ? `<a href="${s.website}" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:10px;background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.28);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗 Website</a>` : ''}
+        </div>
+
+        <!-- Add to my vendors -->
+        <button onclick="openAddVendorModal('${s.category||''}','${s.name||''}')" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:linear-gradient(135deg,var(--rose),#c03060);border:none;color:white;font-size:13px;font-weight:700;cursor:pointer">+ Save to My Vendors</button>
+      </div>
+
+      <!-- Photos gallery -->
+      ${s.photos && s.photos.length ? `
+      <div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Photos</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+          ${s.photos.map(p=>`<img src="${p}" style="flex:0 0 auto;width:140px;height:100px;object-fit:cover;border-radius:10px;border:1px solid rgba(201,169,110,0.18)">`).join('')}
+        </div>
+      </div>` : s.pro ? '' : `
+      <div style="padding:14px 16px;border-radius:14px;background:rgba(181,82,43,0.06);border:1px dashed rgba(181,82,43,0.25);margin-bottom:12px;text-align:center">
+        <div style="font-size:12.5px;font-weight:700;color:#b5522b;margin-bottom:4px">📸 No photos yet</div>
+        <div style="font-size:11.5px;color:var(--ink-4)">Are you this supplier? Upgrade to Pro to upload photos.</div>
+      </div>`}
+
+      <!-- Reviews -->
+      <div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Reviews</div>
+        ${s._reviews && s._reviews.length
+          ? s._reviews.map(r=>`
+              <div style="padding:10px 0;border-bottom:1px solid rgba(201,169,110,0.12)">
+                <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                  <span style="font-size:12px;font-weight:700;color:var(--ink)">${r.author||'Anonymous'}</span>
+                  <span style="font-size:12px;color:#c9a96e">${'★'.repeat(r.rating||5)}</span>
+                </div>
+                ${r.text ? `<div style="font-size:12px;color:var(--ink-3);line-height:1.55">${r.text}</div>` : ''}
+              </div>`).join('')
+          : `<div style="font-size:12.5px;color:var(--ink-4);padding:8px 0">No reviews yet.</div>`}
+        ${s.pro || s.verified ? `
+        <button onclick="openLeaveReview('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">✍️ Leave a Review</button>` : ''}
+      </div>
+
+      <!-- Pro plan CTA (only for non-pro) -->
+      ${!s.pro ? `
+      <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,rgba(181,82,43,0.08),rgba(201,169,110,0.15));border:1px solid rgba(181,82,43,0.22);text-align:center;margin-bottom:12px">
+        <div style="font-size:20px;margin-bottom:6px">⭐</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Upgrade to Pro Listing</div>
+        <div style="font-size:12px;color:var(--ink-3);line-height:1.6;margin-bottom:12px">Upload photos • Get featured at the top • Enable reviews & ratings • Verified badge • Full profile page</div>
+        <a href="mailto:hello@vowsandpetals.app?subject=Pro Listing - ${encodeURIComponent(s.name||'')}" style="display:inline-block;padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:13px;font-weight:700;text-decoration:none">Get Pro Listing</a>
+      </div>` : ''}
+    `;
+  });
+}
+
+function openLeaveReview(supplierId, supplierName) {
+  document.getElementById('leave-review-modal')?.remove();
+  const el = document.createElement('div');
+  el.id = 'leave-review-modal';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Review: ${supplierName}</div>
+      <div class="input-group">
+        <div class="input-label">Rating</div>
+        <div style="display:flex;gap:8px">
+          ${[1,2,3,4,5].map(n=>`<button class="split-btn${n===5?' active':''}" style="flex:none;padding:8px 14px;font-size:18px" onclick="this.parentNode.querySelectorAll('.split-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');document.getElementById('review-rating').value=${n}">★</button>`).join('')}
+        </div>
+        <input type="hidden" id="review-rating" value="5">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Your Review (optional)</div>
+        <textarea id="review-text" class="glass-input" rows="3" placeholder="Share your experience…" style="resize:vertical"></textarea>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Your Name</div>
+        <input id="review-author" class="glass-input" value="${WED.couple.p1||''}" placeholder="e.g. Maria & Juan">
+      </div>
+      <button class="cta-btn" onclick="submitReview('${supplierId}')">Submit Review →</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+async function submitReview(supplierId) {
+  const rating = parseInt(document.getElementById('review-rating')?.value || '5');
+  const text   = (document.getElementById('review-text')?.value   || '').trim();
+  const author = (document.getElementById('review-author')?.value || '').trim() || 'Anonymous';
+  try {
+    if (typeof DB !== 'undefined' && DB) {
+      await DB.collection('kasalko_marketplace').doc(supplierId)
+        .collection('reviews').add({ rating, text, author, date: new Date().toISOString(),
+          coupleKey: ((WED.couple.p1||'')+'_'+(WED.couple.p2||'')).toLowerCase().replace(/[^a-z0-9]/g,'_') });
+      // Invalidate cache so next view reloads
+      if (_marketplaceCache) delete _marketplaceCache[supplierId];
+    }
+    document.getElementById('leave-review-modal')?.remove();
+    showToast('⭐ Review submitted! Thank you.');
+    // Reload profile view
+    if (_supplierView?.type === 'profile') setSupplierView({ type:'profile', id: supplierId });
+  } catch(e) { showToast('❌ Could not submit review. Try again.'); }
 }
 
 /* ── VENDOR CRUD ─────────────────────────────── */
@@ -4188,3 +4676,14 @@ window.downloadInviteTemplate     = downloadInviteTemplate;
 window.selectInviteTheme          = selectInviteTheme;
 window.copyGuestLink              = copyGuestLink;
 window.setGuestFilter             = setGuestFilter;
+window.openEditGuest              = openEditGuest;
+window.submitEditGuest            = submitEditGuest;
+window.openManageCategories       = openManageCategories;
+window.populateExpenseCatSelect   = populateExpenseCatSelect;
+window.addExpenseCat              = addExpenseCat;
+window.removeExpenseCat           = removeExpenseCat;
+window.generateCategoryReceipt    = generateCategoryReceipt;
+window.setSupplierView            = setSupplierView;
+window.openSupplierProfile        = openSupplierProfile;
+window.openLeaveReview            = openLeaveReview;
+window.submitReview               = submitReview;

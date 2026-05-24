@@ -374,7 +374,7 @@
         <option value="music">🎵 Music</option>
         <option value="cake">🎂 Cake</option>
         <option value="invites">💌 Invites</option>
-        <option value="other">📦 Other</option>
+        <!-- Custom categories are appended dynamically by populateExpenseCatSelect() -->
       </select>
     </div>
     <button class="cta-btn" onclick="addWedExpense()">Add Expense →</button>
@@ -408,9 +408,9 @@
       <input type="text" id="new-guest-dietary" class="glass-input" placeholder="e.g. Nut allergy, Kosher…">
     </div>
     <div class="input-group">
-      <div class="input-label">Group</div>
-      <select id="new-guest-group" class="glass-input guest-group-select" style="cursor:pointer">
-        <option value="">-- No group --</option>
+      <div class="input-label">Group <span style="color:var(--pink-deep)">*</span></div>
+      <select id="new-guest-group" class="glass-input guest-group-select" style="cursor:pointer" required>
+        <option value="" disabled selected>-- Select a group --</option>
         <option>Bride's Side</option>
         <option>Groom's Side</option>
         <option>Friends</option>
