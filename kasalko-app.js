@@ -851,7 +851,6 @@ function showRSVPCard(guestId, opts = {}) {
     if (!WED.customCardImage && !guest) {
       WED._invitationImg = dataUrl;
       saveState();
-      if (typeof saveInvitePublic === 'function') saveInvitePublic();
       // also update the overview builder preview
       const ovImg = document.getElementById('inv-page1-img');
       if (ovImg) { ovImg.src = dataUrl; ovImg.style.display = 'block'; }
@@ -1222,7 +1221,6 @@ function refreshCard2(cb) {
     const dataUrl = canvas2.toDataURL('image/jpeg', 0.92);
     WED._invitationImg2 = dataUrl;
     saveState();
-    if (typeof saveInvitePublic === 'function') saveInvitePublic();
     const img2 = document.getElementById('inv-page2-img');
     if (img2) { img2.src = dataUrl; img2.style.display = 'block'; }
     const p2ph = document.getElementById('inv-page2-placeholder');

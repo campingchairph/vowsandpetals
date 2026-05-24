@@ -126,12 +126,9 @@ async function cloudLoadWedding() {
                         .collection('data').doc('wedding').get();
     if (!doc.exists) { cloudSave(); return; } // first login — push local up
     const cloudData = doc.data();
-    const localRaw  = localStorage.getItem('kasalko_data');
-    if (localRaw) {
-      _showCloudConflictSheet(cloudData);
-    } else {
-      _applyCloudData(cloudData);
-    }
+    // Cloud is always authoritative for signed-in users — apply immediately,
+    // no conflict dialog. Local data is just a session cache.
+    _applyCloudData(cloudData);
   } catch(e) { console.warn('Cloud load error:', e); }
 }
 
@@ -191,36 +188,6 @@ async function syncRSVPsFromCloud() {
 }
 window.syncRSVPsFromCloud = syncRSVPsFromCloud;
 
-function _showCloudConflictSheet(cloudData) {
-  const old = document.getElementById('cloud-conflict-sheet');
-  if (old) old.remove();
-  const d = cloudData._savedAt
-    ? new Date(cloudData._savedAt).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
-    : 'unknown date';
-  const ov = document.createElement('div');
-  ov.id = 'cloud-conflict-sheet';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:1100;background:rgba(44,31,14,0.4);display:flex;align-items:flex-end;justify-content:center;';
-  ov.innerHTML = `
-    <div style="width:100%;max-width:440px;background:var(--cream);border-radius:22px 22px 0 0;padding:28px 20px 44px;box-shadow:0 -8px 40px rgba(44,31,14,0.22)">
-      <div style="font-size:30px;text-align:center;margin-bottom:8px">☁️</div>
-      <div style="font-size:15px;font-weight:700;color:var(--ink);text-align:center;margin-bottom:6px">Cloud Backup Found</div>
-      <div style="font-size:12px;color:var(--ink-3);text-align:center;margin-bottom:22px;line-height:1.6">
-        You have plans saved both here and in the cloud.<br>
-        <span style="font-weight:700;color:var(--tan-dark)">Cloud last saved: ${d}</span>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button id="_ccs_cloud"
-          style="width:100%;padding:13px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;font-size:13px;font-weight:700;color:white;cursor:pointer;font-family:var(--f)">
-          ☁️ Load from Cloud (${d})</button>
-        <button id="_ccs_local"
-          style="width:100%;padding:13px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.3);background:rgba(255,253,248,0.9);font-size:13px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f)">
-          💾 Keep Local Data &amp; Upload to Cloud</button>
-      </div>
-    </div>`;
-  ov.querySelector('#_ccs_cloud').onclick = () => { _applyCloudData(cloudData); ov.remove(); };
-  ov.querySelector('#_ccs_local').onclick = () => { cloudSave(); ov.remove(); showToast('💾 Local data kept & uploading...'); };
-  document.body.appendChild(ov);
-}
 
 /* ── TEMPLATE EXPORT (Save & Sell) ──────────── */
 // Only shareable fields: budget, expenses, checklist, vendors, schedule.
@@ -468,12 +435,12 @@ function saveInvitePublic() {
   if (!DB || !CURRENT_USER || !WED || !WED.inviteSettings) return;
   const coupleKey = ((WED.couple?.p1 || 'unknown') + '_' + (WED.couple?.p2 || 'unknown'))
     .toLowerCase().replace(/[^a-z0-9]/g, '_');
+  // NOTE: card images (base64) are intentionally omitted — they exceed Firestore's 1MB doc limit.
+  // Invitation card visuals live in localStorage only (WED._invitationImg / _invitationImg2).
   DB.collection('kasalko_invite').doc(coupleKey).set({
     ...WED.inviteSettings,
     p1: WED.couple?.p1 || '',
     p2: WED.couple?.p2 || '',
-    card1Img: WED._invitationImg  || null,
-    card2Img: WED._invitationImg2 || null,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   }).catch(() => {});
 }
