@@ -809,41 +809,66 @@ function setGuestFilter(val) {
 }
 
 function _guestCard(g) {
-  const chair    = WED.furniture.find(f => g._chairId === f.id);
-  const initials = g.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-  const bgColor  = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)';
-  const txtColor = g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)';
-  const sentAt   = g._inviteSentAt ? new Date(g._inviteSentAt).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '';
-  return `<div class="glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden">
+  const chair      = WED.furniture.find(f => g._chairId === f.id);
+  const initials   = g.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const bgColor    = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)';
+  const txtColor   = g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)';
+  const sentAt     = g._inviteSentAt ? new Date(g._inviteSentAt).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '';
+  const rsvpEmoji  = g.rsvp==='attending'?'✅':g.rsvp==='declined'?'❌':'⏳';
+
+  // Shared action buttons (used in both desktop col and mobile expand row)
+  const sendBtn = chair
+    ? `<button onclick="event.stopPropagation();shareGuestInvite(${g.id})" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>`
+    : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(184,145,106,0.2);background:rgba(245,230,200,0.3);font-size:11.5px;font-weight:700;color:var(--ink-4);cursor:not-allowed;white-space:nowrap;opacity:0.5">💌 Send</button>`;
+  const linkBtn = chair
+    ? `<button onclick="event.stopPropagation();copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11.5px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>`
+    : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(184,145,106,0.18);background:rgba(245,230,200,0.25);font-size:11.5px;font-weight:700;color:var(--ink-4);cursor:not-allowed;opacity:0.45">🔗</button>`;
+  const editBtn = `<button onclick="event.stopPropagation();openEditGuest(${g.id})" style="padding:5px 9px;border-radius:8px;border:none;background:rgba(245,230,200,0.7);font-size:13px;cursor:pointer;color:var(--tan-dark)">✏️</button>`;
+  const delBtn  = `<button onclick="event.stopPropagation();removeGuest(${g.id})" style="padding:5px 9px;border-radius:8px;border:none;background:rgba(224,120,152,0.15);font-size:13px;cursor:pointer;color:var(--pink-deep)">🗑</button>`;
+  const rsvpSel = (extraStyle='') => `<select onchange="updateGuestRSVP(${g.id},this.value)" onclick="event.stopPropagation()" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.9);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none${extraStyle}">
+    <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
+    <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
+    <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
+  </select>`;
+
+  return `<div class="guest-card glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden" onclick="toggleGuestCard(event,this)">
     <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
       <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${txtColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">${initials}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
+        <div class="gc-tags-row">
           ${g.group ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.14);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.22)">${g.group}</span>` : ''}
-          ${chair    ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${chair.label}</span>` : ''}
-          ${g.meal   ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>` : ''}
-          ${g.phone  ? `<a href="tel:${g.phone.replace(/\s/g,'')}" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>` : ''}
+          ${chair   ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${chair.label}</span>` : ''}
+          ${g.meal  ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>` : ''}
+          ${g.phone ? `<a href="tel:${g.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>` : ''}
           ${g._inviteSent ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.18);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.28)">💌 Sent${sentAt?' · '+sentAt:''}</span>` : ''}
         </div>
       </div>
+      <!-- Mobile only: RSVP status emoji + expand chevron -->
+      <div class="gc-mobile-hint">
+        <span style="font-size:16px;line-height:1">${rsvpEmoji}</span>
+        <span class="gc-chevron">▾</span>
+      </div>
+      <!-- Desktop only: full action column -->
       <div class="guest-actions-col">
-        <select onchange="updateGuestRSVP(${g.id},this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">
-          <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
-          <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
-          <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
-        </select>
-        ${chair
-          ? `<button onclick="shareGuestInvite(${g.id})" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>`
-          : `<button onclick="showToast('🪑 Assign a seat first in the Seating tab')" title="Assign a seat before sending" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(184,145,106,0.2);background:rgba(245,230,200,0.3);font-size:11px;font-weight:700;color:var(--ink-4);cursor:not-allowed;white-space:nowrap;opacity:0.5">💌 Send</button>`}
-        ${chair
-          ? `<button onclick="copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>`
-          : `<button onclick="showToast('🪑 Assign a seat first in the Seating tab')" title="Assign a seat before copying link" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(184,145,106,0.18);background:rgba(245,230,200,0.25);font-size:11px;font-weight:700;color:var(--ink-4);cursor:not-allowed;opacity:0.45">🔗</button>`}
-        <button onclick="openEditGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
-        <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
+        ${rsvpSel()}
+        ${sendBtn}${linkBtn}
+        <button onclick="event.stopPropagation();openEditGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
+        <button onclick="event.stopPropagation();removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
       </div>
     </div>
+    <!-- Mobile only: expanded action row (hidden until tapped) -->
+    <div class="gc-mobile-actions">
+      ${rsvpSel(';font-size:12px;padding:6px 10px')}
+      ${sendBtn}${linkBtn}${editBtn}${delBtn}
+    </div>
   </div>`;
+}
+
+/* Toggle guest card expand on mobile */
+function toggleGuestCard(event, card) {
+  if (window.innerWidth >= 900) return; // desktop: cards are always fully visible
+  card.classList.toggle('gc-expanded');
 }
 
 function renderGuests() {
@@ -3895,6 +3920,42 @@ function assignChairGuest(chairId, guestId) {
   showToast(guestId ? '🪑 Guest seated!' : '🗑 Seat cleared');
 }
 
+/* ── MOBILE SCREEN-SIZE HINT ─────────────────── */
+function _showMobileHint() {
+  if (window.innerWidth >= 768) return;               // only on phones
+  if (sessionStorage.getItem('dtti_mhint')) return;   // only once per session
+  sessionStorage.setItem('dtti_mhint', '1');
+
+  const el = document.createElement('div');
+  el.style.cssText = [
+    'position:fixed;bottom:0;left:0;right:0;z-index:9999',
+    'background:rgba(250,246,238,0.98)',
+    'border-radius:20px 20px 0 0',
+    'padding:18px 22px 36px',
+    'border-top:1.5px solid rgba(184,145,106,0.25)',
+    'box-shadow:0 -6px 32px rgba(44,24,16,0.14)',
+    'transform:translateY(100%)',
+    'transition:transform 0.42s cubic-bezier(0.34,1.4,0.64,1)',
+    'font-family:var(--f)'
+  ].join(';');
+
+  el.innerHTML = `
+    <div style="width:38px;height:4px;border-radius:2px;background:rgba(44,24,16,0.12);margin:0 auto 20px"></div>
+    <div style="font-size:28px;text-align:center;margin-bottom:10px">💻</div>
+    <div style="font-size:17px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:8px;letter-spacing:-0.3px">Better on a bigger screen</div>
+    <div style="font-size:13.5px;color:var(--ink-3);text-align:center;line-height:1.7;margin-bottom:22px">
+      We designed this for tablets and laptops — but don't worry, everything still works on your phone!
+      Just know it'll look and feel even better when you have more room. 🌸
+    </div>
+    <button onclick="this.parentElement.style.transform='translateY(110%)';setTimeout(()=>this.parentElement.remove(),350)"
+      style="width:100%;padding:14px;border-radius:14px;border:none;background:var(--gold);color:var(--ivory);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f);letter-spacing:0.2px">
+      Got it — let's plan! 💍
+    </button>`;
+
+  document.body.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transform = 'translateY(0)'; }));
+}
+
 /* ── LANDING PAGE ────────────────────────────── */
 function enterApp(instant) {
   if (!window.CURRENT_USER) {
@@ -3913,7 +3974,11 @@ function enterApp(instant) {
   el.style.transition = 'opacity 0.55s ease, visibility 0.55s ease';
   el.style.opacity    = '0';
   el.style.visibility = 'hidden';
-  el.addEventListener('transitionend', () => { el.style.display = 'none'; }, { once: true });
+  el.addEventListener('transitionend', () => {
+    el.style.display = 'none';
+    // After landing page fades, nudge mobile users toward a bigger screen
+    setTimeout(_showMobileHint, 600);
+  }, { once: true });
 }
 
 /* ── INIT ────────────────────────────────────── */
@@ -4626,6 +4691,7 @@ window.deleteVendor            = deleteVendor;
 window.openQuickDials          = openQuickDials;
 window.closeQuickDials         = closeQuickDials;
 window.enterApp                = enterApp;
+window.toggleGuestCard         = toggleGuestCard;
 window.rotateFurniture         = rotateFurniture;
 window.zoomCanvas              = zoomCanvas;
 window.fitCanvas               = fitCanvas;

@@ -968,6 +968,60 @@ textarea.glass-input {
   }
 }
 
+/* ── GUEST CARD — MOBILE COMPACT ────────────────── */
+/* Tags row and chevron base */
+.gc-tags-row    { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+.gc-mobile-hint { display: none; }
+.gc-mobile-actions { display: none; }
+.gc-chevron {
+  font-size: 11px;
+  color: var(--ink-4);
+  transition: transform 0.22s ease;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+@media (max-width: 899px) {
+  /* Compact card: hide tags + desktop action column */
+  .gc-tags-row       { display: none; }
+  .guest-actions-col { display: none; }
+
+  /* Show RSVP emoji + expand chevron */
+  .gc-mobile-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Card looks tappable */
+  .guest-card {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(184,145,106,0.12);
+    user-select: none;
+  }
+
+  /* Expanded state: reveal tags, action buttons, rotate chevron */
+  .guest-card.gc-expanded .gc-tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 3px;
+  }
+  .guest-card.gc-expanded .gc-mobile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 14px 12px 62px;
+    border-top: 1px solid rgba(184,145,106,0.1);
+    margin-top: 2px;
+  }
+  .guest-card.gc-expanded .gc-chevron {
+    transform: rotate(180deg);
+  }
+}
+
 /* ── PROGRESS ────────────────────────────────── */
 .progress-bar-wrap {
   height: 6px;
