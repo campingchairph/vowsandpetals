@@ -2700,6 +2700,12 @@ function assignChairGuest(chairId, guestId) {
 
 /* ── LANDING PAGE ────────────────────────────── */
 function enterApp(instant) {
+  if (!window.CURRENT_USER) {
+    window._pendingEnter = true;
+    if (typeof openAuthModal === 'function') openAuthModal();
+    return;
+  }
+  window._pendingEnter = false;
   sessionStorage.setItem('dtti_entered', '1');
   const el = document.getElementById('dtti-landing');
   if (!el) return;

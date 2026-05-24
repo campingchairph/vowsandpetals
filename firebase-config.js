@@ -41,6 +41,10 @@ if (AUTH) {
     updateAuthUI(user);
     if (user) {
       cloudLoadWedding();
+      if (window._pendingEnter && typeof enterApp === 'function') {
+        window._pendingEnter = false;
+        setTimeout(() => enterApp(), 400);
+      }
     } else {
       // Signed out — refresh overview to show sign-in prompt
       if (typeof renderOverview === 'function' && WED && WED.activeTab === 'overview') renderOverview();
