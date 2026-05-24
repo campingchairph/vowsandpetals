@@ -589,13 +589,14 @@ body {
 }
 .hss-item:last-child { border-right: none; }
 .hss-val {
-  font-family: var(--f2);
-  font-size: 16px;
-  font-style: italic;
-  font-weight: 600;
+  font-family: var(--f);
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 800;
   color: var(--ink);
   line-height: 1.1;
   text-align: center;
+  letter-spacing: -0.3px;
 }
 .hss-lbl {
   font-size: 8.5px;
@@ -1700,13 +1701,14 @@ textarea.glass-input {
 }
 .ev-stat:last-child { border-right: none; }
 .ev-stat-val {
-  font-family: var(--f2);
-  font-size: 18px;
-  font-style: italic;
-  font-weight: 600;
+  font-family: var(--f);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 800;
   color: var(--ink);
   line-height: 1.1;
   text-align: center;
+  letter-spacing: -0.4px;
 }
 .ev-stat-lbl {
   font-size: 8px;

@@ -348,7 +348,7 @@ function renderOverview() {
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,252,247,0.65);border:1px solid rgba(184,145,106,0.18)">
         <div>
           <div style="font-size:11px;color:var(--ink-4);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Budget</div>
-          <div style="font-family:var(--f2);font-size:19px;font-style:italic;font-weight:600;color:var(--ink)">₱${WED.budget.toLocaleString()}</div>
+          <div style="font-family:var(--f);font-size:19px;font-style:normal;font-weight:800;color:var(--ink);letter-spacing:-0.3px">₱${WED.budget.toLocaleString()}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:11px;color:var(--ink-4)">Committed: <b style="color:var(--ink)">₱${totalSpent.toLocaleString()}</b></div>
@@ -559,7 +559,7 @@ function renderBudget() {
   el.innerHTML = `
     <div class="budget-hero">
       <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px">Total Budget</div>
-      <div style="font-family:var(--f2);font-size:34px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-1px;margin:4px 0 12px">₱${WED.budget.toLocaleString()}</div>
+      <div style="font-family:var(--f);font-size:34px;font-style:normal;font-weight:800;color:var(--ink);letter-spacing:-1px;margin:4px 0 12px">₱${WED.budget.toLocaleString()}</div>
       <div class="progress-bar-wrap" style="margin-bottom:8px">
         <div class="progress-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--green-accent),var(--tan))"></div>
       </div>
@@ -757,7 +757,7 @@ function generateCategoryReceipt(catKey) {
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:16px 0 12px">
         <div style="font-size:32px;margin-bottom:4px">${catEmoji}</div>
-        <div style="font-family:var(--f2);font-size:20px;font-style:italic;font-weight:600;color:var(--ink)">${catLabel}</div>
+        <div style="font-family:var(--f);font-size:20px;font-style:normal;font-weight:800;color:var(--ink);letter-spacing:-0.3px">${catLabel}</div>
         <div style="font-size:11px;color:var(--ink-4);margin-top:2px">Expense Receipt · ${d}</div>
         ${WED.couple.p1 && WED.couple.p2 ? `<div style="font-size:11.5px;font-weight:700;color:var(--tan-dark);margin-top:4px">${WED.couple.p1} &amp; ${WED.couple.p2}</div>` : ''}
       </div>
@@ -900,15 +900,15 @@ function renderGuests() {
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
       <div class="glass-green" style="padding:12px;border-radius:var(--r-md);text-align:center">
-        <div style="font-size:22px;font-weight:700;color:var(--green-deep);font-family:var(--f2);font-style:italic">${attending}</div>
+        <div style="font-size:24px;font-weight:800;color:var(--green-deep);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${attending}</div>
         <div style="font-size:10.5px;color:var(--green-deep);font-weight:700">Attending</div>
       </div>
       <div class="glass-cream" style="padding:12px;border-radius:var(--r-md);text-align:center">
-        <div style="font-size:22px;font-weight:700;color:var(--tan-dark);font-family:var(--f2);font-style:italic">${pending}</div>
+        <div style="font-size:24px;font-weight:800;color:var(--tan-dark);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${pending}</div>
         <div style="font-size:10.5px;color:var(--tan-dark);font-weight:700">Pending</div>
       </div>
       <div class="glass-pink" style="padding:12px;border-radius:var(--r-md);text-align:center">
-        <div style="font-size:22px;font-weight:700;color:var(--pink-deep);font-family:var(--f2);font-style:italic">${declined}</div>
+        <div style="font-size:24px;font-weight:800;color:var(--pink-deep);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${declined}</div>
         <div style="font-size:10.5px;color:var(--pink-deep);font-weight:700">Declined</div>
       </div>
     </div>
@@ -3434,7 +3434,7 @@ function openAddTableModal(type) {
         <button onclick="changeTableSeats(-1,${maxSeats})"
           style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(201,169,110,0.4);background:rgba(245,230,200,0.65);font-size:22px;font-weight:700;color:var(--tan-dark);cursor:pointer;line-height:1;font-family:var(--f)">−</button>
         <div style="text-align:center;min-width:64px">
-          <div id="table-seats-display" style="font-size:42px;font-weight:700;font-family:var(--f2);font-style:italic;color:var(--ink);line-height:1">${_tableSeatsCount[type]}</div>
+          <div id="table-seats-display" style="font-size:42px;font-weight:800;font-family:var(--f);font-style:normal;color:var(--ink);line-height:1;letter-spacing:-1px">${_tableSeatsCount[type]}</div>
           <div style="font-size:11px;color:var(--ink-4);margin-top:2px">seats</div>
         </div>
         <button onclick="changeTableSeats(+1,${maxSeats})"
