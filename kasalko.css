@@ -1648,3 +1648,18 @@ textarea.glass-input {
 /* ── MOSAIC PHOTOS ───────────────────────────── */
 .lp-mosaic-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .lp-mosaic-bw  { filter: grayscale(100%); }
+
+/* ── GUEST GROUP HEADER ──────────────────────── */
+.guest-group-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 4px 5px 2px;
+  margin-bottom: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(184,145,106,0.18);
+}

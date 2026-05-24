@@ -461,8 +461,24 @@ function renderCloudSection() {
     </div>`;
 }
 
+/* ── PUBLIC INVITE SETTINGS ──────────────────── */
+/* Firestore rule needed:
+   match /kasalko_invite/{coupleKey} { allow read: if true; allow write: if request.auth != null; } */
+function saveInvitePublic() {
+  if (!DB || !CURRENT_USER || !WED || !WED.inviteSettings) return;
+  const coupleKey = ((WED.couple?.p1 || 'unknown') + '_' + (WED.couple?.p2 || 'unknown'))
+    .toLowerCase().replace(/[^a-z0-9]/g, '_');
+  DB.collection('kasalko_invite').doc(coupleKey).set({
+    ...WED.inviteSettings,
+    p1: WED.couple?.p1 || '',
+    p2: WED.couple?.p2 || '',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }).catch(() => {});
+}
+
 /* ── WINDOW EXPORTS ──────────────────────────── */
 window.cloudSave              = cloudSave;
+window.saveInvitePublic       = saveInvitePublic;
 window.cloudSaveNow           = cloudSaveNow;
 window.cloudLoadWedding       = cloudLoadWedding;
 window.exportTemplate         = exportTemplate;

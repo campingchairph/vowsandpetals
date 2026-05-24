@@ -77,6 +77,8 @@ const WED = {
   notePhotos: [],
   allTags: [],
   _nextPhotoId: 1,
+  guestGroups: ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"],
+  inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false },
 };
 
 /* ── PER-GUEST INVITE STATE ──────────────────── */
@@ -117,6 +119,8 @@ function saveState() {
       notePhotos:       WED.notePhotos,
       allTags:          WED.allTags,
       _nextPhotoId:     WED._nextPhotoId,
+      guestGroups:      WED.guestGroups,
+      inviteSettings:   WED.inviteSettings,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(snapshot));
   } catch(e) {}
@@ -142,6 +146,9 @@ function loadState() {
     if (!WED.notePhotos)        WED.notePhotos        = [];
     if (!WED.allTags)           WED.allTags           = [];
     if (!WED._nextPhotoId)      WED._nextPhotoId      = 1;
+    if (!WED.guestGroups)       WED.guestGroups       = ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"];
+    if (!WED.inviteSettings)    WED.inviteSettings    = { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false };
+    WED.guests.forEach(g => { if (g.group === undefined) g.group = ''; });
   } catch(e) {}
 }
 
@@ -326,7 +333,8 @@ function renderOverview() {
         📎 ${(WED.customCardImage || WED._invitationImg) ? 'Replace Invitation' : 'Upload Invitation'}
         <input type="file" accept="image/*" style="display:none" onchange="uploadInvitation(event)">
       </label>
-      <button onclick="showRSVPCard()" style="width:100%;padding:10px;border-radius:14px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">💌 Generate Digital Invitation</button>
+      <button onclick="showRSVPCard()" style="width:100%;padding:10px;border-radius:14px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.25);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer;margin-bottom:6px">💌 Generate Digital Invitation</button>
+      <button onclick="openModal('invite-customizer-modal');renderInviteCustomizer()" style="width:100%;padding:10px;border-radius:14px;background:rgba(232,245,237,0.65);border:1px solid rgba(106,142,112,0.25);font-size:13px;font-weight:700;color:var(--green-deep);cursor:pointer">✏️ Customize Invitation / RSVP Page</button>
     </div>
 
     ${typeof renderCloudSection === 'function' ? renderCloudSection() : `
@@ -483,15 +491,93 @@ function deleteExpense(i) {
 }
 
 /* ── GUESTS ──────────────────────────────────── */
+let _guestSearch = '';
+
+function updateGuestSearch(val) {
+  _guestSearch = (val || '').toLowerCase();
+  renderGuests();
+  // Restore focus + value after re-render
+  const inp = document.getElementById('guest-search-input');
+  if (inp) { inp.value = val || _guestSearch; inp.focus(); }
+}
+
+function _guestCard(g) {
+  const chair    = WED.furniture.find(f => g._chairId === f.id);
+  const initials = g.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const bgColor  = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)';
+  const txtColor = g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)';
+  const sentAt   = g._inviteSentAt ? new Date(g._inviteSentAt).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '';
+  return `<div class="glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
+      <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${txtColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
+          ${g.group ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.14);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.22)">${g.group}</span>` : ''}
+          ${chair    ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${chair.label}</span>` : ''}
+          ${g.meal   ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>` : ''}
+          ${g.phone  ? `<a href="tel:${g.phone.replace(/\s/g,'')}" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>` : ''}
+          ${g._inviteSent ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.18);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.28)">💌 Sent${sentAt?' · '+sentAt:''}</span>` : ''}
+        </div>
+      </div>
+      <div class="guest-actions-col">
+        <select onchange="updateGuestRSVP(${g.id},this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">
+          <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
+          <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
+          <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
+        </select>
+        <button onclick="shareGuestInvite(${g.id})" style="padding:4px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>
+        <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderGuests() {
   const el = document.getElementById('wed-guests-content');
   if (!el) return;
-  const attending = WED.guests.filter(g=>g.rsvp==='attending').length;
-  const pending   = WED.guests.filter(g=>g.rsvp==='pending').length;
-  const declined  = WED.guests.filter(g=>g.rsvp==='declined').length;
+  const attending = WED.guests.filter(g => g.rsvp === 'attending').length;
+  const pending   = WED.guests.filter(g => g.rsvp === 'pending').length;
+  const declined  = WED.guests.filter(g => g.rsvp === 'declined').length;
+
+  const q = _guestSearch.toLowerCase();
+  const filtered = q ? WED.guests.filter(g => g.name.toLowerCase().includes(q) || (g.group||'').toLowerCase().includes(q)) : WED.guests;
+
+  // Group filtered guests
+  const groups = {};
+  const ungrouped = [];
+  filtered.forEach(g => {
+    if (g.group) { (groups[g.group] = groups[g.group] || []).push(g); }
+    else { ungrouped.push(g); }
+  });
+
+  const groupOrder = [...(WED.guestGroups || []), ...Object.keys(groups).filter(k => !(WED.guestGroups||[]).includes(k))];
+
+  let guestHTML = '';
+  groupOrder.forEach(grp => {
+    const members = groups[grp];
+    if (!members || !members.length) return;
+    const att = members.filter(g => g.rsvp === 'attending').length;
+    guestHTML += `
+      <div style="margin-bottom:4px">
+        <div class="guest-group-hdr">
+          <span>${grp}</span>
+          <span style="font-size:10.5px;font-weight:400;opacity:0.7">${members.length} guest${members.length!==1?'s':''} · ${att} attending</span>
+        </div>
+        ${members.map(_guestCard).join('')}
+      </div>`;
+  });
+  if (ungrouped.length) {
+    guestHTML += ungrouped.length === filtered.length
+      ? ungrouped.map(_guestCard).join('')   // all ungrouped — no header
+      : `<div style="margin-bottom:4px">
+           <div class="guest-group-hdr"><span>Other / Ungrouped</span><span style="font-size:10.5px;font-weight:400;opacity:0.7">${ungrouped.length}</span></div>
+           ${ungrouped.map(_guestCard).join('')}
+         </div>`;
+  }
 
   el.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
       <div class="glass-green" style="padding:12px;border-radius:var(--r-md);text-align:center">
         <div style="font-size:22px;font-weight:700;color:var(--green-deep);font-family:var(--f2);font-style:italic">${attending}</div>
         <div style="font-size:10.5px;color:var(--green-deep);font-weight:700">Attending</div>
@@ -505,39 +591,16 @@ function renderGuests() {
         <div style="font-size:10.5px;color:var(--pink-deep);font-weight:700">Declined</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
       <button onclick="openModal('wed-add-guest-modal')" style="flex:1;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Guest</button>
+      <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.22);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer" title="Manage Groups">👥 Groups</button>
     </div>
-    ${WED.guests.length ? WED.guests.map(g => {
-      const chair = WED.furniture.find(f => g._chairId === f.id);
-      const initials = g.name.split(' ').map(n=>n[0]).join('').substring(0,2);
-      const bgColor = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)';
-      const txtColor= g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)';
-      const sentAt = g._inviteSentAt ? new Date(g._inviteSentAt).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '';
-      return `<div class="glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
-          <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${txtColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">${initials}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
-              ${chair?`<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${chair.label}</span>`:''}
-              ${g.meal?`<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>`:''}
-              ${g.phone?`<a href="tel:${g.phone.replace(/\s/g,'')}" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>`:''}
-              ${g._inviteSent?`<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.18);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.28)">💌 Sent${sentAt?' · '+sentAt:''}</span>`:''}
-            </div>
-          </div>
-          <div class="guest-actions-col">
-            <select onchange="updateGuestRSVP(${g.id},this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.8);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none">
-              <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
-              <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
-              <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
-            </select>
-            <button onclick="shareGuestInvite(${g.id})" style="padding:4px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Share'}</button>
-            <button onclick="removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('') : `<div style="text-align:center;padding:32px;font-size:13px;color:var(--ink-4)">No guests yet — click "+ Add Guest" to start your list.</div>`}`;
+    <div style="position:relative;margin-bottom:12px">
+      <input id="guest-search-input" type="search" placeholder="🔍 Search guests or groups…" value="${_guestSearch}"
+        oninput="updateGuestSearch(this.value)"
+        style="width:100%;padding:9px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.9);font-size:13px;color:var(--ink);font-family:var(--f);outline:none">
+    </div>
+    ${filtered.length ? guestHTML : `<div style="text-align:center;padding:28px 16px;font-size:13px;color:var(--ink-4)">${q ? 'No guests match "'+_guestSearch+'"' : 'No guests yet — click "+ Add Guest" to start.'}</div>`}`;
 }
 
 let _newGuestMeal = 'chicken';
@@ -553,7 +616,8 @@ function submitAddGuest() {
   if (!name) { showToast('⚠️ Enter a guest name'); return; }
   const phone   = (document.getElementById('new-guest-phone')?.value   || '').trim();
   const dietary = (document.getElementById('new-guest-dietary')?.value || '').trim();
-  WED.guests.push({ id: WED.nextGuestId++, name, rsvp:'pending', meal:_newGuestMeal, dietary, phone, _inviteSent: false, _inviteSentAt: null });
+  const group   = (document.getElementById('new-guest-group')?.value   || '').trim();
+  WED.guests.push({ id: WED.nextGuestId++, name, rsvp:'pending', meal:_newGuestMeal, dietary, phone, group, _inviteSent: false, _inviteSentAt: null });
   document.getElementById('new-guest-name').value    = '';
   document.getElementById('new-guest-phone').value   = '';
   document.getElementById('new-guest-dietary').value = '';
@@ -585,17 +649,15 @@ function removeGuest(id) {
 }
 
 /* ── RSVP / INVITATION CARD ──────────────────── */
-function showRSVPCard(guestId) {
+function showRSVPCard(guestId, opts = {}) {
   _rsvpGuestId = (guestId !== undefined && guestId !== null) ? guestId : null;
-  const modal = document.getElementById('rsvp-card-modal');
-  if (!modal) return;
+  const modal  = document.getElementById('rsvp-card-modal');
   const canvas = document.getElementById('rsvp-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const w = canvas.width  = 380;
-  const h = canvas.height = 600;
-
   const guest = _rsvpGuestId !== null ? WED.guests.find(g => g.id === _rsvpGuestId) : null;
+  const w = canvas.width  = 380;
+  const h = canvas.height = guest ? 600 : 520;
 
   // Build RSVP URL (guest-specific if available)
   const p1  = encodeURIComponent(WED.couple.p1 || '');
@@ -662,7 +724,7 @@ function showRSVPCard(guestId) {
   // deco circles
   ctx.globalAlpha = 0.12;
   ctx.fillStyle = '#c9a96e'; ctx.beginPath(); ctx.arc(340, 60, 90, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#e07898'; ctx.beginPath(); ctx.arc(40, 540, 70, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#e07898'; ctx.beginPath(); ctx.arc(40, guest ? 540 : 460, 70, 0, Math.PI*2); ctx.fill();
   ctx.globalAlpha = 1;
 
   // border
@@ -719,14 +781,21 @@ function showRSVPCard(guestId) {
   ctx.fillStyle = 'white'; ctx.font = '700 14px Figtree,sans-serif';
   ctx.fillText('RSVP NOW →', w/2, 382);
 
-  // QR code at y=410, then hashtag after
-  _drawQROnCanvas(410, () => {
+  // QR code (guest-specific only) or straight to hashtag
+  const hashtagY = guest ? 578 : 494;
+  const drawHashtagAndSync = () => {
     ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 13px Lora,serif'; ctx.textAlign = 'center';
-    ctx.fillText(`#${cp1}And${cp2}`, w/2, 578);
+    ctx.fillText(`#${cp1}And${cp2}`, w/2, hashtagY);
     _syncPreview();
-  });
+  };
 
-  modal.classList.add('open');
+  if (guest) {
+    _drawQROnCanvas(410, drawHashtagAndSync);
+  } else {
+    drawHashtagAndSync();
+  }
+
+  if (!opts.silent && modal) modal.classList.add('open');
   _generateRSVPQR();
 }
 
@@ -760,6 +829,7 @@ function _generateRSVPQR() {
 async function shareGuestInvite(guestId) {
   const guest = WED.guests.find(g => g.id === guestId);
   if (!guest) return;
+
   const p1  = encodeURIComponent(WED.couple.p1 || '');
   const p2  = encodeURIComponent(WED.couple.p2 || '');
   const dt  = encodeURIComponent(WED.date       || '');
@@ -767,40 +837,49 @@ async function shareGuestInvite(guestId) {
   const ck  = encodeURIComponent(_rsvpCoupleKey());
   const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
 
+  showToast('💌 Generating card…');
+
+  // Silently draw the guest card (with their QR) onto the canvas
+  showRSVPCard(guestId, { silent: true });
+  // Wait for async QR render (120ms inside _drawQROnCanvas + buffer)
+  await new Promise(r => setTimeout(r, 320));
+
+  const canvas = document.getElementById('rsvp-canvas');
   let shared = false;
-  if (navigator.share) {
+
+  // Try sharing with card image first
+  if (canvas && navigator.share) {
     try {
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+      const file = new File([blob], `${(guest.name).replace(/\s+/g,'_')}_invite.jpg`, { type: 'image/jpeg' });
+      const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
       await navigator.share({
         title: `Wedding Invitation — ${WED.couple.p1} & ${WED.couple.p2}`,
-        text:  `Hi ${guest.name}! You're cordially invited to ${WED.couple.p1} & ${WED.couple.p2}'s wedding. Please RSVP using the link below 💌`,
+        text:  `Hi ${guest.name}! You're cordially invited to ${WED.couple.p1} & ${WED.couple.p2}'s wedding. RSVP here 💌`,
         url,
+        ...(canShareFiles ? { files: [file] } : {}),
       });
       shared = true;
     } catch(e) {
-      if (e.name !== 'AbortError') {
-        // fall through to clipboard copy
-      } else {
-        return; // user cancelled the share sheet
-      }
+      if (e.name === 'AbortError') return;
+      // fall through to clipboard
     }
   }
 
   if (!shared) {
-    // Fallback: copy link to clipboard
     try {
       await navigator.clipboard.writeText(url);
-      showToast('🔗 Invite link copied! Send it to ' + guest.name);
+      showToast('🔗 Invite link copied for ' + guest.name);
     } catch(e) {
       showToast('💌 Link: ' + url);
     }
   }
 
-  // Mark as sent
   guest._inviteSent   = true;
   guest._inviteSentAt = new Date().toISOString();
   saveState();
   renderGuests();
-  showToast('💌 Invite ' + (shared ? 'shared' : 'link copied') + ' for ' + guest.name);
+  if (shared) showToast('💌 Invitation sent to ' + guest.name);
 }
 
 /* ⬇ Download invitation image (desktop / Android) */
@@ -3306,6 +3385,104 @@ function exportWeddingPlan() {
   win.document.close();
 }
 
+/* ═══════════════════════════════════════════════
+   INVITATION CUSTOMIZATION
+═══════════════════════════════════════════════ */
+function saveInviteSetting(key, val) {
+  if (!WED.inviteSettings) WED.inviteSettings = {};
+  WED.inviteSettings[key] = val;
+  saveState();
+  if (typeof saveInvitePublic === 'function') saveInvitePublic();
+}
+
+function uploadInviteHero(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  showToast('📷 Compressing…');
+  compressImage(file, 1000, 0.78).then(dataUrl => {
+    saveInviteSetting('heroPhoto', dataUrl);
+    renderInviteCustomizer();
+    showToast('✅ Hero photo saved!');
+  }).catch(() => showToast('⚠️ Could not read image'));
+}
+
+function renderInviteCustomizer() {
+  const el = document.getElementById('invite-customizer-content');
+  if (!el) return;
+  const s = WED.inviteSettings || {};
+  el.innerHTML = `
+    <div class="input-group">
+      <div class="input-label">Hero Photo (shown at top of RSVP page)</div>
+      ${s.heroPhoto ? `<img src="${s.heroPhoto}" style="width:100%;border-radius:var(--r-md);margin-bottom:8px;max-height:180px;object-fit:cover">` : ''}
+      <label style="display:block;width:100%;padding:9px;border-radius:var(--r-md);border:1.5px dashed rgba(201,169,110,0.4);background:rgba(245,235,215,0.4);text-align:center;cursor:pointer;font-size:12.5px;color:var(--tan-dark);font-weight:700">
+        📷 ${s.heroPhoto ? 'Replace Photo' : 'Upload Photo'}
+        <input type="file" accept="image/*" style="display:none" onchange="uploadInviteHero(event)">
+      </label>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Dress Code</div>
+      <input type="text" class="glass-input" placeholder="e.g. Formal attire, Dusty rose and sage palette…" value="${s.dressCode||''}" oninput="saveInviteSetting('dressCode',this.value)">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Gift Info</div>
+      <input type="text" class="glass-input" placeholder="e.g. Monetary gifts preferred, GCash: 09xx…" value="${s.giftsNote||''}" oninput="saveInviteSetting('giftsNote',this.value)">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Special Notes / Reminders</div>
+      <textarea class="glass-input" style="min-height:70px;resize:vertical" placeholder="e.g. Parking is at Lot B. Gates open at 2:00 PM…" oninput="saveInviteSetting('specialNote',this.value)">${s.specialNote||''}</textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r-md);background:rgba(245,235,215,0.5);border:1px solid rgba(201,169,110,0.2)">
+      <input type="checkbox" id="invite-show-prog" ${s.showProgram?'checked':''} onchange="saveInviteSetting('showProgram',this.checked)" style="width:16px;height:16px;accent-color:var(--tan-dark);cursor:pointer">
+      <label for="invite-show-prog" style="font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer">Show wedding program on RSVP page</label>
+    </div>`;
+}
+
+/* ── GUEST GROUPS MANAGEMENT ─────────────────── */
+function renderGuestGroupModal() {
+  const el = document.getElementById('guest-group-list');
+  if (!el) return;
+  el.innerHTML = (WED.guestGroups || []).map((g, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r-sm);background:rgba(245,235,215,0.5);margin-bottom:5px">
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink-2)">${g}</span>
+      <span style="font-size:11px;color:var(--ink-4)">${WED.guests.filter(gu=>gu.group===g).length} guests</span>
+      <button onclick="removeGuestGroup(${i})" style="border:none;background:none;cursor:pointer;color:var(--pink-deep);font-size:13px;padding:2px">🗑</button>
+    </div>`).join('');
+}
+
+function addGuestGroup() {
+  const inp = document.getElementById('new-group-name');
+  const val = (inp?.value || '').trim();
+  if (!val) { showToast('⚠️ Enter a group name'); return; }
+  if ((WED.guestGroups||[]).includes(val)) { showToast('⚠️ Group already exists'); return; }
+  if (!WED.guestGroups) WED.guestGroups = [];
+  WED.guestGroups.push(val);
+  if (inp) inp.value = '';
+  saveState();
+  renderGuestGroupModal();
+  // Refresh group dropdowns
+  _refreshGroupSelects();
+  showToast('✅ Group added');
+}
+
+function removeGuestGroup(i) {
+  const grp = WED.guestGroups[i];
+  WED.guestGroups.splice(i, 1);
+  WED.guests.forEach(g => { if (g.group === grp) g.group = ''; });
+  saveState();
+  renderGuestGroupModal();
+  _refreshGroupSelects();
+  renderGuests();
+}
+
+function _refreshGroupSelects() {
+  const opts = (WED.guestGroups || []).map(g => `<option value="${g}">${g}</option>`).join('');
+  document.querySelectorAll('.guest-group-select').forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">-- No group --</option>${opts}`;
+    sel.value = cur;
+  });
+}
+
 /* ── WINDOW EXPORTS ──────────────────────────── */
 window.wedTab               = wedTab;
 window.openModal            = openModal;
@@ -3396,3 +3573,10 @@ window.refreshEntouragePicker     = refreshEntouragePicker;
 window.openEditExpense            = openEditExpense;
 window.submitEditExpense          = submitEditExpense;
 window.exportWeddingPlan          = exportWeddingPlan;
+window.updateGuestSearch          = updateGuestSearch;
+window.saveInviteSetting          = saveInviteSetting;
+window.uploadInviteHero           = uploadInviteHero;
+window.renderInviteCustomizer     = renderInviteCustomizer;
+window.renderGuestGroupModal      = renderGuestGroupModal;
+window.addGuestGroup              = addGuestGroup;
+window.removeGuestGroup           = removeGuestGroup;

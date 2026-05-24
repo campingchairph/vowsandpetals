@@ -407,7 +407,42 @@
       <div class="input-label">Dietary Notes (optional)</div>
       <input type="text" id="new-guest-dietary" class="glass-input" placeholder="e.g. Nut allergy, Kosher…">
     </div>
+    <div class="input-group">
+      <div class="input-label">Group</div>
+      <select id="new-guest-group" class="glass-input guest-group-select" style="cursor:pointer">
+        <option value="">-- No group --</option>
+        <option>Bride's Side</option>
+        <option>Groom's Side</option>
+        <option>Friends</option>
+        <option>Colleagues</option>
+        <option>VIP</option>
+        <option>Others</option>
+      </select>
+    </div>
     <button class="cta-btn pink" onclick="submitAddGuest()">Add Guest →</button>
+  </div>
+</div>
+
+<!-- Guest Groups Manager -->
+<div id="wed-add-guest-group-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-add-guest-group-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Guest Groups</div>
+    <div id="guest-group-list" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="new-group-name" class="glass-input" placeholder="New group name…" style="flex:1" onkeydown="if(event.key==='Enter')addGuestGroup()">
+      <button class="cta-btn" style="flex:none;padding:10px 16px" onclick="addGuestGroup()">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Customizer -->
+<div id="invite-customizer-modal" class="modal-overlay" onclick="closeModalOutside(event,'invite-customizer-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Customize Invitation</div>
+    <div id="invite-customizer-content"></div>
+    <button class="cta-btn" onclick="closeModal('invite-customizer-modal');renderOverview()">Done ✓</button>
   </div>
 </div>
 
