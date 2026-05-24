@@ -1638,11 +1638,12 @@ textarea.glass-input {
   font-weight: 600;
   line-height: 1.3;
 }
-<<<<<<< HEAD
 
 /* ── INVITATION CARD SIZE ────────────────────── */
-#rsvp-preview-img { width: 100%; }
-@media (min-width: 600px) { #rsvp-preview-img { width: 55%; } }
+#rsvp-preview-img, .inv-card-img { width: 100%; display: block; }
+@media (min-width: 600px) {
+  #rsvp-preview-img, .inv-card-img { width: 55%; margin: 0 auto; }
+}
 
 /* ── MOSAIC PHOTOS ───────────────────────────── */
 .lp-mosaic-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }

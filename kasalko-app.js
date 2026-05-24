@@ -317,7 +317,7 @@ function renderOverview() {
     <!-- Invitation -->
     <div style="padding:16px;border-radius:18px" class="glass">
       <span class="sec-title">Wedding Invitation</span>
-      ${(WED.customCardImage || WED._invitationImg) ? `<img src="${WED.customCardImage || WED._invitationImg}" style="width:100%;border-radius:14px;margin-bottom:10px">` : `
+      ${(WED.customCardImage || WED._invitationImg) ? `<img src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:14px;margin-bottom:10px">` : `
         <div style="padding:20px;border-radius:14px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);text-align:center;margin-bottom:10px">
           <div style="font-size:28px;margin-bottom:6px">💌</div>
           <div style="font-size:12.5px;color:var(--ink-3)">Upload your own invitation design</div>
@@ -593,19 +593,53 @@ function showRSVPCard(guestId) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width  = 380;
-  const h = canvas.height = 560;
+  const h = canvas.height = 600;
 
-  /* After any draw, push canvas → <img> so it's long-pressable on mobile.
-     When showing the default generated card (no custom upload), also store
-     the data URL in WED._invitationImg so the overview card stays in sync. */
+  const guest = _rsvpGuestId !== null ? WED.guests.find(g => g.id === _rsvpGuestId) : null;
+
+  // Build RSVP URL (guest-specific if available)
+  const p1  = encodeURIComponent(WED.couple.p1 || '');
+  const p2  = encodeURIComponent(WED.couple.p2 || '');
+  const dt  = encodeURIComponent(WED.date       || '');
+  const vn  = encodeURIComponent(WED.venue      || '');
+  const ck  = encodeURIComponent(_rsvpCoupleKey());
+  let rsvpUrl = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
+  if (guest) rsvpUrl += `&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+
   function _syncPreview() {
     const preview = document.getElementById('rsvp-preview-img');
     const dataUrl = canvas.toDataURL('image/png');
     if (preview) preview.src = dataUrl;
-    if (!WED.customCardImage) {
+    if (!WED.customCardImage && !guest) {
       WED._invitationImg = dataUrl;
       saveState();
     }
+  }
+
+  // Draw QR code onto canvas then call cb()
+  function _drawQROnCanvas(qrY, cb) {
+    if (typeof QRCode === 'undefined') { cb(); return; }
+    const tmpDiv = document.createElement('div');
+    tmpDiv.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+    document.body.appendChild(tmpDiv);
+    new QRCode(tmpDiv, { text: rsvpUrl, width: 96, height: 96, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    setTimeout(() => {
+      const qrCanvas = tmpDiv.querySelector('canvas');
+      if (qrCanvas) {
+        const sz = 96, qrX = (w - sz) / 2;
+        // white card behind QR
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.beginPath(); ctx.roundRect(qrX - 8, qrY - 8, sz + 16, sz + 16, 10); ctx.fill();
+        ctx.drawImage(qrCanvas, qrX, qrY, sz, sz);
+        // guest name label
+        if (guest) {
+          ctx.fillStyle = '#7a6045'; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(`for ${guest.name}`, w / 2, qrY + sz + 18);
+        }
+      }
+      document.body.removeChild(tmpDiv);
+      cb();
+    }, 120);
   }
 
   if (WED.customCardImage) {
@@ -621,76 +655,76 @@ function showRSVPCard(guestId) {
   }
 
   // gradient bg
-  const grad = ctx.createLinearGradient(0,0,w,h);
+  const grad = ctx.createLinearGradient(0, 0, w, h);
   grad.addColorStop(0,'#fef6e8'); grad.addColorStop(0.5,'#fce8ee'); grad.addColorStop(1,'#e8f5ed');
-  ctx.fillStyle=grad; ctx.roundRect(0,0,w,h,24); ctx.fill();
+  ctx.fillStyle = grad; ctx.roundRect(0, 0, w, h, 24); ctx.fill();
 
   // deco circles
-  ctx.globalAlpha=0.12;
-  ctx.fillStyle='#c9a96e'; ctx.beginPath(); ctx.arc(340,60,90,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#e07898'; ctx.beginPath(); ctx.arc(40,500,70,0,Math.PI*2); ctx.fill();
-  ctx.globalAlpha=1;
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#c9a96e'; ctx.beginPath(); ctx.arc(340, 60, 90, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#e07898'; ctx.beginPath(); ctx.arc(40, 540, 70, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
 
   // border
-  ctx.strokeStyle='rgba(201,169,110,0.35)'; ctx.lineWidth=1.5;
-  ctx.roundRect(8,8,w-16,h-16,20); ctx.stroke();
+  ctx.strokeStyle = 'rgba(201,169,110,0.35)'; ctx.lineWidth = 1.5;
+  ctx.roundRect(8, 8, w-16, h-16, 20); ctx.stroke();
 
   // florals
-  ctx.font='28px serif'; ctx.textAlign='left';
-  ctx.fillText('🌸',18,50); ctx.fillText('🌸',w-52,50);
-  ctx.fillText('🌿',12,h-28); ctx.fillText('🌿',w-44,h-28);
+  ctx.font = '28px serif'; ctx.textAlign = 'left';
+  ctx.fillText('🌸', 18, 50); ctx.fillText('🌸', w-52, 50);
+  ctx.fillText('🌿', 12, h-22); ctx.fillText('🌿', w-44, h-22);
 
   // header
-  ctx.fillStyle='#7a6045'; ctx.font='500 12.5px Figtree,sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle = '#7a6045'; ctx.font = '500 12.5px Figtree,sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('YOU ARE CORDIALLY INVITED TO THE WEDDING OF', w/2, 80);
 
   // names
   const cp1 = WED.couple.p1 || 'Partner 1';
   const cp2 = WED.couple.p2 || 'Partner 2';
-  ctx.fillStyle='#2c1f0e'; ctx.font='italic 600 38px Lora,serif';
+  ctx.fillStyle = '#2c1f0e'; ctx.font = 'italic 600 38px Lora,serif';
   ctx.fillText(cp1, w/2, 130);
-  ctx.fillStyle='#c9a96e'; ctx.font='italic 400 22px Lora,serif';
+  ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 22px Lora,serif';
   ctx.fillText('&', w/2, 162);
-  ctx.fillStyle='#2c1f0e'; ctx.font='italic 600 38px Lora,serif';
+  ctx.fillStyle = '#2c1f0e'; ctx.font = 'italic 600 38px Lora,serif';
   ctx.fillText(cp2, w/2, 200);
 
   // divider
-  ctx.strokeStyle='rgba(201,169,110,0.4)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(60,220); ctx.lineTo(w-60,220); ctx.stroke();
+  ctx.strokeStyle = 'rgba(201,169,110,0.4)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, 220); ctx.lineTo(w-60, 220); ctx.stroke();
 
-  // date
+  // date / time / venue
   const dateStr = WED.date
-    ? new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    ? new Date(WED.date).toLocaleDateString('en-PH', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
     : '(Date TBD)';
-  ctx.fillStyle='#4a3520'; ctx.font='600 15px Figtree,sans-serif';
+  ctx.fillStyle = '#4a3520'; ctx.font = '600 15px Figtree,sans-serif';
   ctx.fillText(dateStr, w/2, 252);
-  ctx.fillStyle='#7a6045'; ctx.font='400 13px Figtree,sans-serif';
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 13px Figtree,sans-serif';
   ctx.fillText('3:00 PM', w/2, 275);
-  ctx.fillStyle='#4a3520'; ctx.font='600 14px Figtree,sans-serif';
+  ctx.fillStyle = '#4a3520'; ctx.font = '600 14px Figtree,sans-serif';
   ctx.fillText(WED.venue || '(Venue TBD)', w/2, 300);
 
   // divider 2
-  ctx.strokeStyle='rgba(201,169,110,0.3)';
-  ctx.beginPath(); ctx.moveTo(60,318); ctx.lineTo(w-60,318); ctx.stroke();
+  ctx.strokeStyle = 'rgba(201,169,110,0.3)';
+  ctx.beginPath(); ctx.moveTo(60, 318); ctx.lineTo(w-60, 318); ctx.stroke();
 
   // rsvp section
-  ctx.fillStyle='#7a6045'; ctx.font='500 12px Figtree,sans-serif';
+  ctx.fillStyle = '#7a6045'; ctx.font = '500 12px Figtree,sans-serif';
   ctx.fillText('KINDLY CONFIRM YOUR ATTENDANCE', w/2, 342);
 
   // rsvp button visual
-  const btnGrad = ctx.createLinearGradient(w/2-80,358,w/2+80,396);
+  const btnGrad = ctx.createLinearGradient(w/2-80, 358, w/2+80, 396);
   btnGrad.addColorStop(0,'#c9a96e'); btnGrad.addColorStop(1,'#a07840');
-  ctx.fillStyle=btnGrad;
-  ctx.beginPath(); ctx.roundRect(w/2-80,358,160,38,10); ctx.fill();
-  ctx.fillStyle='white'; ctx.font='700 14px Figtree,sans-serif';
+  ctx.fillStyle = btnGrad;
+  ctx.beginPath(); ctx.roundRect(w/2-80, 358, 160, 38, 10); ctx.fill();
+  ctx.fillStyle = 'white'; ctx.font = '700 14px Figtree,sans-serif';
   ctx.fillText('RSVP NOW →', w/2, 382);
 
-  // hashtag
-  ctx.fillStyle='#c9a96e'; ctx.font='italic 400 13px Lora,serif';
-  ctx.fillText(`#${cp1}And${cp2}`, w/2, 538);
-
-  /* Push to <img> so it is long-pressable / saveable */
-  _syncPreview();
+  // QR code at y=410, then hashtag after
+  _drawQROnCanvas(410, () => {
+    ctx.fillStyle = '#c9a96e'; ctx.font = 'italic 400 13px Lora,serif'; ctx.textAlign = 'center';
+    ctx.fillText(`#${cp1}And${cp2}`, w/2, 578);
+    _syncPreview();
+  });
 
   modal.classList.add('open');
   _generateRSVPQR();
