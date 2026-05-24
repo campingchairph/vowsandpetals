@@ -1638,3 +1638,4 @@ textarea.glass-input {
   font-weight: 600;
   line-height: 1.3;
 }
+@media (min-width:600px) { #rsvp-preview-img { width:55%; } }
