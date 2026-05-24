@@ -267,7 +267,7 @@ function importTemplate(file) {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      if (data._type !== 'kasalko-template') { showToast('⚠️ Not a valid Down to the Isle template'); return; }
+      if (data._type !== 'kasalko-template') { showToast('⚠️ Not a valid Vows & Petals template'); return; }
       const byline = data._author ? ` by ${data._author}` : '';
       const label  = data.title || 'Wedding Plan';
       if (!confirm(`Import "${label}"${byline}?\n\nThis will merge the plan's budget, checklist, suppliers and schedule into your current data.`)) return;

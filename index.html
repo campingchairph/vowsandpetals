@@ -7,9 +7,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="description" content="Kasalko — Your personal wedding planner. Track guests, budget, checklist, schedule and seating all in one place.">
+  <meta name="description" content="Vows & Petals — Your personal wedding planner. Track guests, budget, checklist, schedule and seating all in one place.">
 
-  <title>Down to the Isle — Wedding Planner</title>
+  <title>Vows &amp; Petals — Wedding Planner</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,11 +27,11 @@
 <!-- ══════════════════════════════════════════════
      LANDING PAGE OVERLAY
 ══════════════════════════════════════════════ -->
-<div id="dtti-landing" role="region" aria-label="Welcome to Down to the Isle">
+<div id="dtti-landing" role="region" aria-label="Welcome to Vows &amp; Petals">
 
   <!-- ── NAV ───────────────────────────────────────── -->
   <nav class="lp-nav">
-    <div class="lp-nav-brand">Down to the Isle</div>
+    <div class="lp-nav-brand">Vows &amp; Petals</div>
     <div class="lp-nav-actions">
       <a class="lp-nav-link" href="#lp-features">Features</a>
       <button class="lp-nav-cta" onclick="enterApp()">Open Planner →</button>
@@ -116,14 +116,14 @@
     <div class="lp-why-arch">
       <div class="lp-arch-inner">
         <div class="lp-arch-mark">◇</div>
-        <div class="lp-arch-name">Down to the Isle</div>
+        <div class="lp-arch-name">Vows &amp; Petals</div>
         <div class="lp-arch-tagline">Your wedding, your way.</div>
       </div>
     </div>
     <div class="lp-why-text">
-      <div class="lp-eyebrow" style="color:var(--gold)">Why Down to the Isle?</div>
+      <div class="lp-eyebrow" style="color:var(--gold)">Why Vows &amp; Petals?</div>
       <h2 class="lp-why-h">Built for Filipino couples.</h2>
-      <p class="lp-why-p">We know that planning a Filipino wedding has its own magic — entourage lists, ninong &amp; ninang tables, SDE shoots, and coordinators juggling everything at once. Down to the Isle was built with all of that in mind.</p>
+      <p class="lp-why-p">We know that planning a Filipino wedding has its own magic — entourage lists, ninong &amp; ninang tables, SDE shoots, and coordinators juggling everything at once. Vows &amp; Petals was built with all of that in mind.</p>
       <ul class="lp-why-list">
         <li>✓&ensp;Free — no subscriptions, no hidden fees</li>
         <li>✓&ensp;Works offline — plan even without signal</li>
@@ -136,7 +136,7 @@
 
   <!-- ── FOOTER ─────────────────────────────────────── -->
   <footer class="lp-footer">
-    Down to the Isle &nbsp;·&nbsp; part of <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara Suite</a>
+    Vows &amp; Petals &nbsp;·&nbsp; <a href="https://campingchairph.github.io/vowsandpetals/" target="_blank" rel="noopener">campingchairph.github.io</a>
   </footer>
 
 </div>
@@ -154,7 +154,7 @@
     <div class="app-header-logo">
       <div class="logo-mark">◇</div>
       <div>
-        <div class="logo-text">Down to the Isle</div>
+        <div class="logo-text">Vows &amp; Petals</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
@@ -190,13 +190,15 @@
     <button class="wed-tab"        id="tab-guests"    role="tab" aria-selected="false" onclick="wedTab('guests')"   >Guests</button>
     <button class="wed-tab"        id="tab-suppliers" role="tab" aria-selected="false" onclick="wedTab('suppliers')" >Suppliers</button>
     <button class="wed-tab"        id="tab-seating"   role="tab" aria-selected="false" onclick="wedTab('seating')"  >Seating</button>
-    <button class="wed-tab"        id="tab-checklist" role="tab" aria-selected="false" onclick="wedTab('checklist')">Checklist</button>
-    <button class="wed-tab"        id="tab-schedule"  role="tab" aria-selected="false" onclick="wedTab('schedule')" >Program</button>
+    <button class="wed-tab"        id="tab-checklist"  role="tab" aria-selected="false" onclick="wedTab('checklist')" >Checklist</button>
+    <button class="wed-tab"        id="tab-schedule"   role="tab" aria-selected="false" onclick="wedTab('schedule')"  >Program</button>
+    <button class="wed-tab"        id="tab-entourage"  role="tab" aria-selected="false" onclick="wedTab('entourage')">Entourage</button>
+    <button class="wed-tab"        id="tab-notes"      role="tab" aria-selected="false" onclick="wedTab('notes')"    >Notes</button>
   </nav>
 
   <!-- Desktop sidebar footer -->
   <div class="app-left-footer-desktop">
-    Down to the Isle &nbsp;·&nbsp; <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara</a>
+    Vows &amp; Petals
   </div>
 
   </aside><!-- /app-left-panel -->
@@ -280,9 +282,19 @@
     <div id="wed-schedule-content"></div>
   </div>
 
+  <!-- Entourage -->
+  <div id="panel-entourage" class="panel" style="display:none">
+    <div id="wed-entourage-content"></div>
+  </div>
+
+  <!-- Notes -->
+  <div id="panel-notes" class="panel" style="display:none">
+    <div id="wed-notes-content"></div>
+  </div>
+
   <!-- Footer -->
   <footer class="app-footer">
-    Down to the Isle &nbsp;·&nbsp; <a href="https://campingchairph.github.io/AnoTara/" target="_blank" rel="noopener">AnoTara Suite</a>
+    Vows &amp; Petals &nbsp;·&nbsp; Your free wedding planner
   </footer>
 
   </main><!-- /app-main -->
@@ -629,6 +641,76 @@
     <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--ink-4);line-height:1.5">
       Your data is stored securely. Sign in once and your plans<br>sync automatically across all your devices.
     </div>
+  </div>
+</div>
+
+<!-- Add / Edit Entourage Member -->
+<div id="wed-entourage-member-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-entourage-member-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="entourage-modal-title">Add Member</div>
+    <div class="input-group">
+      <div class="input-label">Full Name</div>
+      <input type="text" id="entourage-member-name" class="glass-input" placeholder="e.g. Maria Santos">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Role</div>
+      <select id="entourage-member-role" class="glass-input">
+        <option value="Principal Sponsors (Ninong)">💍 Principal Sponsors — Ninong</option>
+        <option value="Principal Sponsors (Ninang)">💍 Principal Sponsors — Ninang</option>
+        <option value="Best Man">🤵 Best Man</option>
+        <option value="Maid of Honor">👰 Maid of Honor</option>
+        <option value="Groomsmen">🤵 Groomsmen</option>
+        <option value="Bridesmaids">💐 Bridesmaids</option>
+        <option value="Flower Girls">🌸 Flower Girls</option>
+        <option value="Ring Bearer">💍 Ring Bearer</option>
+        <option value="Bible Bearer">📖 Bible Bearer</option>
+        <option value="Cord Sponsors">🪢 Cord Sponsors</option>
+        <option value="Veil Sponsors">🤍 Veil Sponsors</option>
+        <option value="Coin Sponsors">🪙 Coin Sponsors</option>
+        <option value="Candle Sponsors">🕯️ Candle Sponsors</option>
+        <option value="Parents of the Groom">👨‍👩‍👦 Parents of the Groom</option>
+        <option value="Parents of the Bride">👨‍👩‍👦 Parents of the Bride</option>
+        <option value="Other">🎀 Other</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Note (optional)</div>
+      <input type="text" id="entourage-member-note" class="glass-input" placeholder="e.g. Tito Bert's side, travelling from Cebu…">
+    </div>
+    <button class="cta-btn pink" id="entourage-member-submit-btn" onclick="submitEntourageMember()">Add Member →</button>
+  </div>
+</div>
+
+<!-- Edit Expense -->
+<div id="wed-edit-expense-modal" class="modal-overlay" onclick="closeModalOutside(event,'wed-edit-expense-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Expense</div>
+    <input type="hidden" id="edit-exp-index">
+    <div class="input-group">
+      <div class="input-label">Description</div>
+      <input type="text" id="edit-exp-label" class="glass-input" placeholder="e.g. Florist deposit…">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Amount (₱)</div>
+      <input type="text" id="edit-exp-amount" class="glass-input peso-input" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Category</div>
+      <select id="edit-exp-category" class="glass-input">
+        <option value="venue">🏛️ Venue</option>
+        <option value="catering">🍽️ Catering</option>
+        <option value="florals">💐 Florals</option>
+        <option value="photography">📸 Photography</option>
+        <option value="attire">👗 Attire</option>
+        <option value="music">🎵 Music</option>
+        <option value="cake">🎂 Cake</option>
+        <option value="invites">💌 Invites</option>
+        <option value="other">📦 Other</option>
+      </select>
+    </div>
+    <button class="cta-btn" onclick="submitEditExpense()">Save Changes →</button>
   </div>
 </div>
 

@@ -70,6 +70,9 @@ const WED = {
   _customPhases: [],
   planningMonths: null,
   _collapsedPhases: [],
+  entourage: [],
+  _nextEntourageId: 1,
+  notes: { general: '', budget: '', venue: '', vendors: '', themes: '' },
 };
 
 /* ── PER-GUEST INVITE STATE ──────────────────── */
@@ -101,8 +104,11 @@ function saveState() {
       nextGuestId:     WED.nextGuestId,
       nextVendorId:    WED.nextVendorId,
       vendors:         WED.vendors,
-      planningMonths:  WED.planningMonths,
+      planningMonths:   WED.planningMonths,
       _collapsedPhases: WED._collapsedPhases,
+      entourage:        WED.entourage,
+      _nextEntourageId: WED._nextEntourageId,
+      notes:            WED.notes,
     };
     localStorage.setItem(STORE_KEY, JSON.stringify(snapshot));
   } catch(e) {}
@@ -120,7 +126,10 @@ function loadState() {
     if (!WED.vendors)          WED.vendors          = [];
     if (!WED.nextVendorId)     WED.nextVendorId     = 1;
     if (WED.planningMonths === undefined) WED.planningMonths = null;
-    if (!WED._collapsedPhases) WED._collapsedPhases = [];
+    if (!WED._collapsedPhases)  WED._collapsedPhases  = [];
+    if (!WED.entourage)         WED.entourage         = [];
+    if (!WED._nextEntourageId)  WED._nextEntourageId  = 1;
+    if (!WED.notes)             WED.notes             = { general: '', budget: '', venue: '', vendors: '', themes: '' };
   } catch(e) {}
 }
 
@@ -162,7 +171,7 @@ function getCountdown() {
 /* ── TAB SWITCH ──────────────────────────────── */
 function wedTab(name) {
   WED.activeTab = name;
-  ['overview','budget','guests','suppliers','seating','checklist','schedule'].forEach(t => {
+  ['overview','budget','guests','suppliers','seating','checklist','schedule','entourage','notes'].forEach(t => {
     const panel = document.getElementById('panel-'+t);
     const tab   = document.getElementById('tab-'+t);
     if (panel) panel.style.display = t === name ? 'block' : 'none';
@@ -175,6 +184,8 @@ function wedTab(name) {
   if (name === 'schedule')  renderSchedule();
   if (name === 'overview')  renderOverview();
   if (name === 'suppliers') renderSuppliers();
+  if (name === 'entourage') renderEntourage();
+  if (name === 'notes')     renderNotes();
 }
 
 /* ── HERO UPDATE ─────────────────────────────── */
@@ -245,7 +256,8 @@ function renderOverview() {
   const attending  = WED.guests.filter(g=>g.rsvp==='attending').length;
 
   el.innerHTML = `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
+      <button onclick="exportWeddingPlan()" style="padding:6px 12px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Export Plan</button>
       <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
     </div>
     <!-- Elegant stats strip — no boxes -->
@@ -386,13 +398,22 @@ function renderBudget() {
 
     ${Object.keys(byCat).length ? `
     <span class="sec-title">By Category</span>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      ${Object.entries(byCat).map(([cat,amt])=>`
-        <div class="${CAT_COLORS[cat]||'glass-cream'}" style="padding:12px;border-radius:var(--r-md)">
-          <div style="font-size:20px;margin-bottom:4px">${CAT_EMOJIS[cat]||'📦'}</div>
-          <div style="font-size:12.5px;font-weight:700;color:var(--ink);text-transform:capitalize">${cat}</div>
-          <div style="font-family:var(--f2);font-size:16px;font-style:italic;color:var(--ink);margin-top:2px">₱${amt.toLocaleString()}</div>
-        </div>`).join('')}
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px">
+      ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+        const catPct = totalSpent ? Math.round((amt/totalSpent)*100) : 0;
+        const budPct = WED.budget  ? Math.min(Math.round((amt/WED.budget)*100),100) : 0;
+        return `
+        <div class="${CAT_COLORS[cat]||'glass-cream'}" style="padding:10px 12px;border-radius:var(--r-md)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:16px">${CAT_EMOJIS[cat]||'📦'}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1">${cat}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--ink)">₱${amt.toLocaleString()}</span>
+            <span style="font-size:10.5px;color:var(--ink-4);font-weight:600">${catPct}%</span>
+          </div>
+          <div style="height:4px;border-radius:2px;background:rgba(44,31,14,0.08);overflow:hidden">
+            <div style="height:100%;width:${budPct}%;background:linear-gradient(90deg,var(--green-accent),var(--tan));border-radius:2px;transition:width 0.4s"></div>
+          </div>
+        </div>`;}).join('')}
     </div>` : ''}
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -412,6 +433,7 @@ function renderBudget() {
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
           <button onclick="toggleExpensePaid(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer">${e.paid?'Unpay':'Mark Paid'}</button>
+          <button onclick="openEditExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(184,145,106,0.25);background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
           <button onclick="deleteExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
         </div>
       </div>`).join('') : `<div style="text-align:center;padding:24px;font-size:13px;color:var(--ink-4)">No expenses yet — click "+ Add" to start tracking.</div>`}
@@ -671,7 +693,7 @@ function _generateRSVPQR() {
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
   const ck  = encodeURIComponent(_rsvpCoupleKey());
-  let rsvpUrl = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
+  let rsvpUrl = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
   if (_rsvpGuestId !== null) {
     const guest = WED.guests.find(g => g.id === _rsvpGuestId);
     if (guest) {
@@ -696,7 +718,7 @@ async function shareGuestInvite(guestId) {
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
   const ck  = encodeURIComponent(_rsvpCoupleKey());
-  const url = `https://campingchairph.github.io/AnoTara/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
+  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
 
   let shared = false;
   if (navigator.share) {
@@ -2697,6 +2719,293 @@ document.addEventListener('DOMContentLoaded', () => {
   // enterApp() is called by the user clicking a CTA on the landing page
 });
 
+/* ═══════════════════════════════════════════════
+   ENTOURAGE
+═══════════════════════════════════════════════ */
+const ENTOURAGE_ROLES = [
+  { role:'Principal Sponsors (Ninong)', emoji:'💍', color:'glass-cream' },
+  { role:'Principal Sponsors (Ninang)', emoji:'💍', color:'glass-cream' },
+  { role:'Best Man',                    emoji:'🤵', color:'glass-green' },
+  { role:'Maid of Honor',               emoji:'👰', color:'glass-pink'  },
+  { role:'Groomsmen',                   emoji:'🤵', color:'glass-green' },
+  { role:'Bridesmaids',                 emoji:'💐', color:'glass-pink'  },
+  { role:'Flower Girls',                emoji:'🌸', color:'glass-pink'  },
+  { role:'Ring Bearer',                 emoji:'💍', color:'glass-cream' },
+  { role:'Bible Bearer',                emoji:'📖', color:'glass-cream' },
+  { role:'Cord Sponsors',               emoji:'🪢', color:'glass-cream' },
+  { role:'Veil Sponsors',               emoji:'🤍', color:'glass-cream' },
+  { role:'Coin Sponsors',               emoji:'🪙', color:'glass-cream' },
+  { role:'Candle Sponsors',             emoji:'🕯️', color:'glass-cream' },
+  { role:'Parents of the Groom',        emoji:'👨‍👩‍👦', color:'glass-green' },
+  { role:'Parents of the Bride',        emoji:'👨‍👩‍👦', color:'glass-pink'  },
+  { role:'Other',                       emoji:'🎀', color:'glass-cream' },
+];
+
+function renderEntourage() {
+  const el = document.getElementById('wed-entourage-content');
+  if (!el) return;
+
+  const total = WED.entourage.length;
+  const byRole = {};
+  WED.entourage.forEach(m => { (byRole[m.role] = byRole[m.role] || []).push(m); });
+
+  const orderedRoles = ENTOURAGE_ROLES.filter(r => byRole[r.role]);
+  const usedRoleNames = new Set(orderedRoles.map(r => r.role));
+  const customRoles = Object.keys(byRole).filter(r => !usedRoleNames.has(r))
+    .map(r => ({ role: r, emoji:'🎀', color:'glass-cream' }));
+  const allRoles = [...orderedRoles, ...customRoles];
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <span class="sec-title" style="margin-bottom:0">Entourage</span>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${total} member${total!==1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="exportEntourage()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
+        <button onclick="openEntourageMemberModal()" class="icon-btn">+ Add</button>
+      </div>
+    </div>
+
+    ${!total ? `<div class="empty-state">
+      <div class="empty-emoji">💍</div>
+      <div class="empty-title">No entourage yet</div>
+      <div class="empty-sub">Add your ninong, ninang, best man,<br>bridesmaids, and more.</div>
+      <button onclick="openEntourageMemberModal()" class="cta-btn pink" style="max-width:220px;margin:0 auto">+ Add First Member</button>
+    </div>` : allRoles.map(({ role, emoji, color }) => {
+      const members = byRole[role] || [];
+      return `
+      <div class="${color}" style="border-radius:var(--r-md);margin-bottom:10px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:16px">${emoji}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${role}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(44,31,14,0.07);color:var(--ink-4)">${members.length}</span>
+          </div>
+          <button onclick="openEntourageMemberModal('${role.replace(/'/g,"\\'")}')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(184,145,106,0.25);background:rgba(255,252,247,0.8);font-size:10.5px;font-weight:700;color:var(--gold-dark);cursor:pointer">+ Add</button>
+        </div>
+        <div style="padding:0 10px 10px;display:flex;flex-direction:column;gap:5px">
+          ${members.map(m => `
+            <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r-sm);background:rgba(255,252,247,0.75);border:1px solid rgba(255,255,255,0.6)">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(184,145,106,0.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-3);flex-shrink:0">${m.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;color:var(--ink)">${m.name}</div>
+                ${m.note ? `<div style="font-size:10.5px;color:var(--ink-4);margin-top:1px;font-style:italic">${m.note}</div>` : ''}
+              </div>
+              <button onclick="removeEntourageMember(${m.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:12px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">×</button>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+let _entourageEditingRole = null;
+let _entourageEditingId   = null;
+
+function openEntourageMemberModal(presetRole) {
+  _entourageEditingId = null;
+  document.getElementById('entourage-modal-title').textContent = 'Add Member';
+  document.getElementById('entourage-member-submit-btn').textContent = 'Add Member →';
+  document.getElementById('entourage-member-name').value = '';
+  document.getElementById('entourage-member-note').value = '';
+  if (presetRole) {
+    const sel = document.getElementById('entourage-member-role');
+    if (sel) sel.value = presetRole;
+  }
+  openModal('wed-entourage-member-modal');
+  setTimeout(() => document.getElementById('entourage-member-name')?.focus(), 200);
+}
+
+function submitEntourageMember() {
+  const name = (document.getElementById('entourage-member-name')?.value || '').trim();
+  if (!name) { showToast('⚠️ Enter a name'); return; }
+  const role = document.getElementById('entourage-member-role')?.value || 'Other';
+  const note = (document.getElementById('entourage-member-note')?.value || '').trim();
+  if (_entourageEditingId !== null) {
+    const m = WED.entourage.find(m => m.id === _entourageEditingId);
+    if (m) { m.name = name; m.role = role; m.note = note; }
+  } else {
+    WED.entourage.push({ id: WED._nextEntourageId++, role, name, note });
+  }
+  saveState();
+  closeModal('wed-entourage-member-modal');
+  renderEntourage();
+  showToast(_entourageEditingId ? '✅ Member updated!' : '🎉 ' + name + ' added!');
+}
+
+function removeEntourageMember(id) {
+  const m = WED.entourage.find(m => m.id === id);
+  if (!m || !confirm('Remove ' + m.name + '?')) return;
+  WED.entourage = WED.entourage.filter(m => m.id !== id);
+  saveState();
+  renderEntourage();
+  showToast('🗑 Removed from entourage');
+}
+
+function exportEntourage() {
+  const byRole = {};
+  WED.entourage.forEach(m => { (byRole[m.role] = byRole[m.role] || []).push(m); });
+  const rows = ENTOURAGE_ROLES
+    .filter(r => byRole[r.role])
+    .concat(Object.keys(byRole).filter(r => !ENTOURAGE_ROLES.find(x=>x.role===r)).map(r=>({role:r,emoji:'🎀'})))
+    .map(({ role, emoji }) => {
+      const members = (byRole[role] || []).map(m => `<tr><td style="padding:6px 10px;font-size:13px;color:#2c1810;border-bottom:1px solid #f0e8d8">${m.name}</td><td style="padding:6px 10px;font-size:11px;color:#8c6848;border-bottom:1px solid #f0e8d8;font-style:italic">${m.note||''}</td></tr>`).join('');
+      return `<tr style="background:#faf0e0"><td colspan="2" style="padding:8px 10px;font-size:12px;font-weight:700;color:#5c3a24;letter-spacing:0.3px">${emoji} ${role} (${(byRole[role]||[]).length})</td></tr>${members}`;
+    }).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Entourage — ${WED.couple.p1 || ''} &amp; ${WED.couple.p2 || ''}</title><style>body{font-family:Georgia,serif;background:#fdfaf4;color:#2c1810;padding:32px;max-width:680px;margin:0 auto}h1{font-size:28px;text-align:center;margin-bottom:4px}p{text-align:center;color:#8c6848;margin-bottom:24px}table{width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid #e8d8c0}@media print{button{display:none}}</style></head><body><h1>${WED.couple.p1||'—'} &amp; ${WED.couple.p2||'—'}</h1><p>Wedding Entourage${WED.date?' · '+new Date(WED.date).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'}):''}</p><table>${rows}</table><div style="text-align:center;margin-top:24px"><button onclick="window.print()" style="padding:10px 24px;background:#8c6640;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">🖨 Print</button></div></body></html>`);
+  win.document.close();
+}
+
+/* ═══════════════════════════════════════════════
+   NOTES / MOOD BOARD
+═══════════════════════════════════════════════ */
+const NOTE_SECTIONS = [
+  { key:'general',  label:'General Notes',    emoji:'📝', placeholder:'Ideas, reminders, anything you don\'t want to forget…' },
+  { key:'budget',   label:'Budget Notes',     emoji:'💰', placeholder:'Payment schedules, discount codes, balance reminders…' },
+  { key:'venue',    label:'Venue & Logistics',emoji:'📍', placeholder:'Parking info, load-in times, venue rules, transport…' },
+  { key:'vendors',  label:'Vendor Notes',     emoji:'🤝', placeholder:'Contact notes, special requests, follow-ups needed…' },
+  { key:'themes',   label:'Theme & Mood',     emoji:'🌸', placeholder:'Color palette, inspiration, décor ideas, mood board links…' },
+];
+
+function renderNotes() {
+  const el = document.getElementById('wed-notes-content');
+  if (!el) return;
+  const totalChars = NOTE_SECTIONS.reduce((a,s) => a + (WED.notes[s.key]||'').length, 0);
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <span class="sec-title" style="margin-bottom:0">Notes &amp; Mood Board</span>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${totalChars ? totalChars.toLocaleString()+' characters saved' : 'Write freely — auto-saved'}</div>
+      </div>
+      <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
+    </div>
+    ${NOTE_SECTIONS.map(s => `
+      <div class="glass" style="border-radius:var(--r-md);margin-bottom:12px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 14px 8px;border-bottom:1px solid rgba(184,145,106,0.10)">
+          <span style="font-size:16px">${s.emoji}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${s.label}</span>
+        </div>
+        <textarea
+          style="width:100%;padding:12px 14px;border:none;background:transparent;font-size:13px;color:var(--ink);line-height:1.65;resize:vertical;min-height:90px;font-family:var(--f);outline:none"
+          placeholder="${s.placeholder}"
+          oninput="saveNoteField('${s.key}',this.value)"
+        >${WED.notes[s.key]||''}</textarea>
+      </div>`).join('')}`;
+}
+
+function saveNoteField(key, value) {
+  WED.notes[key] = value;
+  saveState();
+}
+
+function exportNotes() {
+  const sections = NOTE_SECTIONS
+    .filter(s => (WED.notes[s.key]||'').trim())
+    .map(s => `<h3 style="margin:0 0 8px;color:#5c3a24;font-size:15px">${s.emoji} ${s.label}</h3><div style="white-space:pre-wrap;font-size:13px;line-height:1.7;color:#2c1810;padding:12px 16px;border-radius:10px;background:#faf0e0;border:1px solid #e8d8c0;margin-bottom:20px">${WED.notes[s.key]}</div>`).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Notes — ${WED.couple.p1||''} &amp; ${WED.couple.p2||''}</title><style>body{font-family:Georgia,serif;background:#fdfaf4;color:#2c1810;padding:32px;max-width:680px;margin:0 auto}h1{font-size:26px;text-align:center;margin-bottom:4px}p{text-align:center;color:#8c6848;margin-bottom:28px}@media print{button{display:none}}</style></head><body><h1>${WED.couple.p1||'—'} &amp; ${WED.couple.p2||'—'}</h1><p>Wedding Notes${WED.date?' · '+new Date(WED.date).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'}):''}</p>${sections||'<p style="text-align:center;color:#b89870">No notes saved yet.</p>'}<div style="text-align:center;margin-top:24px"><button onclick="window.print()" style="padding:10px 24px;background:#8c6640;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer">🖨 Print</button></div></body></html>`);
+  win.document.close();
+}
+
+/* ═══════════════════════════════════════════════
+   EDIT EXPENSE
+═══════════════════════════════════════════════ */
+function openEditExpense(i) {
+  const e = WED.expenses[i];
+  if (!e) return;
+  document.getElementById('edit-exp-index').value    = i;
+  document.getElementById('edit-exp-label').value    = e.label;
+  document.getElementById('edit-exp-amount').value   = e.amount.toLocaleString();
+  document.getElementById('edit-exp-category').value = e.category;
+  openModal('wed-edit-expense-modal');
+}
+
+function submitEditExpense() {
+  const i      = parseInt(document.getElementById('edit-exp-index')?.value, 10);
+  const label  = (document.getElementById('edit-exp-label')?.value || '').trim();
+  const amount = parseFloat((document.getElementById('edit-exp-amount')?.value || '').replace(/,/g,'')) || 0;
+  const cat    = document.getElementById('edit-exp-category')?.value;
+  if (!label || !amount) { showToast('⚠️ Fill in all fields'); return; }
+  if (WED.expenses[i]) {
+    WED.expenses[i].label    = label;
+    WED.expenses[i].amount   = amount;
+    WED.expenses[i].category = cat;
+  }
+  saveState();
+  closeModal('wed-edit-expense-modal');
+  renderBudget();
+  showToast('✅ Expense updated!');
+}
+
+/* ═══════════════════════════════════════════════
+   EXPORT — Full wedding plan printable page
+═══════════════════════════════════════════════ */
+function exportWeddingPlan() {
+  const attending = WED.guests.filter(g => g.rsvp === 'attending');
+  const pending   = WED.guests.filter(g => g.rsvp === 'pending');
+  const totalSpent = WED.expenses.reduce((a,e) => a + e.amount, 0);
+
+  const guestRows = WED.guests.map(g =>
+    `<tr><td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px">${g.name}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:11px;color:${g.rsvp==='attending'?'#3a7a54':g.rsvp==='declined'?'#9c4038':'#8c6640'}">${g.rsvp==='attending'?'✓ Attending':g.rsvp==='declined'?'✗ Declined':'⏳ Pending'}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:11px;color:#8c6848">${g.meal||''}</td></tr>`
+  ).join('');
+
+  const expRows = WED.expenses.map(e =>
+    `<tr><td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px">${e.label}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px;text-transform:capitalize">${e.category}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px;text-align:right">₱${e.amount.toLocaleString()}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:11px;color:${e.paid?'#3a7a54':'#9c4038'}">${e.paid?'Paid':'Pending'}</td></tr>`
+  ).join('');
+
+  const schedRows = [...WED.schedule]
+    .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time))
+    .map(s => `<tr><td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:11px;color:#8c6848;white-space:nowrap">${s.time||''}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px">${s.event}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:11px;color:#8c6848">${s.assignee||''}</td></tr>`).join('');
+
+  const entourageByRole = {};
+  WED.entourage.forEach(m => { (entourageByRole[m.role] = entourageByRole[m.role]||[]).push(m.name); });
+  const entourageRows = Object.entries(entourageByRole).map(([role, names]) =>
+    `<tr><td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px;font-weight:700;color:#5c3a24">${role}</td>
+     <td style="padding:5px 8px;border-bottom:1px solid #f0e8d8;font-size:12px">${names.join(', ')}</td></tr>`
+  ).join('');
+
+  const dateStr = WED.date ? new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '—';
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Wedding Plan — ${WED.couple.p1||''} &amp; ${WED.couple.p2||''}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;background:#fdfaf4;color:#2c1810;padding:32px;max-width:800px;margin:0 auto}
+  h1{font-size:32px;text-align:center;margin-bottom:6px;letter-spacing:-0.5px}
+  .sub{text-align:center;color:#8c6848;margin-bottom:6px;font-size:14px}
+  .venue{text-align:center;color:#5c3a24;font-weight:700;margin-bottom:32px;font-size:15px}
+  h2{font-size:18px;font-weight:700;color:#5c3a24;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #e8d8c0}
+  table{width:100%;border-collapse:collapse;border:1px solid #e8d8c0;border-radius:8px;overflow:hidden;margin-bottom:8px}
+  th{padding:8px 10px;background:#f0e8d8;font-size:11px;font-weight:700;text-align:left;color:#5c3a24;text-transform:uppercase;letter-spacing:0.3px}
+  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+  .stat{flex:1;min-width:120px;padding:14px;border-radius:10px;background:#f0e8d8;border:1px solid #e0d0c0;text-align:center}
+  .stat-val{font-size:22px;font-weight:700;color:#2c1810}
+  .stat-lbl{font-size:11px;color:#8c6848;margin-top:3px}
+  @media print{button{display:none}body{padding:16px}}
+  </style></head><body>
+  <h1>${WED.couple.p1||'—'} &amp; ${WED.couple.p2||'—'}</h1>
+  <div class="sub">${dateStr}</div>
+  <div class="venue">${WED.venue||''}</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-val">${WED.guests.length}</div><div class="stat-lbl">Total Guests</div></div>
+    <div class="stat"><div class="stat-val">${attending.length}</div><div class="stat-lbl">Attending</div></div>
+    <div class="stat"><div class="stat-val">₱${totalSpent.toLocaleString()}</div><div class="stat-lbl">Total Committed</div></div>
+    <div class="stat"><div class="stat-val">${WED.entourage.length}</div><div class="stat-lbl">Entourage</div></div>
+  </div>
+  <div style="text-align:center;margin:16px 0 28px"><button onclick="window.print()" style="padding:10px 28px;background:#8c6640;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer;font-family:Georgia,serif">🖨 Print / Save as PDF</button></div>
+  ${WED.guests.length?`<h2>Guest List (${WED.guests.length})</h2><table><tr><th>Name</th><th>RSVP</th><th>Meal</th></tr>${guestRows}</table>`:''}
+  ${WED.expenses.length?`<h2>Budget (₱${WED.budget.toLocaleString()} total · ₱${totalSpent.toLocaleString()} committed)</h2><table><tr><th>Item</th><th>Category</th><th>Amount</th><th>Status</th></tr>${expRows}</table>`:''}
+  ${WED.schedule.length?`<h2>Day Program</h2><table><tr><th>Time</th><th>Event</th><th>Assigned To</th></tr>${schedRows}</table>`:''}
+  ${WED.entourage.length?`<h2>Entourage (${WED.entourage.length})</h2><table><tr><th>Role</th><th>Members</th></tr>${entourageRows}</table>`:''}
+  </body></html>`);
+  win.document.close();
+}
+
 /* ── WINDOW EXPORTS ──────────────────────────── */
 window.wedTab               = wedTab;
 window.openModal            = openModal;
@@ -2766,4 +3075,15 @@ window.submitChecklistTimeline    = submitChecklistTimeline;
 window.showChecklistTimelineChanger = showChecklistTimelineChanger;
 window.toggleSeatTable            = toggleSeatTable;
 window.updateSeatSearch           = updateSeatSearch;
-window.openPartnerBrowse        = openPartnerBrowse;
+window.openPartnerBrowse          = openPartnerBrowse;
+window.renderEntourage            = renderEntourage;
+window.openEntourageMemberModal   = openEntourageMemberModal;
+window.submitEntourageMember      = submitEntourageMember;
+window.removeEntourageMember      = removeEntourageMember;
+window.exportEntourage            = exportEntourage;
+window.renderNotes                = renderNotes;
+window.saveNoteField              = saveNoteField;
+window.exportNotes                = exportNotes;
+window.openEditExpense            = openEditExpense;
+window.submitEditExpense          = submitEditExpense;
+window.exportWeddingPlan          = exportWeddingPlan;
