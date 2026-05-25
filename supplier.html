@@ -639,7 +639,7 @@ function _renderGallery() {
   const atLimit    = _savedGallery.length >= maxPhotos;
   let html = '';
   _savedGallery.forEach((url, i) =>
-    html += `<div class="gallery-item"><img src="${url}" alt=""><button class="rm-btn" onclick="removeGallery(${i})">×</button></div>`);
+    html += `<div class="gallery-item"><img src="${url}" onclick="zoomPhoto('${url}')" style="cursor:zoom-in" alt=""><button class="rm-btn" onclick="removeGallery(${i})">×</button></div>`);
   if (!atLimit) {
     html += `<div class="gallery-add" onclick="document.getElementById('gallery-input').click()"><span class="gallery-add-icon">＋</span><span class="gallery-add-lbl">Add Photo</span></div>`;
   } else if (!_isProActive()) {
@@ -900,7 +900,7 @@ function _renderPreview() {
   const visiblePhotos = p.pro ? (p.photos || []) : (p.photos || []).slice(0, 2);
   const galleryHtml = visiblePhotos.length
     ? `<div style="display:flex;gap:6px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">
-        ${visiblePhotos.map(url => `<img src="${url}" style="height:90px;min-width:90px;border-radius:10px;object-fit:cover;flex-shrink:0" alt="">`).join('')}
+        ${visiblePhotos.map(url => `<img src="${url}" onclick="zoomPhoto('${url}')" style="height:90px;min-width:90px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:zoom-in" alt="">`).join('')}
         ${!p.pro && (p.photos||[]).length >= 2 ? `<div style="flex:0 0 90px;height:90px;border-radius:10px;background:rgba(184,145,106,0.12);border:1.5px dashed rgba(184,145,106,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer" onclick="showDashTab('plan')"><span style="font-size:16px">⭐</span><span style="font-size:9px;font-weight:700;color:var(--gold-dk);text-align:center">More<br>on Pro</span></div>` : ''}
        </div>`
     : '';
@@ -1135,6 +1135,19 @@ function toast(msg, dur = 2800) {
   el.classList.add('show');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ── PHOTO ZOOM ── */
+function zoomPhoto(url) {
+  document.getElementById('sp-photo-zoom')?.remove();
+  const el = document.createElement('div');
+  el.id = 'sp-photo-zoom';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out';
+  el.innerHTML = `
+    <img src="${url}" style="max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 8px 48px rgba(0,0,0,0.5)">
+    <button onclick="document.getElementById('sp-photo-zoom').remove()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>`;
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  document.body.appendChild(el);
 }
 
 // Initial gallery render (empty)

@@ -1818,16 +1818,25 @@ function setSupplierView(view) {
   if (el) el.scrollTop = 0;
 }
 
+// Legacy category key aliases (old supplier.html used different keys)
+const CAT_ALIASES = {
+  invites:  ['invites', 'invitations'],
+  florals:  ['florals', 'flowers'],
+  hair:     ['hair', 'makeup'],
+};
+
 async function _loadMarketplaceCat(cat) {
   if (_marketplaceCache && _marketplaceCache[cat] !== undefined) return _marketplaceCache[cat];
   if (!_marketplaceCache) _marketplaceCache = {};
   try {
     if (typeof DB !== 'undefined' && DB) {
+      const keys = CAT_ALIASES[cat] || [cat];
+      // Use 'in' to catch both current and legacy category keys
       const snap = await DB.collection('kasalko_marketplace')
-        .where('category', '==', cat)
+        .where('category', 'in', keys)
         .limit(50)
         .get();
-      // Sort client-side: verified+pro first, then verified, then pro, then free
+      // Sort client-side: verified+pro → verified → pro → free
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       docs.sort((a, b) => {
         const rank = s => (s.verified ? 2 : 0) + (s.pro ? 1 : 0);
@@ -1837,7 +1846,10 @@ async function _loadMarketplaceCat(cat) {
     } else {
       _marketplaceCache[cat] = [];
     }
-  } catch(e) { _marketplaceCache[cat] = []; }
+  } catch(e) {
+    console.warn('Marketplace load error (check Firestore rules):', e);
+    _marketplaceCache[cat] = [];
+  }
   return _marketplaceCache[cat];
 }
 
@@ -2131,7 +2143,7 @@ function _renderSupplierProfileView(el, supplierId) {
     profileEl.style.textAlign = 'left';
     profileEl.innerHTML = `
       <!-- Cover + avatar -->
-      ${s.cover_photo ? `<div style="height:180px;border-radius:16px;overflow:hidden;margin-bottom:-24px"><img src="${s.cover_photo}" style="width:100%;height:100%;object-fit:cover"></div>` : ''}
+      ${s.cover_photo ? `<div style="height:180px;border-radius:16px;overflow:hidden;margin-bottom:-24px;cursor:zoom-in" onclick="openPhotoZoom('${s.cover_photo}')"><img src="${s.cover_photo}" style="width:100%;height:100%;object-fit:cover"></div>` : ''}
       <div class="glass" style="border-radius:var(--r-lg);padding:20px;margin-bottom:12px;${s.cover_photo?'padding-top:36px':''}">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${proBadge}${verifiedBadge}</div>
         <div style="font-family:var(--f2);font-size:22px;font-style:italic;font-weight:600;color:var(--ink)">${s.name}</div>
@@ -2158,8 +2170,10 @@ function _renderSupplierProfileView(el, supplierId) {
       <div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Photos</div>
         <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
-          ${s.photos.map(p=>`<img src="${p}" style="flex:0 0 auto;width:140px;height:100px;object-fit:cover;border-radius:10px;border:1px solid rgba(201,169,110,0.18)">`).join('')}
+          ${s.cover_photo ? `<img src="${s.cover_photo}" onclick="openPhotoZoom('${s.cover_photo}')" style="flex:0 0 auto;width:140px;height:100px;object-fit:cover;border-radius:10px;border:1px solid rgba(201,169,110,0.18);cursor:zoom-in">` : ''}
+          ${s.photos.map(p=>`<img src="${p}" onclick="openPhotoZoom('${p}')" style="flex:0 0 auto;width:140px;height:100px;object-fit:cover;border-radius:10px;border:1px solid rgba(201,169,110,0.18);cursor:zoom-in">`).join('')}
         </div>
+        <div style="font-size:10px;color:var(--ink-4);margin-top:6px">Tap a photo to zoom</div>
       </div>` : ''}
 
       <!-- Reviews -->
@@ -2188,6 +2202,18 @@ function _renderSupplierProfileView(el, supplierId) {
       </div>` : ''}
     `;
   });
+}
+
+function openPhotoZoom(url) {
+  document.getElementById('photo-zoom-overlay')?.remove();
+  const el = document.createElement('div');
+  el.id = 'photo-zoom-overlay';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out';
+  el.innerHTML = `
+    <img src="${url}" style="max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 8px 48px rgba(0,0,0,0.6)">
+    <button onclick="document.getElementById('photo-zoom-overlay').remove()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>`;
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  document.body.appendChild(el);
 }
 
 function openLeaveReview(supplierId, supplierName) {
@@ -4791,6 +4817,7 @@ window.toggleSeatTable            = toggleSeatTable;
 window.updateSeatSearch           = updateSeatSearch;
 window.openPartnerBrowse          = openPartnerBrowse;
 window.supplierSearch             = supplierSearch;
+window.openPhotoZoom              = openPhotoZoom;
 window.renderEntourage            = renderEntourage;
 window.openEntourageMemberModal   = openEntourageMemberModal;
 window.submitEntourageMember      = submitEntourageMember;
