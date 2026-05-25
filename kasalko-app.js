@@ -1952,6 +1952,19 @@ function _renderSuppliersMain(el) {
         </div>
       </div>`).join('')
     : `<div style="text-align:center;padding:28px;font-size:13px;color:var(--ink-4)">No vendors saved yet — click <b>+ Add</b> next to any category above.</div>`}
+
+    <!-- Supplier portal CTA -->
+    <div style="margin-top:20px;padding:16px;border-radius:var(--r-lg);background:rgba(245,230,200,0.35);border:1px solid rgba(184,145,106,0.2);display:flex;align-items:center;gap:12px">
+      <span style="font-size:26px;flex-shrink:0">🏪</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:2px">Are you a wedding supplier?</div>
+        <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5">Get your business listed in our directory — free, no setup needed.</div>
+      </div>
+      <a href="https://campingchairph.github.io/vowsandpetals/supplier.html" target="_blank" rel="noopener"
+        style="flex-shrink:0;padding:8px 13px;border-radius:var(--r-md);background:var(--tan);color:var(--ivory);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;font-family:var(--f)">
+        Get Listed →
+      </a>
+    </div>
   `;
 }
 
