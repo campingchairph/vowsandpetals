@@ -137,6 +137,42 @@
     .pro-features li { font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
     .pro-features li::before { content: '✓'; color: var(--gold-dk); font-weight: 800; }
 
+    /* ── PLAN TAB ── */
+    .plan-status-card { border-radius: var(--r-xl); border: 1.5px solid; padding: 18px 18px 16px; margin-bottom: 14px; }
+    .plan-status-card.free  { background: rgba(245,230,200,0.25); border-color: rgba(184,145,106,0.25); }
+    .plan-status-card.pro   { background: linear-gradient(135deg, rgba(184,145,106,0.1), rgba(192,112,104,0.07)); border-color: rgba(184,145,106,0.4); }
+    .plan-status-card.expiring { background: rgba(255,200,50,0.08); border-color: rgba(200,150,0,0.35); }
+    .plan-status-card.expired  { background: rgba(192,112,104,0.08); border-color: rgba(192,112,104,0.3); }
+    .plan-badge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .plan-tier-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 0.2px; }
+    .plan-tier-badge.free    { background: rgba(184,145,106,0.15); color: var(--ink-3); border: 1px solid rgba(184,145,106,0.25); }
+    .plan-tier-badge.pro     { background: linear-gradient(135deg, var(--gold), var(--gold-dk)); color: #fff; }
+    .plan-tier-badge.expired { background: rgba(192,112,104,0.15); color: var(--rose); border: 1px solid rgba(192,112,104,0.3); }
+    .plan-detail-row { display: flex; align-items: baseline; gap: 6px; }
+    .plan-expiry-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-4); }
+    .plan-expiry-val   { font-size: 13.5px; font-weight: 800; color: var(--ink); }
+    .plan-days-chip { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .plan-days-chip.ok       { background: rgba(106,142,112,0.15); color: var(--sage); }
+    .plan-days-chip.soon     { background: rgba(200,150,0,0.14); color: #b07700; }
+    .plan-days-chip.expired  { background: rgba(192,112,104,0.15); color: var(--rose); }
+    .plan-perks { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+    .plan-perk { font-size: 12.5px; color: var(--ink-2); display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
+    .plan-perk .ck { font-weight: 800; flex-shrink: 0; }
+    .plan-perk .ck.yes  { color: var(--sage); }
+    .plan-perk .ck.no   { color: var(--ink-4); }
+    .plan-pricing-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+    .plan-price-card  { border-radius: var(--r-lg); border: 1.5px solid rgba(184,145,106,0.22); padding: 14px 12px; text-align: center; background: rgba(255,252,247,0.9); cursor: pointer; transition: all 0.15s; }
+    .plan-price-card:hover   { border-color: var(--gold); box-shadow: 0 2px 12px rgba(184,145,106,0.18); }
+    .plan-price-card.featured { border-color: var(--gold); background: rgba(255,252,247,0.98); box-shadow: 0 3px 16px rgba(184,145,106,0.2); }
+    .plan-price-amount { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; line-height: 1.1; }
+    .plan-price-period { font-size: 10px; font-weight: 700; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .plan-price-save   { font-size: 10px; font-weight: 700; color: var(--sage); margin-top: 4px; }
+    .plan-how-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-4); margin-bottom: 10px; padding-top: 4px; border-top: 1px solid rgba(184,145,106,0.14); margin-top: 18px; padding-top: 14px; }
+    .plan-step { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+    .plan-step-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(184,145,106,0.18); font-size: 11px; font-weight: 800; color: var(--gold-dk); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .plan-step-text { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+    .plan-step-text b { color: var(--ink); }
+
     /* ── TOAST ── */
     #sp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: rgba(44,24,16,0.9); color: #fff; padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; white-space: nowrap; z-index: 9999; transition: transform 0.3s ease; pointer-events: none; }
     #sp-toast.show { transform: translateX(-50%) translateY(0); }
@@ -287,7 +323,7 @@
         <label>Gallery <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;color:var(--ink-4)">— up to 6 photos · ⭐ Pro only</span></label>
         <div class="gallery-grid" id="gallery-grid"></div>
         <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="pickGallery(this)">
-        <div class="field-hint" style="margin-top:8px">Gallery photos are visible to couples on Pro listings. <button class="text-btn" onclick="showScreen('dashboard');showDashTab('preview');setTimeout(()=>document.getElementById('pro-cta')?.scrollIntoView({behavior:'smooth'}),200)">Learn about Pro →</button></div>
+        <div class="field-hint" style="margin-top:8px">Free: 2 photos. Pro: up to 9 photos, all shown to couples. <button class="text-btn" onclick="if(_profile){showScreen('dashboard');showDashTab('plan');}">See Pro pricing →</button></div>
       </div>
     </div>
 
@@ -304,6 +340,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" id="tab-btn-preview" onclick="showDashTab('preview')">👁 Preview</button>
       <button class="tab-btn" id="tab-btn-reviews" onclick="showDashTab('reviews')">💬 Reviews</button>
+      <button class="tab-btn" id="tab-btn-plan" onclick="showDashTab('plan')">💳 Plan</button>
     </div>
 
     <!-- Preview tab -->
@@ -319,8 +356,10 @@
       </div>
     </div>
 
-    <!-- Pro CTA -->
-    <div class="pro-cta-card" id="pro-cta"></div>
+    <!-- Plan tab -->
+    <div class="tab-pane" id="tab-pane-plan">
+      <div id="plan-area"></div>
+    </div>
   </div>
 
 </div><!-- /.sp-wrap -->
@@ -345,6 +384,17 @@ const FB_CFG = {
 // 2. Settings → Upload → Upload Presets → Add preset → set to Unsigned
 const CLOUDINARY_CLOUD  = 'drqdoqdci';
 const CLOUDINARY_PRESET = 'vowsandpetals';
+// ─────────────────────────────────────────────────────────────
+
+// ── PRO PLAN PRICING ─────────────────────────────────────────
+// After supplier pays, admin sets pro:true, pro_plan:'monthly'|'annual',
+// and pro_expires_at (Firestore Timestamp) in kasalko_marketplace/{uid}
+const PRO_PRICE_MONTHLY = 299;   // ₱/month
+const PRO_PRICE_ANNUAL  = 2499;  // ₱/year
+// Payment links — create these in PayMongo or GCash dashboard, paste URLs here
+const PAY_LINK_MONTHLY  = '';    // ← PayMongo/GCash payment link for monthly
+const PAY_LINK_ANNUAL   = '';    // ← PayMongo/GCash payment link for annual
+const SUPPORT_EMAIL     = 'hello@vowsandpetals.com';
 // ─────────────────────────────────────────────────────────────
 
 let AUTH, DB;
@@ -527,9 +577,17 @@ async function pickCover(input) {
 
 async function pickGallery(input) {
   const files = Array.from(input.files || []);
-  const slots = 6 - _savedGallery.length;
+  const maxPhotos = _isProActive() ? 9 : 2;
+  const slots = maxPhotos - _savedGallery.length;
   input.value = '';
-  if (!slots) { toast('⚠️ Gallery full — max 6 photos'); return; }
+  if (!slots) {
+    if (!_isProActive()) {
+      toast('⭐ Pro plan unlocks up to 9 photos — tap the Plan tab to upgrade');
+    } else {
+      toast('⚠️ Gallery full — max 9 photos');
+    }
+    return;
+  }
   if (!CLOUDINARY_CLOUD) { toast('⚠️ Cloudinary not set up yet'); return; }
 
   for (const file of files.slice(0, slots)) {
@@ -559,14 +617,27 @@ function removeGallery(idx) {
   _renderGallery();
 }
 
+function _isProActive() {
+  return _proStatus() === 'pro' || _proStatus() === 'expiring';
+}
+
 function _renderGallery() {
   const grid = document.getElementById('gallery-grid');
   if (!grid) return;
+  const maxPhotos  = _isProActive() ? 9 : 2;
+  const atLimit    = _savedGallery.length >= maxPhotos;
   let html = '';
   _savedGallery.forEach((url, i) =>
     html += `<div class="gallery-item"><img src="${url}" alt=""><button class="rm-btn" onclick="removeGallery(${i})">×</button></div>`);
-  if (_savedGallery.length < 6)
+  if (!atLimit) {
     html += `<div class="gallery-add" onclick="document.getElementById('gallery-input').click()"><span class="gallery-add-icon">＋</span><span class="gallery-add-lbl">Add Photo</span></div>`;
+  } else if (!_isProActive()) {
+    // Lock tile — show Pro upsell
+    html += `<div class="gallery-add" style="border-color:rgba(184,145,106,0.45);background:rgba(245,230,200,0.3);" onclick="showScreen('dashboard');showDashTab('plan')">
+      <span style="font-size:18px">⭐</span>
+      <span class="gallery-add-lbl" style="color:var(--gold-dk);text-align:center;line-height:1.3">Pro<br>unlock more</span>
+    </div>`;
+  }
   grid.innerHTML = html;
 }
 
@@ -693,7 +764,6 @@ function _renderDashboard() {
   if (!_profile) return;
   _renderDashHeader();
   _renderPreview();
-  _renderProCta();
 }
 
 function _renderDashHeader() {
@@ -718,7 +788,7 @@ function _renderDashHeader() {
       <div style="font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-0.3px;margin-bottom:2px">${_esc(p.name)}</div>
       <div style="font-size:12px;color:var(--ink-4);margin-bottom:4px">${CAT_EMOJI[p.category]||''} ${CAT_LABEL[p.category]||p.category||''}${p.location ? ' · ' + _esc(p.location) : ''}</div>
       ${priceText ? `<div style="font-size:13px;font-weight:700;color:var(--gold-dk);margin-bottom:10px">${priceText}</div>` : '<div style="margin-bottom:10px"></div>'}
-      <div style="display:flex;gap:16px;align-items:center">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <div style="text-align:center">
           <div style="font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.3px">${p.review_count||0}</div>
           <div style="font-size:9.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Reviews</div>
@@ -727,7 +797,15 @@ function _renderDashHeader() {
           <div style="font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.3px">${p.rating_avg ? Number(p.rating_avg).toFixed(1) : '—'}</div>
           <div style="font-size:9.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Rating</div>
         </div>
-        <button onclick="editProfile()" style="margin-left:auto;padding:8px 14px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.28);background:rgba(245,230,200,0.55);font-family:var(--f);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer">✏️ Edit Profile</button>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          ${(()=>{
+            const st = _proStatus();
+            if (st==='pro'||st==='expiring') return `<span onclick="showDashTab('plan')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--gold-dk));color:#fff;font-size:10px;font-weight:800">⭐ Pro</span>`;
+            if (st==='expired') return `<span onclick="showDashTab('plan')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:rgba(192,112,104,0.12);border:1px solid rgba(192,112,104,0.3);color:var(--rose);font-size:10px;font-weight:800">⚠️ Expired</span>`;
+            return `<span onclick="showDashTab('plan')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:rgba(245,230,200,0.55);border:1px solid rgba(184,145,106,0.25);color:var(--ink-3);font-size:10px;font-weight:800">Free</span>`;
+          })()}
+          <button onclick="editProfile()" style="padding:8px 14px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.28);background:rgba(245,230,200,0.55);font-family:var(--f);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer">✏️ Edit</button>
+        </div>
       </div>
     </div>`;
 }
@@ -772,11 +850,164 @@ function _renderPreview() {
 
 /* ── DASHBOARD TABS ── */
 function showDashTab(name) {
-  ['preview','reviews'].forEach(t => {
+  ['preview','reviews','plan'].forEach(t => {
     document.getElementById('tab-pane-' + t)?.classList.toggle('active', t === name);
     document.getElementById('tab-btn-' + t)?.classList.toggle('active', t === name);
   });
   if (name === 'reviews') _loadReviews();
+  if (name === 'plan')    _renderPlanTab();
+}
+
+/* ── PRO STATUS HELPER ── */
+function _proStatus() {
+  // Returns: 'free' | 'pro' | 'expiring' | 'expired'
+  if (!_profile?.pro) return 'free';
+  const exp = _profile.pro_expires_at?.toDate?.();
+  if (!exp) return 'pro'; // no expiry set = indefinite (legacy / manual)
+  const now   = new Date();
+  const days  = Math.ceil((exp - now) / 86400000);
+  if (days <= 0)  return 'expired';
+  if (days <= 14) return 'expiring';
+  return 'pro';
+}
+
+function _proDaysLeft() {
+  const exp = _profile?.pro_expires_at?.toDate?.();
+  if (!exp) return null;
+  return Math.ceil((exp - new Date()) / 86400000);
+}
+
+/* ── PLAN TAB ── */
+function _renderPlanTab() {
+  const area = document.getElementById('plan-area');
+  if (!area) return;
+  const status = _proStatus();
+  const days   = _proDaysLeft();
+  const exp    = _profile?.pro_expires_at?.toDate?.();
+  const planLabel = _profile?.pro_plan === 'annual' ? 'Pro Annual' : _profile?.pro_plan === 'monthly' ? 'Pro Monthly' : 'Pro';
+
+  /* ── Current status card ── */
+  let statusHtml = '';
+  if (status === 'free') {
+    statusHtml = `
+      <div class="plan-status-card free">
+        <div class="plan-badge-row">
+          <span class="plan-tier-badge free">🆓 Free Plan</span>
+        </div>
+        <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:4px">
+          You're on the <b>Free plan</b>. Upgrade to Pro to get featured, unlock your full gallery, and show all your reviews to couples.
+        </div>
+      </div>`;
+  } else if (status === 'pro') {
+    const expText = exp ? exp.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' }) : 'No expiry set';
+    statusHtml = `
+      <div class="plan-status-card pro">
+        <div class="plan-badge-row">
+          <span class="plan-tier-badge pro">⭐ ${planLabel}</span>
+          ${days !== null ? `<span class="plan-days-chip ok">${days} days left</span>` : ''}
+        </div>
+        <div class="plan-detail-row">
+          <span class="plan-expiry-label">Renews / Expires</span>
+          <span class="plan-expiry-val">${expText}</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-4);margin-top:8px;line-height:1.5">
+          Your listing is featured and your full gallery is visible to couples. 🎉
+        </div>
+      </div>`;
+  } else if (status === 'expiring') {
+    const expText = exp ? exp.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' }) : '';
+    statusHtml = `
+      <div class="plan-status-card expiring">
+        <div class="plan-badge-row">
+          <span class="plan-tier-badge pro">⭐ ${planLabel}</span>
+          <span class="plan-days-chip soon">⚠️ Expires in ${days} day${days===1?'':'s'}</span>
+        </div>
+        <div class="plan-detail-row">
+          <span class="plan-expiry-label">Expires on</span>
+          <span class="plan-expiry-val">${expText}</span>
+        </div>
+        <div style="font-size:12px;color:#b07700;margin-top:8px;line-height:1.5;font-weight:600">
+          Renew before it expires to keep your featured placement and full gallery.
+        </div>
+      </div>`;
+  } else { // expired
+    statusHtml = `
+      <div class="plan-status-card expired">
+        <div class="plan-badge-row">
+          <span class="plan-tier-badge expired">⛔ Pro Expired</span>
+        </div>
+        <div style="font-size:13px;color:var(--rose);font-weight:600;margin-bottom:4px">
+          Your Pro plan has expired. Your listing is now on Free — gallery and extra reviews are hidden from couples.
+        </div>
+        <div style="font-size:12px;color:var(--ink-4);line-height:1.5">Renew anytime to restore your Pro features instantly.</div>
+      </div>`;
+  }
+
+  /* ── Features comparison ── */
+  const isActiveProNow = status === 'pro' || status === 'expiring';
+  const featuresHtml = `
+    <div style="background:rgba(255,252,247,0.9);border:1px solid rgba(184,145,106,0.18);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-4);margin-bottom:10px">What's included</div>
+      <div class="plan-perks">
+        <div class="plan-perk"><span class="ck yes">✓</span><span>Full business profile (name, category, location, contacts, pricing)</span></div>
+        <div class="plan-perk"><span class="ck yes">✓</span><span>Cover photo + <b>2 gallery photos</b> (Free) · <b>up to 9 photos</b> (Pro)</span></div>
+        <div class="plan-perk"><span class="ck yes">✓</span><span>Listed in the supplier directory</span></div>
+        <div class="plan-perk"><span class="ck yes">✓</span><span>Collect reviews &amp; "Legit" tags from clients</span></div>
+        <div class="plan-perk"><span class="ck ${isActiveProNow ? 'yes' : 'no'}">${isActiveProNow ? '✓' : '○'}</span>
+          <span style="color:${isActiveProNow ? 'inherit' : 'var(--ink-4)'}"><b>2 reviews shown to couples</b> (Free) · <b>all reviews shown</b> (Pro)</span></div>
+        <div class="plan-perk"><span class="ck ${isActiveProNow ? 'yes' : 'no'}">${isActiveProNow ? '✓' : '○'}</span>
+          <span style="color:${isActiveProNow ? 'inherit' : 'var(--ink-4)'}">⭐ Featured badge — sorted above free listings in directory</span></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-4);line-height:1.55;padding-top:10px;border-top:1px solid rgba(184,145,106,0.12)">
+        <b style="color:var(--ink-3)">✔ Verified badge</b> is separate from Pro — earned by submitting proof of business registration (DTI/SEC/gov't ID) plus having 10+ Legit tags and a 4.0+ rating. Both Free and Pro suppliers can earn it.
+      </div>
+    </div>`;
+
+  /* ── Pricing + pay buttons (shown if free, expiring, or expired) ── */
+  let pricingHtml = '';
+  if (status !== 'pro') {
+    const monthlyLink = PAY_LINK_MONTHLY || `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Monthly — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi! I\'d like to subscribe to Pro Monthly (₱299/mo).\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||''))}`;
+    const annualLink  = PAY_LINK_ANNUAL  || `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Annual — '  + (_profile?.name||''))}&body=${encodeURIComponent('Hi! I\'d like to subscribe to Pro Annual (₱2,499/yr).\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||''))}`;
+
+    pricingHtml = `
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-4);margin-bottom:10px">
+          ${status === 'expired' ? 'Renew your Pro plan' : 'Upgrade to Pro ⭐'}
+        </div>
+        <div class="plan-pricing-row">
+          <div class="plan-price-card" onclick="window.open('${monthlyLink}','_blank')">
+            <div class="plan-price-amount">₱${PRO_PRICE_MONTHLY.toLocaleString()}</div>
+            <div class="plan-price-period">per month</div>
+            <div style="margin-top:10px;padding:8px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));color:#fff;font-size:12px;font-weight:700">${status === 'expired' ? 'Renew Monthly' : 'Go Monthly'}</div>
+          </div>
+          <div class="plan-price-card featured" onclick="window.open('${annualLink}','_blank')">
+            <div style="font-size:9.5px;font-weight:800;color:var(--sage);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Best value</div>
+            <div class="plan-price-amount">₱${PRO_PRICE_ANNUAL.toLocaleString()}</div>
+            <div class="plan-price-period">per year</div>
+            <div class="plan-price-save">Save ₱${(PRO_PRICE_MONTHLY * 12 - PRO_PRICE_ANNUAL).toLocaleString()} vs monthly</div>
+            <div style="margin-top:10px;padding:8px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));color:#fff;font-size:12px;font-weight:700">${status === 'expired' ? 'Renew Annual' : 'Go Annual'}</div>
+          </div>
+        </div>
+
+        <div class="plan-how-title">How to activate</div>
+        <div class="plan-step"><div class="plan-step-num">1</div><div class="plan-step-text">Click a plan above → complete payment via GCash or card.</div></div>
+        <div class="plan-step"><div class="plan-step-num">2</div><div class="plan-step-text"><b>Include your registered email</b> (${_esc(_user?.email||'')}) in the payment reference / notes so we can match it to your account.</div></div>
+        <div class="plan-step"><div class="plan-step-num">3</div><div class="plan-step-text">We activate your Pro plan within <b>24 hours</b>. You'll see the ⭐ badge appear here once it's live.</div></div>
+        <div style="font-size:11.5px;color:var(--ink-4);margin-top:10px;line-height:1.55">Questions? Email us at <a href="mailto:${SUPPORT_EMAIL}" style="color:var(--gold);font-weight:700">${SUPPORT_EMAIL}</a></div>
+      </div>`;
+  }
+
+  /* ── Renew button for active Pro (expiring soon) ── */
+  let renewHtml = '';
+  if (status === 'expiring') {
+    const annualLink = PAY_LINK_ANNUAL || `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Renewal — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi! I\'d like to renew my Pro plan.\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||''))}`;
+    renewHtml = `
+      <button onclick="window.open('${annualLink}','_blank')" style="width:100%;padding:13px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px">
+        Renew Pro Now ⭐
+      </button>`;
+  }
+
+  area.innerHTML = statusHtml + featuresHtml + renewHtml + pricingHtml;
 }
 
 /* ── REVIEWS ── */
@@ -814,38 +1045,6 @@ async function _loadReviews() {
   }
 }
 
-/* ── PRO CTA ── */
-function _renderProCta() {
-  const el = document.getElementById('pro-cta');
-  if (!el) return;
-  if (_profile?.pro) {
-    el.innerHTML = `
-      <div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px">⭐ You're on Pro!</div>
-      <div style="font-size:13px;color:var(--ink-3);line-height:1.65">Your listing is featured at the top of your category and your gallery is fully visible to couples. Thank you for supporting Vows &amp; Petals! 💍</div>`;
-    return;
-  }
-  el.innerHTML = `
-    <div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px">⭐ Upgrade to Pro</div>
-    <div style="font-size:13px;color:var(--ink-3);line-height:1.65;margin-bottom:10px">Stand out and get more bookings. Pro suppliers get priority placement and full gallery visibility.</div>
-    <ul class="pro-features">
-      <li>⭐ Featured badge in all browse results</li>
-      <li>Sorted #1 in your category</li>
-      <li>Full photo gallery visible to couples</li>
-      <li>Fast-track to Verified status</li>
-      <li>Priority support from our team</li>
-    </ul>
-    <button onclick="contactPro()" style="width:100%;padding:13px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.2px">
-      Inquire About Pro ⭐
-    </button>`;
-}
-
-function contactPro() {
-  const name = _profile?.name || 'my business';
-  const email = _user?.email || '';
-  const subject = encodeURIComponent('Pro Plan Inquiry — ' + name);
-  const body = encodeURIComponent(`Hi!\n\nI'd like to upgrade "${name}" to Pro on Vows & Petals.\n\nMy email: ${email}\n\nPlease let me know the details. Thank you!`);
-  window.open(`mailto:hello@vowsandpetals.com?subject=${subject}&body=${body}`, '_blank');
-}
 
 /* ── HELPERS ── */
 function _esc(str) {
