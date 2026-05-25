@@ -1801,14 +1801,24 @@ const VENDOR_EMOJI = {
   cake:'🎂', invites:'📄', hair:'💄', 'photo-booth':'🖼️',
   transportation:'🚗', lights:'💡', jewelry:'💍', others:'✨', other:'📦',
 };
+const VENDOR_CAT_LABEL = {
+  venue:'Venue', catering:'Catering', photography:'Photography', videography:'Videography',
+  florals:'Flowers & Florals', attire:'Attire & Accessories', music:'Music & Entertainment',
+  coordination:'Coordination & Planning', cake:'Cake & Desserts', invites:'Invitations & Printing',
+  hair:'Hair & Makeup', 'photo-booth':'Photo Booth', transportation:'Transportation',
+  lights:'Lights & Sounds', jewelry:'Jewelry', others:'Others',
+  // legacy keys
+  flowers:'Flowers & Florals', makeup:'Hair & Makeup', invitations:'Invitations & Printing',
+};
 function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
 
 /* ═══════════════════════════════════════════════
    SUPPLIER MARKETPLACE — inline browse within the Suppliers tab
    View states: 'main' | 'browse' | { cat, catLabel } | { profile: supplierId, suppData }
 ═══════════════════════════════════════════════ */
-let _supplierView = 'main';
-let _marketplaceCache = null; // { cat: [supplier,...] }
+let _supplierView     = 'main';
+let _prevSupplierView = null;  // tracks where to go when pressing Back from profile
+let _marketplaceCache = null;  // { cat: [supplier,...] }
 
 function setSupplierView(view) {
   _supplierView = view;
@@ -1892,6 +1902,7 @@ function _supplierCard(s) {
 }
 
 function openSupplierProfile(id) {
+  _prevSupplierView = _supplierView; // remember where we came from
   setSupplierView({ type: 'profile', id });
 }
 
@@ -2124,10 +2135,28 @@ function _renderSuppliersCategory(el, cat, catLabel) {
   });
 }
 
+function _goBackFromProfile() {
+  // Go back to the exact view we came from (category list, search, or browse)
+  const dest = _prevSupplierView || 'browse';
+  _prevSupplierView = null;
+  setSupplierView(dest);
+}
+
+function _fbToMessenger(fbUrl) {
+  if (!fbUrl) return null;
+  try {
+    const m = fbUrl.match(/(?:facebook\.com|fb\.com)\/([^/?#&]+)/);
+    if (m && m[1] && m[1] !== 'pages' && !m[1].startsWith('profile')) {
+      return 'https://m.me/' + m[1];
+    }
+  } catch(e) {}
+  return null;
+}
+
 function _renderSupplierProfileView(el, supplierId) {
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <button onclick="history.back ? setSupplierView('browse') : setSupplierView('main')" onclick="setSupplierView('browse')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+      <button onclick="_goBackFromProfile()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
     </div>
     <div id="supplier-profile-content" style="text-align:center;padding:30px 0;color:var(--ink-4)">Loading profile…</div>`;
 
@@ -2147,21 +2176,28 @@ function _renderSupplierProfileView(el, supplierId) {
       <div class="glass" style="border-radius:var(--r-lg);padding:20px;margin-bottom:12px;${s.cover_photo?'padding-top:36px':''}">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">${proBadge}${verifiedBadge}</div>
         <div style="font-family:var(--f2);font-size:22px;font-style:italic;font-weight:600;color:var(--ink)">${s.name}</div>
-        ${s.category ? `<div style="font-size:11.5px;color:var(--ink-4);text-transform:capitalize;margin-top:3px">${getSupplierEmoji(s.category)} ${s.category}</div>` : ''}
+        ${s.category ? `<div style="font-size:11.5px;color:var(--ink-4);margin-top:3px">${getSupplierEmoji(s.category)} ${VENDOR_CAT_LABEL[s.category] || s.category}</div>` : ''}
         ${s.location  ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px">📍 ${s.location}</div>` : ''}
         ${stars ? `<div style="font-size:13px;color:#c9a96e;letter-spacing:1.5px;margin-top:4px">${stars} <span style="font-size:11px;color:var(--ink-4)">${s.review_count||0} review${(s.review_count||0)!==1?'s':''}</span></div>` : ''}
         ${s.price_from ? `<div style="font-size:13px;font-weight:700;color:var(--tan-dark);margin-top:6px">₱${Number(s.price_from).toLocaleString()}${s.price_to?' – ₱'+Number(s.price_to).toLocaleString():'+'}</div>` : ''}
         ${s.description ? `<div style="font-size:12.5px;color:var(--ink-3);line-height:1.65;margin-top:10px">${s.description}</div>` : ''}
 
-        <!-- Contact row -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-          ${s.phone   ? `<a href="tel:${s.phone.replace(/\s/g,'')}" style="padding:8px 14px;border-radius:10px;background:rgba(90,171,122,0.15);border:1px solid rgba(90,171,122,0.28);font-size:12px;font-weight:700;color:var(--green-deep);text-decoration:none">📞 Call</a>` : ''}
-          ${s.fb      ? `<a href="${s.fb}" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:10px;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);font-size:12px;font-weight:700;color:#1a73e8;text-decoration:none">Facebook</a>` : ''}
-          ${s.ig      ? `<a href="${s.ig}" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:10px;background:rgba(181,63,137,0.1);border:1px solid rgba(181,63,137,0.22);font-size:12px;font-weight:700;color:#b53f89;text-decoration:none">Instagram</a>` : ''}
-          ${s.website ? `<a href="${s.website}" target="_blank" rel="noopener" style="padding:8px 14px;border-radius:10px;background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.28);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗 Website</a>` : ''}
-        </div>
+        <!-- Contact buttons -->
+        ${(()=>{
+          const raw   = (s.phone||'').replace(/[\s\-().]/g,'');
+          const msngr = _fbToMessenger(s.fb);
+          const btns  = [];
+          if (raw) btns.push(`<a href="tel:${raw}" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(90,171,122,0.15);border:1px solid rgba(90,171,122,0.28);font-size:12px;font-weight:700;color:var(--green-deep);text-decoration:none">📞 Call</a>`);
+          if (raw) btns.push(`<a href="viber://chat?number=${encodeURIComponent(raw)}" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(112,73,167,0.1);border:1px solid rgba(112,73,167,0.25);font-size:12px;font-weight:700;color:#7049a7;text-decoration:none">💬 Viber</a>`);
+          if (raw) btns.push(`<a href="sms:${raw}" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.22);font-size:12px;font-weight:700;color:var(--green-deep);text-decoration:none">✉️ Text / iMessage</a>`);
+          if (msngr) btns.push(`<a href="${msngr}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(0,153,255,0.1);border:1px solid rgba(0,153,255,0.25);font-size:12px;font-weight:700;color:#0099ff;text-decoration:none">💬 Messenger</a>`);
+          if (s.fb)      btns.push(`<a href="${s.fb}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);font-size:12px;font-weight:700;color:#1a73e8;text-decoration:none">📘 Facebook</a>`);
+          if (s.ig)      btns.push(`<a href="${s.ig.startsWith('http')?s.ig:'https://instagram.com/'+s.ig.replace(/^@/,'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(181,63,137,0.1);border:1px solid rgba(181,63,137,0.22);font-size:12px;font-weight:700;color:#b53f89;text-decoration:none">📸 Instagram</a>`);
+          if (s.website) btns.push(`<a href="${s.website}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.28);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗 Website</a>`);
+          return btns.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">${btns.join('')}</div>` : '';
+        })()}
 
-        <!-- Add to my vendors -->
+        <!-- Save to vendors -->
         <button onclick="openAddVendorModal('${s.category||''}','${s.name||''}')" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:linear-gradient(135deg,var(--rose),#c03060);border:none;color:white;font-size:13px;font-weight:700;cursor:pointer">+ Save to My Vendors</button>
       </div>
 
@@ -2188,18 +2224,9 @@ function _renderSupplierProfileView(el, supplierId) {
                 </div>
                 ${r.text ? `<div style="font-size:12px;color:var(--ink-3);line-height:1.55">${r.text}</div>` : ''}
               </div>`).join('')
-          : `<div style="font-size:12.5px;color:var(--ink-4);padding:8px 0">No reviews yet.</div>`}
+          : `<div style="font-size:12.5px;color:var(--ink-4);padding:8px 0">No reviews yet — be the first!</div>`}
         <button onclick="openLeaveReview('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">✍️ Leave a Review</button>
       </div>
-
-      <!-- Pro plan CTA (only for non-pro) -->
-      ${!s.pro ? `
-      <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,rgba(181,82,43,0.08),rgba(201,169,110,0.15));border:1px solid rgba(181,82,43,0.22);text-align:center;margin-bottom:12px">
-        <div style="font-size:20px;margin-bottom:6px">⭐</div>
-        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Upgrade to Pro Listing</div>
-        <div style="font-size:12px;color:var(--ink-3);line-height:1.6;margin-bottom:12px">Upload photos • Get featured at the top • Enable reviews & ratings • Verified badge • Full profile page</div>
-        <a href="mailto:hello@vowsandpetals.app?subject=Pro Listing - ${encodeURIComponent(s.name||'')}" style="display:inline-block;padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:13px;font-weight:700;text-decoration:none">Get Pro Listing</a>
-      </div>` : ''}
     `;
   });
 }
@@ -4818,6 +4845,7 @@ window.updateSeatSearch           = updateSeatSearch;
 window.openPartnerBrowse          = openPartnerBrowse;
 window.supplierSearch             = supplierSearch;
 window.openPhotoZoom              = openPhotoZoom;
+window._goBackFromProfile         = _goBackFromProfile;
 window.renderEntourage            = renderEntourage;
 window.openEntourageMemberModal   = openEntourageMemberModal;
 window.submitEntourageMember      = submitEntourageMember;
