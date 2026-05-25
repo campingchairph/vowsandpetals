@@ -1778,21 +1778,29 @@ window.clearCustomCard = function() {
    SUPPLIERS
 ═══════════════════════════════════════════════ */
 const SUGGESTED_SUPPLIERS = [
-  { cat:'venue',       emoji:'🏛️', label:'Venue',           tip:'Book 12+ months out — venues fill fast',         link:'https://kasal.com/venues' },
-  { cat:'catering',    emoji:'🍽️', label:'Catering',        tip:'Request a tasting before signing anything',       link:'https://kasal.com/caterers' },
-  { cat:'photography', emoji:'📸', label:'Photography',      tip:'Ask for full-day + 2nd shooter + album',          link:'https://kasal.com/photography' },
-  { cat:'videography', emoji:'🎬', label:'Videography',      tip:'SDE (same-day edit) is the Filipino must-have',   link:'https://kasal.com/videography' },
-  { cat:'florals',     emoji:'💐', label:'Florals',          tip:'Seasonal blooms save 20–30% on your budget',      link:'https://kasal.com/florists' },
-  { cat:'attire',      emoji:'👗', label:'Attire & Styling', tip:'Schedule fittings at least 3 months before',     link:'https://kasal.com/attire' },
-  { cat:'music',       emoji:'🎵', label:'Music & Band',     tip:'Hear them live at a gig before booking',          link:'https://kasal.com/entertainment' },
-  { cat:'coordination',emoji:'📋', label:'Coordination',     tip:'A good coordinator is the best investment',       link:'https://kasal.com/coordinators' },
-  { cat:'cake',        emoji:'🎂', label:'Cake & Desserts',  tip:'Order tasting boxes from your shortlist',         link:'https://kasal.com/cakes' },
-  { cat:'invites',     emoji:'💌', label:'Invitations',      tip:'Stationery sets the entire wedding tone',         link:'https://kasal.com/invitations' },
-  { cat:'hair',        emoji:'💄', label:'Hair & Makeup',    tip:'Book an HMUA who specializes in your look',       link:'https://kasal.com/hairmakeup' },
-  { cat:'photo-booth', emoji:'🖼️', label:'Photo Booth',      tip:'Fun keepsake for guests — worth every peso',      link:'https://kasal.com/photobooth' },
+  { cat:'venue',          emoji:'🏛️', label:'Venue',                tip:'Book 12+ months out — venues fill fast',          link:'https://kasal.com/venues' },
+  { cat:'catering',       emoji:'🍽️', label:'Catering',             tip:'Request a tasting before signing anything',        link:'https://kasal.com/caterers' },
+  { cat:'photography',    emoji:'📸', label:'Photography',           tip:'Ask for full-day + 2nd shooter + album',           link:'https://kasal.com/photography' },
+  { cat:'videography',    emoji:'🎥', label:'Videography',           tip:'SDE (same-day edit) is the Filipino must-have',    link:'https://kasal.com/videography' },
+  { cat:'florals',        emoji:'💐', label:'Flowers & Florals',     tip:'Seasonal blooms save 20–30% on your budget',       link:'https://kasal.com/florists' },
+  { cat:'attire',         emoji:'👗', label:'Attire & Accessories',  tip:'Schedule fittings at least 3 months before',      link:'https://kasal.com/attire' },
+  { cat:'music',          emoji:'🎵', label:'Music & Entertainment', tip:'Hear them live at a gig before booking',           link:'https://kasal.com/entertainment' },
+  { cat:'coordination',   emoji:'📋', label:'Coordination & Planning',tip:'A good coordinator is the best investment',      link:'https://kasal.com/coordinators' },
+  { cat:'cake',           emoji:'🎂', label:'Cake & Desserts',       tip:'Order tasting boxes from your shortlist',          link:'https://kasal.com/cakes' },
+  { cat:'invites',        emoji:'📄', label:'Invitations & Printing',tip:'Stationery sets the entire wedding tone',          link:'https://kasal.com/invitations' },
+  { cat:'hair',           emoji:'💄', label:'Hair & Makeup',         tip:'Book an HMUA who specializes in your look',        link:'https://kasal.com/hairmakeup' },
+  { cat:'photo-booth',    emoji:'🖼️', label:'Photo Booth',           tip:'Fun keepsake for guests — worth every peso',       link:'https://kasal.com/photobooth' },
+  { cat:'transportation', emoji:'🚗', label:'Transportation',        tip:'Book early — cars go fast for popular dates',      link:'https://kasal.com' },
+  { cat:'lights',         emoji:'💡', label:'Lights & Sounds',       tip:'Lights transform a venue — visit for a demo',     link:'https://kasal.com' },
+  { cat:'jewelry',        emoji:'💍', label:'Jewelry',               tip:'Commission custom pieces at least 4 months out',  link:'https://kasal.com' },
 ];
 
-const VENDOR_EMOJI = { venue:'🏛️',catering:'🍽️',photography:'📸',videography:'🎬',florals:'💐',attire:'👗',music:'🎵',coordination:'📋',cake:'🎂',invites:'💌',hair:'💄','photo-booth':'🖼️',other:'📦' };
+const VENDOR_EMOJI = {
+  venue:'🏛️', catering:'🍽️', photography:'📸', videography:'🎥',
+  florals:'💐', attire:'👗', music:'🎵', coordination:'📋',
+  cake:'🎂', invites:'📄', hair:'💄', 'photo-booth':'🖼️',
+  transportation:'🚗', lights:'💡', jewelry:'💍', others:'✨', other:'📦',
+};
 function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
 
 /* ═══════════════════════════════════════════════
@@ -1817,11 +1825,15 @@ async function _loadMarketplaceCat(cat) {
     if (typeof DB !== 'undefined' && DB) {
       const snap = await DB.collection('kasalko_marketplace')
         .where('category', '==', cat)
-        .orderBy('pro', 'desc')
-        .orderBy('verified', 'desc')
-        .limit(30)
+        .limit(50)
         .get();
-      _marketplaceCache[cat] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort client-side: verified+pro first, then verified, then pro, then free
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      docs.sort((a, b) => {
+        const rank = s => (s.verified ? 2 : 0) + (s.pro ? 1 : 0);
+        return rank(b) - rank(a);
+      });
+      _marketplaceCache[cat] = docs;
     } else {
       _marketplaceCache[cat] = [];
     }
@@ -1846,7 +1858,7 @@ async function _loadSupplierProfile(id) {
 }
 
 function _supplierCard(s) {
-  const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 6px">✔ Verified</span>` : '';
+  const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 6px">✔ Verified</span>` : `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--ink-4);background:rgba(245,230,200,0.4);border:1px solid rgba(184,145,106,0.2);border-radius:6px;padding:2px 6px">Unverified</span>`;
   const proBadge      = s.pro      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#b5522b;background:rgba(181,82,43,0.1);border:1px solid rgba(181,82,43,0.22);border-radius:6px;padding:2px 6px">⭐ Featured</span>` : '';
   const stars = s.rating_avg ? '★'.repeat(Math.round(s.rating_avg)) + '☆'.repeat(5-Math.round(s.rating_avg)) : '';
   const priceStr = s.price_from ? `₱${Number(s.price_from).toLocaleString()}${s.price_to?' – ₱'+Number(s.price_to).toLocaleString():'+'} ` : '';
@@ -1960,7 +1972,7 @@ function _renderSuppliersMain(el) {
         <div style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:2px">Are you a wedding supplier?</div>
         <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5">Get your business listed in our directory — free, no setup needed.</div>
       </div>
-      <a href="https://campingchairph.github.io/vowsandpetals/supplier.html" target="_blank" rel="noopener"
+      <a href="https://campingchairph.github.io/vowsandpetals/" target="_blank" rel="noopener"
         style="flex-shrink:0;padding:8px 13px;border-radius:var(--r-md);background:var(--tan);color:var(--ivory);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;font-family:var(--f)">
         Get Listed →
       </a>
@@ -1968,36 +1980,103 @@ function _renderSuppliersMain(el) {
   `;
 }
 
+let _supplierSearchQ    = '';
+let _supplierLocFilter  = '';
+let _supplierSearchResults = null; // null = not searching
+
+function supplierSearch() {
+  const q   = (document.getElementById('sup-search-input')?.value || '').trim().toLowerCase();
+  const loc = (document.getElementById('sup-loc-filter')?.value || '').toLowerCase();
+  _supplierSearchQ   = q;
+  _supplierLocFilter = loc;
+
+  const resultsEl = document.getElementById('sup-search-results');
+  if (!resultsEl) return;
+
+  if (!q && !loc) {
+    resultsEl.innerHTML = '';
+    _supplierSearchResults = null;
+    return;
+  }
+
+  resultsEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--ink-4);font-size:12.5px">Searching…</div>`;
+
+  if (typeof DB === 'undefined' || !DB) {
+    resultsEl.innerHTML = `<div style="padding:16px;color:var(--ink-4);font-size:12.5px">Search unavailable offline.</div>`;
+    return;
+  }
+
+  DB.collection('kasalko_marketplace').limit(100).get().then(snap => {
+    let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Filter
+    if (q) docs = docs.filter(d => {
+      const haystack = ((d.name||'') + ' ' + (d.category||'') + ' ' + (d.description||'') + ' ' + (d.location||'')).toLowerCase();
+      return haystack.includes(q);
+    });
+    if (loc) docs = docs.filter(d => (d.location||'').toLowerCase().includes(loc));
+    // Sort: verified+pro first
+    docs.sort((a, b) => {
+      const rank = s => (s.verified ? 2 : 0) + (s.pro ? 1 : 0);
+      return rank(b) - rank(a);
+    });
+    _supplierSearchResults = docs;
+    if (!docs.length) {
+      resultsEl.innerHTML = `<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px">No results found — try different keywords or location.</div>`;
+    } else {
+      resultsEl.innerHTML = `
+        <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">${docs.length} result${docs.length!==1?'s':''}</div>
+        ${docs.map(s => _supplierCard(s)).join('')}`;
+    }
+  }).catch(() => {
+    resultsEl.innerHTML = `<div style="padding:16px;color:var(--ink-4);font-size:12.5px">Search failed. Please try again.</div>`;
+  });
+}
+
+const PH_CITIES = ['Metro Manila','Quezon City','Makati','Taguig','Pasig','Mandaluyong','Manila','Caloocan','Marikina','Parañaque','Las Piñas','Muntinlupa','Valenzuela','Pasay','Malabon','Navotas','San Juan','Cebu City','Davao City','Iloilo City','Cagayan de Oro','Bacolod','Baguio','General Santos','Zamboanga City','Antipolo','Batangas City','Cabanatuan','San Jose del Monte','Laguna','Cavite','Bulacan','Pampanga','Rizal'];
+
 function _renderSuppliersBrowse(el) {
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button onclick="setSupplierView('main')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--ink)">Supplier Marketplace</div>
-        <div style="font-size:11px;color:var(--ink-4)">Browse verified Philippine wedding suppliers</div>
+        <div style="font-size:11px;color:var(--ink-4)">All registered Philippine wedding suppliers</div>
       </div>
     </div>
 
-    <!-- List your business CTA -->
-    <div style="padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(201,169,110,0.15),rgba(181,82,43,0.1));border:1px solid rgba(201,169,110,0.28);margin-bottom:16px;text-align:center">
-      <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px">Are you a wedding supplier?</div>
-      <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:10px">List your business and reach couples planning their dream wedding.</div>
-      <a href="mailto:hello@vowsandpetals.app?subject=List My Business" style="display:inline-block;padding:8px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">📋 List My Business</a>
+    <!-- Search + Location -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input id="sup-search-input" type="search" placeholder="Search name, category…" value="${_supplierSearchQ}"
+        oninput="supplierSearch()"
+        style="flex:1;padding:9px 13px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:13px;color:var(--ink);outline:none">
+      <select id="sup-loc-filter" onchange="supplierSearch()"
+        style="padding:9px 10px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:12px;color:var(--ink);outline:none;max-width:130px">
+        <option value="">📍 All areas</option>
+        ${PH_CITIES.map(c=>`<option value="${c.toLowerCase()}" ${_supplierLocFilter===c.toLowerCase()?'selected':''}>${c}</option>`).join('')}
+      </select>
     </div>
 
-    <!-- Category grid -->
-    <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Browse by Category</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      ${SUGGESTED_SUPPLIERS.map(s => `
-        <div onclick="openPartnerBrowse('${s.cat}','${s.label}')" class="glass"
-             style="padding:14px 12px;border-radius:var(--r-md);cursor:pointer;display:flex;align-items:center;gap:10px">
-          <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${s.emoji}</div>
-          <div>
-            <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${s.label}</div>
-            <div style="font-size:10px;color:var(--ink-4);margin-top:1px">Browse →</div>
-          </div>
-        </div>`).join('')}
+    <!-- Search results (hidden when empty) -->
+    <div id="sup-search-results"></div>
+
+    <!-- Category grid (shown when not actively searching) -->
+    <div id="sup-cat-grid">
+      <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Browse by Category</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${SUGGESTED_SUPPLIERS.map(s => `
+          <div onclick="openPartnerBrowse('${s.cat}','${s.label}')" class="glass"
+               style="padding:14px 12px;border-radius:var(--r-md);cursor:pointer;display:flex;align-items:center;gap:10px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${s.emoji}</div>
+            <div>
+              <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${s.label}</div>
+              <div style="font-size:10px;color:var(--ink-4);margin-top:1px">Browse →</div>
+            </div>
+          </div>`).join('')}
+      </div>
     </div>`;
+
+  // Re-run search if there was a previous query
+  if (_supplierSearchQ || _supplierLocFilter) supplierSearch();
 }
 
 function _renderSuppliersCategory(el, cat, catLabel) {
@@ -2007,7 +2086,7 @@ function _renderSuppliersCategory(el, cat, catLabel) {
       <button onclick="setSupplierView('browse')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--ink)">${catLabel}</div>
-        <div style="font-size:11px;color:var(--ink-4)">Verified suppliers · featured first</div>
+        <div style="font-size:11px;color:var(--ink-4)">All suppliers · verified first</div>
       </div>
     </div>
     <div id="supplier-cat-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -2023,9 +2102,9 @@ function _renderSuppliersCategory(el, cat, catLabel) {
       listEl.innerHTML = `
         <div style="text-align:center;padding:40px 16px">
           <div style="font-size:36px;margin-bottom:12px">${getSupplierEmoji(cat)}</div>
-          <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">No suppliers listed yet</div>
-          <div style="font-size:12px;color:var(--ink-4);line-height:1.6;margin-bottom:16px">We're curating verified ${catLabel.toLowerCase()} suppliers for Philippine weddings.</div>
-          <a href="mailto:hello@vowsandpetals.app?subject=List My Business - ${catLabel}" style="display:inline-block;padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">🤝 Get Listed Here</a>
+          <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">No suppliers listed yet in this category</div>
+          <div style="font-size:12px;color:var(--ink-4);line-height:1.6;margin-bottom:16px">Are you a ${catLabel.toLowerCase()} supplier? List your business for free.</div>
+          <a href="https://campingchairph.github.io/vowsandpetals/" target="_blank" rel="noopener" style="display:inline-block;padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">🤝 Get Listed Free</a>
         </div>`;
     } else {
       listEl.innerHTML = suppliers.map(s => _supplierCard(s)).join('');
@@ -2081,11 +2160,7 @@ function _renderSupplierProfileView(el, supplierId) {
         <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
           ${s.photos.map(p=>`<img src="${p}" style="flex:0 0 auto;width:140px;height:100px;object-fit:cover;border-radius:10px;border:1px solid rgba(201,169,110,0.18)">`).join('')}
         </div>
-      </div>` : s.pro ? '' : `
-      <div style="padding:14px 16px;border-radius:14px;background:rgba(181,82,43,0.06);border:1px dashed rgba(181,82,43,0.25);margin-bottom:12px;text-align:center">
-        <div style="font-size:12.5px;font-weight:700;color:#b5522b;margin-bottom:4px">📸 No photos yet</div>
-        <div style="font-size:11.5px;color:var(--ink-4)">Are you this supplier? Upgrade to Pro to upload photos.</div>
-      </div>`}
+      </div>` : ''}
 
       <!-- Reviews -->
       <div class="glass" style="border-radius:var(--r-lg);padding:16px;margin-bottom:12px">
@@ -2100,8 +2175,7 @@ function _renderSupplierProfileView(el, supplierId) {
                 ${r.text ? `<div style="font-size:12px;color:var(--ink-3);line-height:1.55">${r.text}</div>` : ''}
               </div>`).join('')
           : `<div style="font-size:12.5px;color:var(--ink-4);padding:8px 0">No reviews yet.</div>`}
-        ${s.pro || s.verified ? `
-        <button onclick="openLeaveReview('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">✍️ Leave a Review</button>` : ''}
+        <button onclick="openLeaveReview('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" style="width:100%;margin-top:12px;padding:9px;border-radius:10px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">✍️ Leave a Review</button>
       </div>
 
       <!-- Pro plan CTA (only for non-pro) -->
@@ -4716,6 +4790,7 @@ window.showChecklistTimelineChanger = showChecklistTimelineChanger;
 window.toggleSeatTable            = toggleSeatTable;
 window.updateSeatSearch           = updateSeatSearch;
 window.openPartnerBrowse          = openPartnerBrowse;
+window.supplierSearch             = supplierSearch;
 window.renderEntourage            = renderEntourage;
 window.openEntourageMemberModal   = openEntourageMemberModal;
 window.submitEntourageMember      = submitEntourageMember;

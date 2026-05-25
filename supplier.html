@@ -267,13 +267,14 @@
           <option value="videography">Videography 🎥</option>
           <option value="catering">Catering 🍽️</option>
           <option value="venue">Venue 🏛️</option>
-          <option value="flowers">Flowers &amp; Florals 💐</option>
+          <option value="florals">Flowers &amp; Florals 💐</option>
           <option value="cake">Cake &amp; Desserts 🎂</option>
-          <option value="makeup">Hair &amp; Makeup 💄</option>
+          <option value="hair">Hair &amp; Makeup 💄</option>
           <option value="attire">Attire &amp; Accessories 👗</option>
           <option value="music">Music &amp; Entertainment 🎵</option>
           <option value="coordination">Coordination &amp; Planning 📋</option>
-          <option value="invitations">Invitations &amp; Printing 📄</option>
+          <option value="invites">Invitations &amp; Printing 📄</option>
+          <option value="photo-booth">Photo Booth 🖼️</option>
           <option value="transportation">Transportation 🚗</option>
           <option value="lights">Lights &amp; Sounds 💡</option>
           <option value="jewelry">Jewelry 💍</option>
@@ -398,9 +399,11 @@ const SUPPORT_EMAIL     = 'hello@vowsandpetals.com';
 // ─────────────────────────────────────────────────────────────
 
 let AUTH, DB;
-let _user      = null;
-let _profile   = null;
-let _isEditing = false;
+let _user        = null;
+let _profile     = null;   // primary business
+let _profile2    = null;   // secondary business (Pro only)
+let _activeBiz   = 1;      // 1 = primary, 2 = secondary
+let _isEditing   = false;
 
 // Photo state — URLs only (Cloudinary uploads immediately on pick)
 let _coverUrl     = null;   // string URL or null
@@ -415,15 +418,16 @@ try {
 /* ── CATEGORY DATA ── */
 const CAT_EMOJI = {
   photography:'📸', videography:'🎥', catering:'🍽️', venue:'🏛️',
-  flowers:'💐', cake:'🎂', makeup:'💄', attire:'👗', music:'🎵',
-  coordination:'📋', invitations:'📄', transportation:'🚗',
-  lights:'💡', jewelry:'💍', others:'✨',
+  florals:'💐', cake:'🎂', hair:'💄', attire:'👗', music:'🎵',
+  coordination:'📋', invites:'📄', 'photo-booth':'🖼️',
+  transportation:'🚗', lights:'💡', jewelry:'💍', others:'✨',
 };
 const CAT_LABEL = {
   photography:'Photography', videography:'Videography', catering:'Catering',
-  venue:'Venue', flowers:'Flowers & Florals', cake:'Cake & Desserts',
-  makeup:'Hair & Makeup', attire:'Attire & Accessories', music:'Music & Entertainment',
-  coordination:'Coordination & Planning', invitations:'Invitations & Printing',
+  venue:'Venue', florals:'Flowers & Florals', cake:'Cake & Desserts',
+  hair:'Hair & Makeup', attire:'Attire & Accessories', music:'Music & Entertainment',
+  coordination:'Coordination & Planning', invites:'Invitations & Printing',
+  'photo-booth':'Photo Booth',
   transportation:'Transportation', lights:'Lights & Sounds', jewelry:'Jewelry', others:'Others',
 };
 
@@ -437,16 +441,23 @@ AUTH?.onAuthStateChanged(async user => {
     const doc = await DB.collection('kasalko_marketplace').doc(user.uid).get();
     if (doc.exists) {
       _profile = doc.data();
+      // Also try to load secondary business
+      const doc2 = await DB.collection('kasalko_marketplace').doc(user.uid + '_b2').get();
+      _profile2 = doc2.exists ? doc2.data() : null;
+      _activeBiz = 1;
       _savedGallery = Array.isArray(_profile.photos) ? [..._profile.photos] : [];
+      _coverUrl     = _profile.cover_photo || null;
       _renderDashboard();
       showScreen('dashboard');
       _loadReviews();
     } else {
+      _activeBiz = 1;
       _populateForm(null);
       showScreen('setup');
     }
   } catch(e) {
     console.warn('Profile load error:', e);
+    _activeBiz = 1;
     _populateForm(null);
     showScreen('setup');
   }
@@ -707,12 +718,19 @@ async function saveProfile() {
       photos:      galleryUrls,
       ownerEmail:  _user.email,
       ownerName:   _user.displayName || _user.email.split('@')[0],
+      ownerUid:    _user.uid,
       updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-      ...(!_profile && { verified: false, pro: false, rating_avg: 0, review_count: 0 }),
+      ...(_activeBiz === 1 && !_profile    && { verified: false, pro: false, rating_avg: 0, review_count: 0 }),
+      ...(_activeBiz === 2 && !_profile2   && { verified: false, pro: _profile?.pro || false, rating_avg: 0, review_count: 0 }),
     };
 
-    await DB.collection('kasalko_marketplace').doc(_user.uid).set(data, { merge: true });
-    _profile = { ..._profile, ...data };
+    const docId = _activeBiz === 2 ? _user.uid + '_b2' : _user.uid;
+    await DB.collection('kasalko_marketplace').doc(docId).set(data, { merge: true });
+    if (_activeBiz === 2) {
+      _profile2 = { ..._profile2, ...data };
+    } else {
+      _profile = { ..._profile, ...data };
+    }
 
     toast('🌸 Profile saved!');
     _isEditing = false;
@@ -742,7 +760,8 @@ function _hideSetupErr() {
 /* ── EDIT PROFILE ── */
 function editProfile() {
   _isEditing = true;
-  _populateForm(_profile);
+  const p = _activeBiz === 2 ? _profile2 : _profile;
+  _populateForm(p);
   document.getElementById('setup-back-btn').style.display = 'inline-block';
   document.getElementById('setup-title').textContent = 'Edit your profile';
   const btn = document.getElementById('setup-save-btn');
@@ -759,17 +778,71 @@ function cancelEdit() {
   showScreen('dashboard');
 }
 
+/* ── BUSINESS SWITCHER ── */
+function switchBusiness(n) {
+  if (n === _activeBiz) return;
+  _activeBiz = n;
+  const p = n === 2 ? _profile2 : _profile;
+  _coverUrl     = p?.cover_photo || null;
+  _savedGallery = Array.isArray(p?.photos) ? [...p.photos] : [];
+  _reviewsLoaded = false;
+  _renderDashboard();
+  showDashTab('preview');
+}
+
+function startSecondBusiness() {
+  _activeBiz = 2;
+  _populateForm(null);
+  document.getElementById('setup-back-btn').style.display = 'inline-block';
+  document.getElementById('setup-title').textContent = 'Register Second Business';
+  const btn = document.getElementById('setup-save-btn');
+  if (btn) btn.textContent = 'Save Second Business 🌸';
+  showScreen('setup');
+}
+
 /* ── DASHBOARD ── */
 function _renderDashboard() {
   if (!_profile) return;
+  _renderBizSwitcher();
   _renderDashHeader();
   _renderPreview();
+}
+
+function _renderBizSwitcher() {
+  // Only show if Pro
+  let el = document.getElementById('biz-switcher');
+  const isProActive = _isProActive();
+  if (!isProActive) { if (el) el.remove(); return; }
+
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'biz-switcher';
+    const screen = document.getElementById('screen-dashboard');
+    screen?.insertBefore(el, screen.firstChild);
+  }
+
+  const p2name = _profile2?.name || null;
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <button onclick="switchBusiness(1)" style="flex:1;padding:8px 10px;border-radius:var(--r-md);border:${_activeBiz===1?'2px solid var(--gold)':'1.5px solid rgba(184,145,106,0.25)'};background:${_activeBiz===1?'rgba(245,230,200,0.7)':'rgba(250,246,238,0.5)'};font-family:var(--f);font-size:12.5px;font-weight:${_activeBiz===1?'800':'600'};color:var(--ink-2);cursor:pointer;text-align:left">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-4);margin-bottom:1px">Business 1</div>
+        ${_esc(_profile?.name || 'Primary Business')}
+      </button>
+      ${p2name
+        ? `<button onclick="switchBusiness(2)" style="flex:1;padding:8px 10px;border-radius:var(--r-md);border:${_activeBiz===2?'2px solid var(--gold)':'1.5px solid rgba(184,145,106,0.25)'};background:${_activeBiz===2?'rgba(245,230,200,0.7)':'rgba(250,246,238,0.5)'};font-family:var(--f);font-size:12.5px;font-weight:${_activeBiz===2?'800':'600'};color:var(--ink-2);cursor:pointer;text-align:left">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-4);margin-bottom:1px">Business 2</div>
+            ${_esc(p2name)}
+          </button>`
+        : `<button onclick="startSecondBusiness()" style="flex:1;padding:8px 10px;border-radius:var(--r-md);border:1.5px dashed rgba(184,145,106,0.3);background:rgba(245,230,200,0.2);font-family:var(--f);font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;text-align:center">
+            + Add Second Business
+          </button>`}
+    </div>`;
 }
 
 function _renderDashHeader() {
   const el = document.getElementById('dash-header');
   if (!el || !_profile) return;
-  const p = _profile;
+  const p = _activeBiz === 2 ? (_profile2 || _profile) : _profile;
   const verBadge = p.verified
     ? `<span class="badge-verified">✔ Verified</span>`
     : `<span class="badge-pending">⏳ Pending Verification</span>`;
@@ -813,7 +886,7 @@ function _renderDashHeader() {
 function _renderPreview() {
   const area = document.getElementById('preview-area');
   if (!area || !_profile) return;
-  const p = _profile;
+  const p = _activeBiz === 2 ? (_profile2 || _profile) : _profile;
   const priceText = p.price_from
     ? `₱${Number(p.price_from).toLocaleString()}${p.price_to ? ' – ₱' + Number(p.price_to).toLocaleString() : '+'}`
     : '';
@@ -823,10 +896,12 @@ function _renderPreview() {
   const proBadge = p.pro ? `<span class="badge-pro" style="font-size:9px">⭐ Featured</span> ` : '';
   const verBadge = p.verified ? `<span class="badge-verified" style="font-size:9px">✔ Verified</span>` : '';
 
-  // Gallery (only shown for Pro)
-  const galleryHtml = p.pro && p.photos?.length
+  // Gallery: free users see their 2 photos; Pro sees all
+  const visiblePhotos = p.pro ? (p.photos || []) : (p.photos || []).slice(0, 2);
+  const galleryHtml = visiblePhotos.length
     ? `<div style="display:flex;gap:6px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">
-        ${p.photos.map(url => `<img src="${url}" style="height:90px;min-width:90px;border-radius:10px;object-fit:cover;flex-shrink:0" alt="">`).join('')}
+        ${visiblePhotos.map(url => `<img src="${url}" style="height:90px;min-width:90px;border-radius:10px;object-fit:cover;flex-shrink:0" alt="">`).join('')}
+        ${!p.pro && (p.photos||[]).length >= 2 ? `<div style="flex:0 0 90px;height:90px;border-radius:10px;background:rgba(184,145,106,0.12);border:1.5px dashed rgba(184,145,106,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer" onclick="showDashTab('plan')"><span style="font-size:16px">⭐</span><span style="font-size:9px;font-weight:700;color:var(--gold-dk);text-align:center">More<br>on Pro</span></div>` : ''}
        </div>`
     : '';
 
@@ -1016,8 +1091,9 @@ async function _loadReviews() {
   if (_reviewsLoaded || !_user || !DB) return;
   const area = document.getElementById('reviews-area');
   if (!area) return;
+  const docId = _activeBiz === 2 ? _user.uid + '_b2' : _user.uid;
   try {
-    const snap = await DB.collection('kasalko_marketplace').doc(_user.uid)
+    const snap = await DB.collection('kasalko_marketplace').doc(docId)
                          .collection('reviews').orderBy('date','desc').limit(50).get();
     _reviewsLoaded = true;
     if (snap.empty) {
