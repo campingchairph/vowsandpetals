@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#faf6ee">
+  <title>Supplier Portal — Vows &amp; Petals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ivory:   #FAF6EE; --gold:    #B8916A; --gold-dk: #8C6640;
+      --rose:    #C07068; --sage:    #6A8E70;
+      --ink:     #2C1810; --ink-2:   #5C3A24; --ink-3:   #8C6848; --ink-4:   #B89870;
+      --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px;
+      --f: 'Inter', system-ui, sans-serif; --f2: 'Cormorant Garamond', Georgia, serif;
+    }
+    html, body { min-height: 100%; }
+    body { font-family: var(--f); background: var(--ivory); color: var(--ink); }
+
+    /* ── HEADER ── */
+    .sp-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,246,238,0.93); backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(184,145,106,0.18); padding: 12px 16px;
+    }
+    .sp-header-inner { max-width: 580px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .sp-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .sp-brand-logo { font-size: 22px; line-height: 1; }
+    .sp-brand-name { font-family: var(--f2); font-size: 16px; font-style: italic; font-weight: 600; color: var(--ink); line-height: 1.1; }
+    .sp-brand-tag  { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold); }
+    .sp-header-btn { padding: 7px 13px; border-radius: var(--r-md); border: 1px solid rgba(184,145,106,0.28); background: rgba(245,230,200,0.5); font-family: var(--f); font-size: 12px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
+
+    /* ── WRAP ── */
+    .sp-wrap { max-width: 580px; margin: 0 auto; padding: 24px 16px 72px; }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── LOADING ── */
+    .sp-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 30vh; gap: 12px; color: var(--ink-4); font-size: 13px; }
+    .sp-spinner { width: 28px; height: 28px; border: 3px solid rgba(184,145,106,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── AUTH ── */
+    .auth-hero { text-align: center; padding: 20px 0 24px; }
+    .auth-hero-emoji { font-size: 44px; margin-bottom: 14px; }
+    .auth-hero-title { font-family: var(--f2); font-size: 30px; font-style: italic; font-weight: 600; color: var(--ink); margin-bottom: 10px; line-height: 1.2; }
+    .auth-hero-sub { font-size: 13.5px; color: var(--ink-3); line-height: 1.7; max-width: 380px; margin: 0 auto 22px; }
+    .auth-perks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+    .auth-perk { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: rgba(245,230,200,0.45); border: 1px solid rgba(184,145,106,0.18); }
+    .auth-perk-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .auth-perk-text { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+    .auth-perk-text b { color: var(--ink); display: block; margin-bottom: 1px; font-size: 12.5px; }
+    .auth-card { background: rgba(255,252,247,0.96); border-radius: var(--r-xl); border: 1px solid rgba(184,145,106,0.2); box-shadow: 0 4px 24px rgba(44,24,16,0.08); padding: 22px 20px; }
+    .google-btn { width: 100%; padding: 12px; border-radius: var(--r-md); border: 1.5px solid rgba(184,145,106,0.28); background: #fff; font-family: var(--f); font-size: 13.5px; font-weight: 700; color: #3c3c3c; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .google-btn:hover { background: #f8f8f8; }
+    .auth-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; font-size: 11px; font-weight: 600; color: var(--ink-4); }
+    .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: rgba(184,145,106,0.2); }
+
+    /* ── FORM FIELDS ── */
+    .field { margin-bottom: 13px; }
+    .field label { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-4); margin-bottom: 5px; }
+    .field label .req { color: var(--rose); }
+    .field input, .field select, .field textarea { width: 100%; padding: 10px 13px; border-radius: var(--r-md); border: 1.5px solid rgba(184,145,106,0.25); background: rgba(253,250,244,0.9); font-family: var(--f); font-size: 13.5px; color: var(--ink); outline: none; transition: border-color 0.15s; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: rgba(184,145,106,0.6); background: #fff; }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-hint { font-size: 10.5px; color: var(--ink-4); margin-top: 4px; line-height: 1.4; }
+    .sp-error { padding: 10px 13px; border-radius: var(--r-md); background: rgba(192,112,104,0.1); border: 1px solid rgba(192,112,104,0.25); font-size: 12.5px; color: var(--rose); font-weight: 600; margin: 8px 0; display: none; }
+
+    /* ── BUTTONS ── */
+    .primary-btn { width: 100%; padding: 13px; border-radius: var(--r-md); background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dk) 100%); border: none; color: #fff; font-family: var(--f); font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: 0.2px; transition: opacity 0.15s; }
+    .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .primary-btn:hover:not(:disabled) { opacity: 0.9; }
+    .ghost-btn { width: 100%; padding: 11px; border-radius: var(--r-md); border: 1.5px solid rgba(184,145,106,0.3); background: transparent; font-family: var(--f); font-size: 13px; font-weight: 700; color: var(--ink-2); cursor: pointer; margin-bottom: 10px; }
+    .ghost-btn:hover { background: rgba(245,230,200,0.4); }
+    .text-btn { background: none; border: none; color: var(--gold); font-family: var(--f); font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline; }
+
+    /* ── FORM SECTIONS ── */
+    .form-section { margin-bottom: 22px; }
+    .form-section-title { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--gold-dk); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(184,145,106,0.18); }
+
+    /* ── PHOTO UPLOAD ── */
+    .cover-upload-area { width: 100%; height: 160px; border-radius: var(--r-lg); border: 2px dashed rgba(184,145,106,0.35); background: rgba(245,230,200,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.15s; }
+    .cover-upload-area:hover { border-color: rgba(184,145,106,0.6); }
+    .cover-upload-area .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .cover-upload-area .upload-overlay { position: absolute; inset: 0; background: rgba(44,24,16,0.45); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .cover-upload-area:hover .upload-overlay { opacity: 1; }
+    .upload-hint { display: flex; flex-direction: column; align-items: center; gap: 5px; pointer-events: none; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+    .gallery-item { aspect-ratio: 1; border-radius: var(--r-md); overflow: hidden; position: relative; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-item .rm-btn { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(44,24,16,0.65); color: #fff; border: none; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .gallery-add { aspect-ratio: 1; border-radius: var(--r-md); border: 2px dashed rgba(184,145,106,0.3); background: rgba(245,230,200,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; transition: all 0.15s; }
+    .gallery-add:hover { border-color: rgba(184,145,106,0.6); background: rgba(245,230,200,0.4); }
+    .gallery-add-icon { font-size: 22px; color: var(--ink-4); }
+    .gallery-add-lbl { font-size: 10px; font-weight: 700; color: var(--ink-4); }
+
+    /* ── DASHBOARD ── */
+    .profile-header-card { background: rgba(255,252,247,0.96); border-radius: var(--r-xl); border: 1px solid rgba(184,145,106,0.2); box-shadow: 0 4px 20px rgba(44,24,16,0.07); overflow: hidden; margin-bottom: 16px; }
+    .profile-cover { height: 140px; background: linear-gradient(135deg, rgba(184,145,106,0.2), rgba(192,112,104,0.15)); position: relative; overflow: hidden; }
+    .profile-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-cover-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; opacity: 0.35; }
+    .profile-info { padding: 14px 16px 16px; }
+    .badge-verified { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.22); font-size: 10px; font-weight: 700; color: #1d4ed8; }
+    .badge-pro      { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; background: rgba(184,145,106,0.18); border: 1px solid rgba(184,145,106,0.4); font-size: 10px; font-weight: 700; color: var(--gold-dk); }
+    .badge-pending  { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; background: rgba(245,230,200,0.5); border: 1px solid rgba(184,145,106,0.25); font-size: 10px; font-weight: 700; color: var(--ink-3); }
+
+    /* ── TABS ── */
+    .tab-bar { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-lg); background: rgba(245,230,200,0.4); border: 1px solid rgba(184,145,106,0.18); margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 9px 8px; border-radius: var(--r-md); border: none; background: transparent; font-family: var(--f); font-size: 12px; font-weight: 700; color: var(--ink-4); cursor: pointer; transition: all 0.15s; }
+    .tab-btn.active { background: rgba(255,252,247,0.95); color: var(--ink); box-shadow: 0 1px 5px rgba(44,24,16,0.1); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── PREVIEW CARD ── */
+    .preview-card { background: rgba(255,252,247,0.95); border-radius: var(--r-lg); border: 1px solid rgba(184,145,106,0.18); overflow: hidden; margin-bottom: 10px; }
+    .preview-card-img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .preview-card-placeholder { height: 200px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(184,145,106,0.14), rgba(192,112,104,0.08)); font-size: 56px; opacity: 0.45; }
+    .preview-card-body { padding: 14px 16px; }
+
+    /* ── REVIEWS ── */
+    .review-card { background: rgba(255,252,247,0.9); border-radius: var(--r-md); border: 1px solid rgba(184,145,106,0.16); padding: 13px 14px; margin-bottom: 10px; }
+
+    /* ── PRO CTA ── */
+    .pro-cta-card { background: linear-gradient(135deg, rgba(184,145,106,0.12), rgba(192,112,104,0.08)); border: 1.5px solid rgba(184,145,106,0.28); border-radius: var(--r-xl); padding: 20px; margin-top: 20px; }
+    .pro-features { list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 12px 0 16px; }
+    .pro-features li { font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+    .pro-features li::before { content: '✓'; color: var(--gold-dk); font-weight: 800; }
+
+    /* ── TOAST ── */
+    #sp-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: rgba(44,24,16,0.9); color: #fff; padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; white-space: nowrap; z-index: 9999; transition: transform 0.3s ease; pointer-events: none; }
+    #sp-toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 400px) {
+      .auth-perks { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="sp-toast"></div>
+
+<!-- HEADER -->
+<header class="sp-header">
+  <div class="sp-header-inner">
+    <a href="https://campingchairph.github.io/vowsandpetals/" class="sp-brand">
+      <span class="sp-brand-logo">💍</span>
+      <div>
+        <div class="sp-brand-name">Vows &amp; Petals</div>
+        <div class="sp-brand-tag">Supplier Portal</div>
+      </div>
+    </a>
+    <div id="hdr-auth"></div>
+  </div>
+</header>
+
+<div class="sp-wrap">
+
+  <!-- SCREEN: AUTH -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-hero">
+      <div class="auth-hero-emoji">🌸</div>
+      <div class="auth-hero-title">Reach couples planning their dream wedding</div>
+      <div class="auth-hero-sub">Join our growing directory of trusted suppliers. Build your profile, showcase your work, and get discovered — for free.</div>
+    </div>
+    <div class="auth-perks">
+      <div class="auth-perk"><span class="auth-perk-icon">📍</span><div class="auth-perk-text"><b>Free listing</b>Get found immediately at no cost.</div></div>
+      <div class="auth-perk"><span class="auth-perk-icon">💬</span><div class="auth-perk-text"><b>Real reviews</b>Collect reviews from couples you've worked with.</div></div>
+      <div class="auth-perk"><span class="auth-perk-icon">⭐</span><div class="auth-perk-text"><b>Pro listing</b>Get featured at the top of every search.</div></div>
+      <div class="auth-perk"><span class="auth-perk-icon">📸</span><div class="auth-perk-text"><b>Photo gallery</b>Showcase your full portfolio.</div></div>
+    </div>
+    <div class="auth-card">
+      <button class="google-btn" onclick="signInGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="">
+        Continue with Google
+      </button>
+      <div class="auth-divider">or sign in with email</div>
+      <!-- Sign In -->
+      <div id="frm-signin">
+        <div class="field"><label>Email</label><input type="email" id="a-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="a-pass" placeholder="••••••••" autocomplete="current-password"></div>
+        <div class="sp-error" id="err-signin"></div>
+        <button class="primary-btn" style="margin-top:4px" onclick="signInEmail()">Sign In</button>
+        <p style="text-align:center;margin-top:12px;font-size:12.5px;color:var(--ink-4)">No account? <button class="text-btn" onclick="toggleAuth()">Create one free</button></p>
+      </div>
+      <!-- Register -->
+      <div id="frm-register" style="display:none">
+        <div class="field"><label>Your Name</label><input type="text" id="a-name" placeholder="e.g. Maria Santos" autocomplete="name"></div>
+        <div class="field"><label>Email</label><input type="email" id="a-reg-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="a-reg-pass" placeholder="Min. 6 characters" autocomplete="new-password"></div>
+        <div class="sp-error" id="err-register"></div>
+        <button class="primary-btn" style="margin-top:4px" onclick="registerEmail()">Create Account &amp; Get Listed</button>
+        <p style="text-align:center;margin-top:12px;font-size:12.5px;color:var(--ink-4)">Already have an account? <button class="text-btn" onclick="toggleAuth()">Sign in</button></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: LOADING -->
+  <div id="screen-loading" class="screen">
+    <div class="sp-loading"><div class="sp-spinner"></div><span>Loading your profile…</span></div>
+  </div>
+
+  <!-- SCREEN: SETUP / EDIT -->
+  <div id="screen-setup" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <button id="setup-back-btn" onclick="cancelEdit()" style="display:none;padding:6px 12px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.28);background:rgba(245,230,200,0.4);font-family:var(--f);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer">← Back</button>
+      <div>
+        <div id="setup-title" style="font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-0.3px">Build your profile</div>
+        <div style="font-size:13px;color:var(--ink-3);margin-top:2px">Tell couples about your business — you can update this anytime.</div>
+      </div>
+    </div>
+
+    <!-- Business Info -->
+    <div class="form-section">
+      <div class="form-section-title">Business Info</div>
+      <div class="field"><label>Business Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="e.g. Santos Photography" autocomplete="organization"></div>
+      <div class="field"><label>Category <span class="req">*</span></label>
+        <select id="f-category">
+          <option value="" disabled selected>Select your service…</option>
+          <option value="photography">Photography 📸</option>
+          <option value="videography">Videography 🎥</option>
+          <option value="catering">Catering 🍽️</option>
+          <option value="venue">Venue 🏛️</option>
+          <option value="flowers">Flowers &amp; Florals 💐</option>
+          <option value="cake">Cake &amp; Desserts 🎂</option>
+          <option value="makeup">Hair &amp; Makeup 💄</option>
+          <option value="attire">Attire &amp; Accessories 👗</option>
+          <option value="music">Music &amp; Entertainment 🎵</option>
+          <option value="coordination">Coordination &amp; Planning 📋</option>
+          <option value="invitations">Invitations &amp; Printing 📄</option>
+          <option value="transportation">Transportation 🚗</option>
+          <option value="lights">Lights &amp; Sounds 💡</option>
+          <option value="jewelry">Jewelry 💍</option>
+          <option value="others">Others ✨</option>
+        </select>
+      </div>
+      <div class="field"><label>Location / City</label><input type="text" id="f-location" placeholder="e.g. Quezon City, Metro Manila"></div>
+      <div class="field"><label>About Your Business</label><textarea id="f-description" placeholder="Describe your services, experience, and what makes you special…"></textarea></div>
+    </div>
+
+    <!-- Pricing -->
+    <div class="form-section">
+      <div class="form-section-title">Pricing</div>
+      <div class="field-row">
+        <div class="field"><label>Price From (₱)</label><input type="number" id="f-price-from" placeholder="e.g. 15000" min="0"></div>
+        <div class="field"><label>Price To (₱)</label><input type="number" id="f-price-to" placeholder="e.g. 50000" min="0"></div>
+      </div>
+      <div class="field-hint">Leave blank if pricing varies or is upon request.</div>
+    </div>
+
+    <!-- Contact -->
+    <div class="form-section">
+      <div class="form-section-title">Contact &amp; Socials</div>
+      <div class="field"><label>Phone / Viber / WhatsApp</label><input type="tel" id="f-phone" placeholder="+63 912 345 6789" autocomplete="tel"></div>
+      <div class="field"><label>Facebook Page URL</label><input type="url" id="f-fb" placeholder="https://facebook.com/yourbusiness"></div>
+      <div class="field"><label>Instagram</label><input type="text" id="f-ig" placeholder="@yourbusiness"></div>
+      <div class="field"><label>Website</label><input type="url" id="f-website" placeholder="https://yourbusiness.com"></div>
+    </div>
+
+    <!-- Photos -->
+    <div class="form-section">
+      <div class="form-section-title">Photos</div>
+      <div class="field">
+        <label>Cover Photo</label>
+        <div class="cover-upload-area" id="cover-area" onclick="document.getElementById('cover-input').click()">
+          <img id="cover-img" class="cover-img" style="display:none" alt="">
+          <div class="upload-hint" id="cover-hint">
+            <span style="font-size:30px">📷</span>
+            <span style="font-size:12px;font-weight:700;color:var(--ink-3)">Tap to upload cover photo</span>
+            <span style="font-size:10.5px;color:var(--ink-4)">JPG or PNG · max 5MB</span>
+          </div>
+          <div class="upload-overlay">📷 Change photo</div>
+        </div>
+        <input type="file" id="cover-input" accept="image/*" style="display:none" onchange="pickCover(this)">
+      </div>
+      <div class="field">
+        <label>Gallery <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;color:var(--ink-4)">— up to 6 photos · ⭐ Pro only</span></label>
+        <div class="gallery-grid" id="gallery-grid"></div>
+        <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="pickGallery(this)">
+        <div class="field-hint" style="margin-top:8px">Gallery photos are visible to couples on Pro listings. <button class="text-btn" onclick="showScreen('dashboard');showDashTab('preview');setTimeout(()=>document.getElementById('pro-cta')?.scrollIntoView({behavior:'smooth'}),200)">Learn about Pro →</button></div>
+      </div>
+    </div>
+
+    <div class="sp-error" id="setup-error"></div>
+    <button class="primary-btn" id="setup-save-btn" onclick="saveProfile()">Save &amp; Publish My Profile 🌸</button>
+  </div>
+
+  <!-- SCREEN: DASHBOARD -->
+  <div id="screen-dashboard" class="screen">
+    <!-- Profile header -->
+    <div class="profile-header-card" id="dash-header"></div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-btn-preview" onclick="showDashTab('preview')">👁 Preview</button>
+      <button class="tab-btn" id="tab-btn-reviews" onclick="showDashTab('reviews')">💬 Reviews</button>
+    </div>
+
+    <!-- Preview tab -->
+    <div class="tab-pane active" id="tab-pane-preview">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">How couples see your listing</div>
+      <div id="preview-area"></div>
+    </div>
+
+    <!-- Reviews tab -->
+    <div class="tab-pane" id="tab-pane-reviews">
+      <div id="reviews-area">
+        <div class="sp-loading" style="min-height:140px"><div class="sp-spinner"></div><span>Loading reviews…</span></div>
+      </div>
+    </div>
+
+    <!-- Pro CTA -->
+    <div class="pro-cta-card" id="pro-cta"></div>
+  </div>
+
+</div><!-- /.sp-wrap -->
+
+<script>
+/* ═══════════════════════════════════════════════
+   SUPPLIER PORTAL
+   ═══════════════════════════════════════════════ */
+
+const FB_CFG = {
+  apiKey:            'AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs',
+  authDomain:        'weddingthings.firebaseapp.com',
+  projectId:         'weddingthings',
+  storageBucket:     'weddingthings.firebasestorage.app',
+  messagingSenderId: '732042029649',
+  appId:             '1:732042029649:web:21bbe63214e8b36770e670',
+};
+
+let AUTH, DB, STORAGE;
+let _user    = null;
+let _profile = null;
+let _isEditing = false;
+
+// Photo state
+let _pendingCover   = null;   // File
+let _pendingGallery = [];     // [{file, preview}]
+let _savedGallery   = [];     // [url] already in Firestore
+
+try {
+  firebase.initializeApp(FB_CFG);
+  AUTH    = firebase.auth();
+  DB      = firebase.firestore();
+  STORAGE = firebase.storage();
+} catch(e) { console.warn('Firebase init:', e); }
+
+/* ── CATEGORY DATA ── */
+const CAT_EMOJI = {
+  photography:'📸', videography:'🎥', catering:'🍽️', venue:'🏛️',
+  flowers:'💐', cake:'🎂', makeup:'💄', attire:'👗', music:'🎵',
+  coordination:'📋', invitations:'📄', transportation:'🚗',
+  lights:'💡', jewelry:'💍', others:'✨',
+};
+const CAT_LABEL = {
+  photography:'Photography', videography:'Videography', catering:'Catering',
+  venue:'Venue', flowers:'Flowers & Florals', cake:'Cake & Desserts',
+  makeup:'Hair & Makeup', attire:'Attire & Accessories', music:'Music & Entertainment',
+  coordination:'Coordination & Planning', invitations:'Invitations & Printing',
+  transportation:'Transportation', lights:'Lights & Sounds', jewelry:'Jewelry', others:'Others',
+};
+
+/* ── AUTH STATE ── */
+AUTH?.onAuthStateChanged(async user => {
+  _user = user;
+  _renderHdrAuth();
+  if (!user) { showScreen('auth'); return; }
+  showScreen('loading');
+  try {
+    const doc = await DB.collection('kasalko_marketplace').doc(user.uid).get();
+    if (doc.exists) {
+      _profile = doc.data();
+      _savedGallery = Array.isArray(_profile.photos) ? [..._profile.photos] : [];
+      _renderDashboard();
+      showScreen('dashboard');
+      _loadReviews();
+    } else {
+      _populateForm(null);
+      showScreen('setup');
+    }
+  } catch(e) {
+    console.warn('Profile load error:', e);
+    _populateForm(null);
+    showScreen('setup');
+  }
+});
+
+/* ── SCREENS ── */
+function showScreen(name) {
+  ['auth','loading','setup','dashboard'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('active', s === name);
+  });
+}
+
+/* ── HEADER AUTH ── */
+function _renderHdrAuth() {
+  const el = document.getElementById('hdr-auth');
+  if (!el) return;
+  el.innerHTML = _user
+    ? `<button class="sp-header-btn" onclick="doSignOut()">Sign Out</button>`
+    : '';
+}
+
+/* ── AUTH ── */
+let _authMode = 'signin';
+function toggleAuth() {
+  _authMode = _authMode === 'signin' ? 'register' : 'signin';
+  document.getElementById('frm-signin').style.display   = _authMode === 'signin'   ? 'block' : 'none';
+  document.getElementById('frm-register').style.display = _authMode === 'register' ? 'block' : 'none';
+}
+
+function signInGoogle() {
+  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(err => _showAuthErr(_authMsg(err.code)));
+}
+
+function signInEmail() {
+  const email = (document.getElementById('a-email')?.value || '').trim();
+  const pass  =  document.getElementById('a-pass')?.value || '';
+  if (!email || !pass) { _showAuthErr('Enter your email and password.'); return; }
+  AUTH.signInWithEmailAndPassword(email, pass)
+    .catch(err => _showAuthErr(_authMsg(err.code)));
+}
+
+function registerEmail() {
+  const name  = (document.getElementById('a-name')?.value || '').trim();
+  const email = (document.getElementById('a-reg-email')?.value || '').trim();
+  const pass  =  document.getElementById('a-reg-pass')?.value || '';
+  if (!email || !pass) { _showAuthErr('Enter email and password.', 'register'); return; }
+  if (pass.length < 6) { _showAuthErr('Password must be at least 6 characters.', 'register'); return; }
+  AUTH.createUserWithEmailAndPassword(email, pass)
+    .then(cred => name ? cred.user.updateProfile({ displayName: name }) : null)
+    .catch(err => _showAuthErr(_authMsg(err.code), 'register'));
+}
+
+function doSignOut() {
+  AUTH.signOut().then(() => toast('👋 Signed out'));
+}
+
+function _showAuthErr(msg, form = 'signin') {
+  const el = document.getElementById('err-' + form);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function _authMsg(code) {
+  return ({
+    'auth/user-not-found':       'No account with that email.',
+    'auth/wrong-password':       'Wrong password.',
+    'auth/email-already-in-use': 'Email already in use — try signing in.',
+    'auth/invalid-email':        'Invalid email address.',
+    'auth/weak-password':        'Password too weak (min 6 chars).',
+    'auth/popup-closed-by-user': 'Sign-in cancelled.',
+    'auth/invalid-credential':   'Wrong email or password.',
+    'auth/network-request-failed': 'Network error.',
+  })[code] || code;
+}
+
+/* ── PHOTO HANDLING ── */
+function pickCover(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('⚠️ Max 5MB per photo'); return; }
+  _pendingCover = file;
+  const url = URL.createObjectURL(file);
+  const img  = document.getElementById('cover-img');
+  const hint = document.getElementById('cover-hint');
+  if (img)  { img.src = url; img.style.display = 'block'; }
+  if (hint) hint.style.display = 'none';
+}
+
+function pickGallery(input) {
+  const files = Array.from(input.files || []);
+  const slots = 6 - _savedGallery.length - _pendingGallery.length;
+  files.slice(0, slots).forEach(f => {
+    if (f.size > 5 * 1024 * 1024) { toast('⚠️ ' + f.name + ' exceeds 5MB'); return; }
+    _pendingGallery.push({ file: f, preview: URL.createObjectURL(f) });
+  });
+  _renderGallery();
+  input.value = '';
+}
+
+function removeGallery(idx, type) {
+  if (type === 's') _savedGallery.splice(idx, 1);
+  else              _pendingGallery.splice(idx, 1);
+  _renderGallery();
+}
+
+function _renderGallery() {
+  const grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+  let html = '';
+  _savedGallery.forEach((url, i) =>
+    html += `<div class="gallery-item"><img src="${url}" alt=""><button class="rm-btn" onclick="removeGallery(${i},'s')">×</button></div>`);
+  _pendingGallery.forEach((item, i) =>
+    html += `<div class="gallery-item"><img src="${item.preview}" alt=""><button class="rm-btn" onclick="removeGallery(${i},'p')">×</button></div>`);
+  if (_savedGallery.length + _pendingGallery.length < 6)
+    html += `<div class="gallery-add" onclick="document.getElementById('gallery-input').click()"><span class="gallery-add-icon">＋</span><span class="gallery-add-lbl">Add Photo</span></div>`;
+  grid.innerHTML = html;
+}
+
+/* ── POPULATE FORM ── */
+function _populateForm(p) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  set('f-name',        p?.name        || '');
+  set('f-location',    p?.location    || '');
+  set('f-description', p?.description || '');
+  set('f-phone',       p?.phone       || '');
+  set('f-fb',          p?.fb          || '');
+  set('f-ig',          p?.ig          || '');
+  set('f-website',     p?.website     || '');
+  set('f-price-from',  p?.price_from  || '');
+  set('f-price-to',    p?.price_to    || '');
+  if (p?.category) {
+    const sel = document.getElementById('f-category');
+    if (sel) sel.value = p.category;
+  }
+  // Cover photo
+  const img  = document.getElementById('cover-img');
+  const hint = document.getElementById('cover-hint');
+  if (p?.cover_photo) {
+    if (img)  { img.src = p.cover_photo; img.style.display = 'block'; }
+    if (hint) hint.style.display = 'none';
+  } else {
+    if (img)  { img.src = ''; img.style.display = 'none'; }
+    if (hint) hint.style.display = 'flex';
+  }
+  // Gallery
+  _pendingCover   = null;
+  _pendingGallery = [];
+  _savedGallery   = Array.isArray(p?.photos) ? [...p.photos] : [];
+  _renderGallery();
+  // Error
+  const errEl = document.getElementById('setup-error');
+  if (errEl) errEl.style.display = 'none';
+}
+
+/* ── SAVE PROFILE ── */
+async function saveProfile() {
+  const nameVal = (document.getElementById('f-name')?.value || '').trim();
+  const catVal  =  document.getElementById('f-category')?.value || '';
+  if (!nameVal) { _showSetupErr('Please enter your business name.'); return; }
+  if (!catVal)  { _showSetupErr('Please select a category.'); return; }
+
+  const btn = document.getElementById('setup-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  _hideSetupErr();
+
+  try {
+    let coverUrl = _profile?.cover_photo || null;
+    let galleryUrls = [..._savedGallery];
+
+    if (_pendingCover) {
+      toast('📤 Uploading cover photo…');
+      const ref = STORAGE.ref(`supplier_photos/${_user.uid}/cover_${Date.now()}`);
+      await ref.put(_pendingCover);
+      coverUrl = await ref.getDownloadURL();
+      _pendingCover = null;
+    }
+    if (_pendingGallery.length) {
+      toast('📤 Uploading gallery…');
+      for (const item of _pendingGallery) {
+        const ref = STORAGE.ref(`supplier_photos/${_user.uid}/g_${Date.now()}_${Math.random().toString(36).slice(2,6)}`);
+        await ref.put(item.file);
+        galleryUrls.push(await ref.getDownloadURL());
+      }
+      _pendingGallery = [];
+    }
+    _savedGallery = galleryUrls;
+
+    const data = {
+      name:        nameVal,
+      category:    catVal,
+      location:    (document.getElementById('f-location')?.value    || '').trim(),
+      description: (document.getElementById('f-description')?.value || '').trim(),
+      price_from:  Number(document.getElementById('f-price-from')?.value || 0) || null,
+      price_to:    Number(document.getElementById('f-price-to')?.value   || 0) || null,
+      phone:       (document.getElementById('f-phone')?.value   || '').trim(),
+      fb:          (document.getElementById('f-fb')?.value      || '').trim(),
+      ig:          (document.getElementById('f-ig')?.value      || '').trim(),
+      website:     (document.getElementById('f-website')?.value || '').trim(),
+      cover_photo: coverUrl,
+      photos:      galleryUrls,
+      ownerEmail:  _user.email,
+      ownerName:   _user.displayName || _user.email.split('@')[0],
+      updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      ...(!_profile && { verified: false, pro: false, rating_avg: 0, review_count: 0 }),
+    };
+
+    await DB.collection('kasalko_marketplace').doc(_user.uid).set(data, { merge: true });
+    _profile = { ..._profile, ...data };
+
+    toast('🌸 Profile saved!');
+    _isEditing = false;
+    document.getElementById('setup-back-btn').style.display = 'none';
+    document.getElementById('setup-title').textContent = 'Build your profile';
+    if (btn) { btn.disabled = false; btn.textContent = 'Save & Publish My Profile 🌸'; }
+    _renderDashboard();
+    showScreen('dashboard');
+    _loadReviews();
+    showDashTab('preview');
+  } catch(e) {
+    console.warn('Save error:', e);
+    _showSetupErr('Something went wrong — please try again.');
+    if (btn) { btn.disabled = false; btn.textContent = _isEditing ? 'Save Changes' : 'Save & Publish My Profile 🌸'; }
+  }
+}
+
+function _showSetupErr(msg) {
+  const el = document.getElementById('setup-error');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function _hideSetupErr() {
+  const el = document.getElementById('setup-error');
+  if (el) el.style.display = 'none';
+}
+
+/* ── EDIT PROFILE ── */
+function editProfile() {
+  _isEditing = true;
+  _populateForm(_profile);
+  document.getElementById('setup-back-btn').style.display = 'inline-block';
+  document.getElementById('setup-title').textContent = 'Edit your profile';
+  const btn = document.getElementById('setup-save-btn');
+  if (btn) btn.textContent = 'Save Changes';
+  showScreen('setup');
+}
+
+function cancelEdit() {
+  _isEditing = false;
+  document.getElementById('setup-back-btn').style.display = 'none';
+  document.getElementById('setup-title').textContent = 'Build your profile';
+  const btn = document.getElementById('setup-save-btn');
+  if (btn) btn.textContent = 'Save & Publish My Profile 🌸';
+  showScreen('dashboard');
+}
+
+/* ── DASHBOARD ── */
+function _renderDashboard() {
+  if (!_profile) return;
+  _renderDashHeader();
+  _renderPreview();
+  _renderProCta();
+}
+
+function _renderDashHeader() {
+  const el = document.getElementById('dash-header');
+  if (!el || !_profile) return;
+  const p = _profile;
+  const verBadge = p.verified
+    ? `<span class="badge-verified">✔ Verified</span>`
+    : `<span class="badge-pending">⏳ Pending Verification</span>`;
+  const proBadge = p.pro ? `<span class="badge-pro">⭐ Pro</span>` : '';
+  const priceText = p.price_from
+    ? `₱${Number(p.price_from).toLocaleString()}${p.price_to ? ' – ₱' + Number(p.price_to).toLocaleString() : '+'}`
+    : '';
+  el.innerHTML = `
+    <div class="profile-cover">
+      ${p.cover_photo
+        ? `<img src="${p.cover_photo}" alt="Cover">`
+        : `<div class="profile-cover-placeholder">${CAT_EMOJI[p.category] || '🏷️'}</div>`}
+    </div>
+    <div class="profile-info">
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">${verBadge}${proBadge}</div>
+      <div style="font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-0.3px;margin-bottom:2px">${_esc(p.name)}</div>
+      <div style="font-size:12px;color:var(--ink-4);margin-bottom:4px">${CAT_EMOJI[p.category]||''} ${CAT_LABEL[p.category]||p.category||''}${p.location ? ' · ' + _esc(p.location) : ''}</div>
+      ${priceText ? `<div style="font-size:13px;font-weight:700;color:var(--gold-dk);margin-bottom:10px">${priceText}</div>` : '<div style="margin-bottom:10px"></div>'}
+      <div style="display:flex;gap:16px;align-items:center">
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.3px">${p.review_count||0}</div>
+          <div style="font-size:9.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Reviews</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-0.3px">${p.rating_avg ? Number(p.rating_avg).toFixed(1) : '—'}</div>
+          <div style="font-size:9.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Rating</div>
+        </div>
+        <button onclick="editProfile()" style="margin-left:auto;padding:8px 14px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.28);background:rgba(245,230,200,0.55);font-family:var(--f);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer">✏️ Edit Profile</button>
+      </div>
+    </div>`;
+}
+
+function _renderPreview() {
+  const area = document.getElementById('preview-area');
+  if (!area || !_profile) return;
+  const p = _profile;
+  const priceText = p.price_from
+    ? `₱${Number(p.price_from).toLocaleString()}${p.price_to ? ' – ₱' + Number(p.price_to).toLocaleString() : '+'}`
+    : '';
+  const stars = p.rating_avg
+    ? '★'.repeat(Math.round(p.rating_avg)) + '☆'.repeat(5 - Math.round(p.rating_avg))
+    : '';
+  const proBadge = p.pro ? `<span class="badge-pro" style="font-size:9px">⭐ Featured</span> ` : '';
+  const verBadge = p.verified ? `<span class="badge-verified" style="font-size:9px">✔ Verified</span>` : '';
+
+  // Gallery (only shown for Pro)
+  const galleryHtml = p.pro && p.photos?.length
+    ? `<div style="display:flex;gap:6px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">
+        ${p.photos.map(url => `<img src="${url}" style="height:90px;min-width:90px;border-radius:10px;object-fit:cover;flex-shrink:0" alt="">`).join('')}
+       </div>`
+    : '';
+
+  area.innerHTML = `
+    <div class="preview-card">
+      ${p.cover_photo
+        ? `<img src="${p.cover_photo}" class="preview-card-img" alt="Cover">`
+        : `<div class="preview-card-placeholder">${CAT_EMOJI[p.category]||'🏷️'}</div>`}
+      <div class="preview-card-body">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">${proBadge}${verBadge}</div>
+        <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:2px">${_esc(p.name)}</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-bottom:6px">${CAT_EMOJI[p.category]||''} ${CAT_LABEL[p.category]||''}${p.location ? ' · ' + _esc(p.location) : ''}</div>
+        ${priceText ? `<div style="font-size:13px;font-weight:700;color:var(--gold-dk);margin-bottom:4px">${priceText}</div>` : ''}
+        ${p.description ? `<div style="font-size:12px;color:var(--ink-3);line-height:1.55;margin-bottom:6px">${_esc(p.description).substring(0,120)}${p.description.length>120?'…':''}</div>` : ''}
+        ${stars ? `<div style="font-size:13px;color:var(--gold)">${stars} <span style="font-size:11px;color:var(--ink-4)">(${p.review_count||0})</span></div>` : ''}
+      </div>
+      ${galleryHtml}
+    </div>
+    <p style="font-size:11.5px;color:var(--ink-4);text-align:center;margin-top:6px">This is how your listing appears to couples browsing the directory.</p>`;
+}
+
+/* ── DASHBOARD TABS ── */
+function showDashTab(name) {
+  ['preview','reviews'].forEach(t => {
+    document.getElementById('tab-pane-' + t)?.classList.toggle('active', t === name);
+    document.getElementById('tab-btn-' + t)?.classList.toggle('active', t === name);
+  });
+  if (name === 'reviews') _loadReviews();
+}
+
+/* ── REVIEWS ── */
+let _reviewsLoaded = false;
+async function _loadReviews() {
+  if (_reviewsLoaded || !_user || !DB) return;
+  const area = document.getElementById('reviews-area');
+  if (!area) return;
+  try {
+    const snap = await DB.collection('kasalko_marketplace').doc(_user.uid)
+                         .collection('reviews').orderBy('date','desc').limit(50).get();
+    _reviewsLoaded = true;
+    if (snap.empty) {
+      area.innerHTML = `<div style="text-align:center;padding:36px 16px;color:var(--ink-4)">
+        <div style="font-size:32px;margin-bottom:10px">💬</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">No reviews yet</div>
+        <div style="font-size:12.5px;line-height:1.65">When couples leave feedback on your listing, it'll appear here.</div>
+      </div>`;
+      return;
+    }
+    let html = '';
+    snap.forEach(doc => {
+      const r = doc.data();
+      const stars = '★'.repeat(r.rating||0) + '☆'.repeat(5-(r.rating||0));
+      const date = r.date ? new Date(r.date).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}) : '';
+      html += `<div class="review-card">
+        <div style="font-size:14px;color:var(--gold);margin-bottom:5px">${stars}</div>
+        <div style="font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:6px">${_esc(r.text||'')}</div>
+        <div style="font-size:10.5px;color:var(--ink-4)">${_esc(r.author||'Anonymous')}${date?' · '+date:''}</div>
+      </div>`;
+    });
+    area.innerHTML = html;
+  } catch(e) {
+    area.innerHTML = `<p style="text-align:center;padding:24px;color:var(--ink-4);font-size:13px">Could not load reviews.</p>`;
+  }
+}
+
+/* ── PRO CTA ── */
+function _renderProCta() {
+  const el = document.getElementById('pro-cta');
+  if (!el) return;
+  if (_profile?.pro) {
+    el.innerHTML = `
+      <div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px">⭐ You're on Pro!</div>
+      <div style="font-size:13px;color:var(--ink-3);line-height:1.65">Your listing is featured at the top of your category and your gallery is fully visible to couples. Thank you for supporting Vows &amp; Petals! 💍</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:6px">⭐ Upgrade to Pro</div>
+    <div style="font-size:13px;color:var(--ink-3);line-height:1.65;margin-bottom:10px">Stand out and get more bookings. Pro suppliers get priority placement and full gallery visibility.</div>
+    <ul class="pro-features">
+      <li>⭐ Featured badge in all browse results</li>
+      <li>Sorted #1 in your category</li>
+      <li>Full photo gallery visible to couples</li>
+      <li>Fast-track to Verified status</li>
+      <li>Priority support from our team</li>
+    </ul>
+    <button onclick="contactPro()" style="width:100%;padding:13px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.2px">
+      Inquire About Pro ⭐
+    </button>`;
+}
+
+function contactPro() {
+  const name = _profile?.name || 'my business';
+  const email = _user?.email || '';
+  const subject = encodeURIComponent('Pro Plan Inquiry — ' + name);
+  const body = encodeURIComponent(`Hi!\n\nI'd like to upgrade "${name}" to Pro on Vows & Petals.\n\nMy email: ${email}\n\nPlease let me know the details. Thank you!`);
+  window.open(`mailto:hello@vowsandpetals.com?subject=${subject}&body=${body}`, '_blank');
+}
+
+/* ── HELPERS ── */
+function _esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let _toastTimer;
+function toast(msg, dur = 2800) {
+  const el = document.getElementById('sp-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// Initial gallery render (empty)
+_renderGallery();
+</script>
+</body>
+</html>
