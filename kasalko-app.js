@@ -692,20 +692,18 @@ function renderBudget() {
             <span style="font-size:12.5px;font-weight:700;color:var(--tan-dark);flex-shrink:0">₱${groupTotal.toLocaleString()}</span>
             <span style="font-size:13px;color:var(--ink-4);flex-shrink:0;margin-left:4px">${collapsed?'▶':'▼'}</span>
           </div>
-          ${collapsed ? '' : `<div style="padding:6px 8px;background:rgba(255,252,247,0.6)">
+          ${collapsed ? '' : `<div>
             ${items.map(e => `
-            <div class="glass" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 10px;border-bottom:1px solid rgba(184,145,106,0.1);background:rgba(255,252,247,0.6)">
               <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:700;color:var(--ink)">${e.label}</div>
+                <span style="font-size:12px;font-weight:600;color:var(--ink)">${e.label}</span>
               </div>
-              <div style="text-align:right;flex-shrink:0">
-                <div style="font-size:14px;font-weight:700;color:var(--ink)">₱${e.amount.toLocaleString()}</div>
-                <div style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:2px;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.12)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'};">${e.paid?'Paid':'Pending'}</div>
-              </div>
-              <div class="expense-actions">
-                <button onclick="toggleExpensePaid(${e._idx})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer;white-space:nowrap">${e.paid?'Unpay':'Mark Paid'}</button>
-                <button onclick="openEditExpense(${e._idx})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(184,145,106,0.25);background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
-                <button onclick="deleteExpense(${e._idx})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
+              <span style="font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0">₱${e.amount.toLocaleString()}</span>
+              <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.1)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'}">${e.paid?'Paid':'Due'}</span>
+              <div class="expense-actions" style="flex-shrink:0">
+                <button onclick="toggleExpensePaid(${e._idx})" style="padding:3px 6px;border-radius:5px;border:none;background:rgba(90,171,122,0.1);font-size:9.5px;font-weight:700;color:var(--green-deep);cursor:pointer;white-space:nowrap">${e.paid?'↩':'✓'}</button>
+                <button onclick="openEditExpense(${e._idx})" style="padding:3px 6px;border-radius:5px;border:none;background:transparent;font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
+                <button onclick="deleteExpense(${e._idx})" style="padding:3px 6px;border-radius:5px;border:none;background:transparent;font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
               </div>
             </div>`).join('')}
           </div>`}
@@ -1003,35 +1001,34 @@ function _guestCard(g) {
     <option value="declined"  ${g.rsvp==='declined' ?'selected':''}>❌ Declined</option>
   </select>`;
 
-  return `<div class="guest-card glass" style="border-radius:var(--r-md);margin-bottom:7px;overflow:hidden" onclick="toggleGuestCard(event,this)">
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
-      <div style="width:38px;height:38px;border-radius:10px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:${txtColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.6)">${initials}</div>
+  return `<div class="guest-card" onclick="toggleGuestCard(event,this)" style="border-bottom:1px solid rgba(184,145,106,0.1)">
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 10px">
+      <div style="width:22px;height:22px;border-radius:3px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${txtColor};flex-shrink:0">${initials}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
-        <div class="gc-tags-row">
-          ${g.group ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.14);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.22)">${g.group}</span>` : ''}
-          ${chair   ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${_formatSeatLabel(chair)}</span>` : ''}
-          ${g.meal  ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>` : ''}
-          ${g.phone ? `<a href="tel:${g.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>` : ''}
-          ${g._inviteSent ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.18);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.28)">💌 Sent${sentAt?' · '+sentAt:''}</span>` : ''}
+        <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
+        <div class="gc-tags-row" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
+          ${g.group ? `<span style="font-size:9.5px;color:var(--ink-4)">${g.group}</span>` : ''}
+          ${chair   ? `<span style="font-size:9.5px;color:var(--green-deep);font-weight:600">🪑 ${_formatSeatLabel(chair)}</span>` : ''}
+          ${g.meal  ? `<span style="font-size:9.5px;color:var(--ink-3)">${g.meal}</span>` : ''}
+          ${g._inviteSent ? `<span style="font-size:9.5px;color:var(--tan-dark)">💌${sentAt?' '+sentAt:''}</span>` : ''}
         </div>
       </div>
       <!-- Mobile only: RSVP status emoji + expand chevron -->
       <div class="gc-mobile-hint">
-        <span style="font-size:16px;line-height:1">${rsvpEmoji}</span>
-        <span class="gc-chevron">▾</span>
+        <span style="font-size:13px;line-height:1">${rsvpEmoji}</span>
+        <span class="gc-chevron" style="font-size:10px;color:var(--ink-4)">▾</span>
       </div>
       <!-- Desktop only: full action column -->
       <div class="guest-actions-col">
         ${rsvpSel()}
         ${sendBtn}${linkBtn}
-        <button onclick="event.stopPropagation();openEditGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
-        <button onclick="event.stopPropagation();removeGuest(${g.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
+        <button onclick="event.stopPropagation();openEditGuest(${g.id})" style="width:22px;height:22px;border-radius:4px;border:none;background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
+        <button onclick="event.stopPropagation();removeGuest(${g.id})" style="width:22px;height:22px;border-radius:4px;border:none;background:rgba(224,120,152,0.12);font-size:11px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
       </div>
     </div>
     <!-- Mobile only: expanded action row (hidden until tapped) -->
     <div class="gc-mobile-actions">
-      ${rsvpSel(';font-size:12px;padding:6px 10px')}
+      ${rsvpSel(';font-size:11px;padding:4px 8px')}
       ${sendBtn}${linkBtn}${editBtn}${delBtn}
     </div>
   </div>`;
@@ -1078,12 +1075,12 @@ function renderGuests() {
     const att = members.filter(g => g.rsvp === 'attending').length;
     const collapsed = _collapsedGuestGroups.has(grp);
     guestHTML += `
-      <div style="margin-bottom:4px">
+      <div style="margin-bottom:8px;border-radius:6px;overflow:hidden;border:1px solid rgba(184,145,106,0.18)">
         <div class="guest-group-hdr" onclick="toggleGuestGroup('${grp.replace(/'/g,"\\'")}') " style="cursor:pointer;user-select:none">
           <span>${grp}</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:10.5px;font-weight:400;opacity:0.7">${members.length} guest${members.length!==1?'s':''} · ${att} attending</span>
-            <span style="font-size:13px;opacity:0.6">${collapsed ? '▶' : '▼'}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">${members.length} · ${att} attending</span>
+            <span style="font-size:11px;opacity:0.5">${collapsed ? '▶' : '▼'}</span>
           </div>
         </div>
         ${collapsed ? '' : members.map(_guestCard).join('')}
@@ -1091,15 +1088,15 @@ function renderGuests() {
   });
   if (ungrouped.length) {
     if (ungrouped.length === filtered.length) {
-      guestHTML += ungrouped.map(_guestCard).join(''); // all ungrouped — no header
+      guestHTML += `<div style="border:1px solid rgba(184,145,106,0.18);border-radius:6px;overflow:hidden;margin-bottom:4px">${ungrouped.map(_guestCard).join('')}</div>`;
     } else {
       const collapsed = _collapsedGuestGroups.has('__ungrouped__');
-      guestHTML += `<div style="margin-bottom:4px">
+      guestHTML += `<div style="margin-bottom:8px;border-radius:6px;overflow:hidden;border:1px solid rgba(184,145,106,0.18)">
         <div class="guest-group-hdr" onclick="toggleGuestGroup('__ungrouped__')" style="cursor:pointer;user-select:none">
-          <span>Other / Ungrouped</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:10.5px;font-weight:400;opacity:0.7">${ungrouped.length}</span>
-            <span style="font-size:13px;opacity:0.6">${collapsed ? '▶' : '▼'}</span>
+          <span>Other</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">${ungrouped.length}</span>
+            <span style="font-size:11px;opacity:0.5">${collapsed ? '▶' : '▼'}</span>
           </div>
         </div>
         ${collapsed ? '' : ungrouped.map(_guestCard).join('')}
@@ -2148,23 +2145,21 @@ function _renderSuppliersMain(el) {
     vendorList = Object.entries(groups).map(([cat, vendors]) => {
       const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
       const catEmoji = getSupplierEmoji(cat);
-      // One-line cards: name (clickable) + action icons
+      // Table-row style: name (clickable) + minimal action icons
       const cards = vendors.map(v => `
-        <div class="glass" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-md)">
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 10px;border-bottom:1px solid rgba(184,145,106,0.1);background:rgba(255,252,247,0.6)">
           <div onclick="openVendorDetail(${v.id})" style="flex:1;min-width:0;cursor:pointer">
-            <span style="font-size:13px;font-weight:700;color:var(--ink)">${v.name}</span>
-            ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.16);border-radius:4px;padding:1px 5px;margin-left:5px">🏪</span>` : ''}
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">${v.name}</span>
+            ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;margin-left:4px">🏪</span>` : ''}
           </div>
-          ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:13px;color:var(--green-deep);text-decoration:none;flex-shrink:0">📞</a>`:''}
-          ${v.link?`<a href="${v.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:13px;color:var(--tan-dark);text-decoration:none;flex-shrink:0">🔗</a>`:''}
-          <button onclick="event.stopPropagation();deleteVendor(${v.id})" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
+          ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="font-size:13px;color:var(--green-deep);text-decoration:none;flex-shrink:0">📞</a>`:''}
+          ${v.link?`<a href="${v.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:13px;color:var(--tan-dark);text-decoration:none;flex-shrink:0">🔗</a>`:''}
+          <button onclick="event.stopPropagation();deleteVendor(${v.id})" style="padding:0;border:none;background:transparent;font-size:13px;cursor:pointer;color:var(--rose);flex-shrink:0;opacity:0.6">🗑</button>
         </div>`).join('');
       return `
-        <div style="margin-bottom:14px">
-          <div style="font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;font-size:11px">(${vendors.length})</span></div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            ${cards}
-          </div>
+        <div style="margin-bottom:12px;border-radius:6px;overflow:hidden;border:1px solid rgba(184,145,106,0.18)">
+          <div style="font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;padding:4px 10px;background:rgba(245,230,200,0.45);border-bottom:1px solid rgba(184,145,106,0.18)">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;opacity:0.7">${vendors.length}</span></div>
+          ${cards}
         </div>`;
     }).join('');
   }

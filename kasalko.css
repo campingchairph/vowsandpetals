@@ -1098,9 +1098,9 @@ textarea.glass-input {
 @media (max-width: 899px) {
   /* ── Hero: clear fixed header + compact height ── */
   .wedding-hero {
-    padding: 64px 20px 16px; /* 64px = header height + buffer; reduced bottom */
+    padding: 130px 20px 16px;
   }
-  /* Names on one line — smaller font, row layout */
+  /* Names on one line — row layout */
   .wedding-couple-names {
     flex-direction: row;
     align-items: baseline;
@@ -1110,14 +1110,14 @@ textarea.glass-input {
     overflow: hidden;
   }
   .hero-name-line {
-    font-size: 26px;
+    font-size: 30px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 42vw;
   }
   .wedding-amp {
-    font-size: 20px;
+    font-size: 22px;
     margin: 0;
     flex-shrink: 0;
   }
@@ -1156,9 +1156,9 @@ textarea.glass-input {
     flex-wrap: wrap;
     gap: 4px;
     align-items: center;
-    padding: 8px 12px 10px 14px;
+    padding: 5px 10px 6px;
     border-top: 1px solid rgba(184,145,106,0.1);
-    margin-top: 2px;
+    background: rgba(250,246,238,0.6);
   }
   .guest-card.gc-expanded .gc-chevron {
     transform: rotate(180deg);
@@ -1920,13 +1920,14 @@ textarea.glass-input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 4px 5px 2px;
-  margin-bottom: 5px;
-  font-size: 11.5px;
+  padding: 4px 10px;
+  margin-bottom: 0;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--ink-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  background: rgba(245,230,200,0.45);
   border-bottom: 1px solid rgba(184,145,106,0.18);
 }
 
