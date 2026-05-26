@@ -825,9 +825,9 @@
 
 <!-- Quick Dials FAB -->
 <button id="quick-dials-fab" onclick="openQuickDials()"
-  style="position:fixed;bottom:80px;right:16px;z-index:700;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;box-shadow:0 4px 18px rgba(44,31,14,0.28);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s"
-  onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform=''">
-  <span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#fff;letter-spacing:0">◇</span>
+  style="position:fixed;bottom:80px;right:16px;z-index:700;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;box-shadow:0 4px 18px rgba(44,31,14,0.28);font-size:22px;cursor:grab;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none"
+  title="Quick Dials — drag to move">
+  <span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#fff;letter-spacing:0;pointer-events:none">◇</span>
 </button>
 
 <!-- ══════════════════════════════════════════════

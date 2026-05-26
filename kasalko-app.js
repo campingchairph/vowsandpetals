@@ -2055,7 +2055,31 @@ function supplierSearch() {
   });
 }
 
-const PH_CITIES = ['Metro Manila','Quezon City','Makati','Taguig','Pasig','Mandaluyong','Manila','Caloocan','Marikina','Parañaque','Las Piñas','Muntinlupa','Valenzuela','Pasay','Malabon','Navotas','San Juan','Cebu City','Davao City','Iloilo City','Cagayan de Oro','Bacolod','Baguio','General Santos','Zamboanga City','Antipolo','Batangas City','Cabanatuan','San Jose del Monte','Laguna','Cavite','Bulacan','Pampanga','Rizal'];
+// Distinct supplier locations — populated from Firestore on first browse open
+let _supplierLocations = [];
+let _supplierLocationsLoaded = false;
+
+async function _loadSupplierLocations() {
+  if (_supplierLocationsLoaded) return;
+  if (typeof DB === 'undefined' || !DB) return;
+  try {
+    const snap = await DB.collection('kasalko_marketplace').limit(300).get();
+    const locs = new Set();
+    snap.docs.forEach(d => {
+      const loc = (d.data().location || '').trim();
+      if (loc) locs.add(loc);
+    });
+    _supplierLocations = [...locs].sort((a, b) => a.localeCompare(b));
+    _supplierLocationsLoaded = true;
+  } catch(e) { console.warn('Could not load supplier locations:', e); }
+}
+
+function _buildLocFilter() {
+  const opts = _supplierLocations.map(loc =>
+    `<option value="${loc.toLowerCase()}" ${_supplierLocFilter === loc.toLowerCase() ? 'selected' : ''}>${loc}</option>`
+  ).join('');
+  return `<option value="">📍 All areas</option>${opts}`;
+}
 
 function _renderSuppliersBrowse(el) {
   el.innerHTML = `
@@ -2075,7 +2099,6 @@ function _renderSuppliersBrowse(el) {
       <select id="sup-loc-filter" onchange="supplierSearch()"
         style="padding:9px 10px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:12px;color:var(--ink);outline:none;max-width:130px">
         <option value="">📍 All areas</option>
-        ${PH_CITIES.map(c=>`<option value="${c.toLowerCase()}" ${_supplierLocFilter===c.toLowerCase()?'selected':''}>${c}</option>`).join('')}
       </select>
     </div>
 
@@ -2097,6 +2120,12 @@ function _renderSuppliersBrowse(el) {
           </div>`).join('')}
       </div>
     </div>`;
+
+  // Load real supplier locations into the filter (async — populates after render)
+  _loadSupplierLocations().then(() => {
+    const sel = document.getElementById('sup-loc-filter');
+    if (sel) sel.innerHTML = _buildLocFilter();
+  });
 
   // Re-run search if there was a previous query
   if (_supplierSearchQ || _supplierLocFilter) supplierSearch();
@@ -4097,6 +4126,68 @@ function _showMobileHint() {
 }
 
 /* ── LANDING PAGE ────────────────────────────── */
+function _initDraggableFab() {
+  const fab = document.getElementById('quick-dials-fab');
+  if (!fab) return;
+  fab.style.display = 'flex'; // Make visible inside the app
+
+  // Restore saved position
+  try {
+    const saved = JSON.parse(localStorage.getItem('_fab_pos') || 'null');
+    if (saved && saved.bottom != null && saved.right != null) {
+      fab.style.bottom = Math.min(saved.bottom, window.innerHeight - 62) + 'px';
+      fab.style.right  = Math.min(saved.right,  window.innerWidth  - 62) + 'px';
+      fab.style.left   = 'auto';
+      fab.style.top    = 'auto';
+    }
+  } catch(e) {}
+
+  let _startX = 0, _startY = 0, _startB = 0, _startR = 0;
+  let _fabDragging = false, _fabMoved = false;
+
+  const fabStart = e => {
+    const t = e.touches ? e.touches[0] : e;
+    _fabDragging = true; _fabMoved = false;
+    _startX = t.clientX; _startY = t.clientY;
+    const rect = fab.getBoundingClientRect();
+    _startB = window.innerHeight - rect.bottom;
+    _startR = window.innerWidth  - rect.right;
+    fab.style.transition = 'none';
+    fab.style.cursor = 'grabbing';
+    e.preventDefault();
+  };
+  const fabMove = e => {
+    if (!_fabDragging) return;
+    const t = e.touches ? e.touches[0] : e;
+    const dx = t.clientX - _startX, dy = t.clientY - _startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) _fabMoved = true;
+    if (!_fabMoved) return;
+    fab.style.bottom = Math.max(8, Math.min(window.innerHeight - 62, _startB - dy)) + 'px';
+    fab.style.right  = Math.max(8, Math.min(window.innerWidth  - 62, _startR - dx)) + 'px';
+    fab.style.left   = 'auto'; fab.style.top = 'auto';
+    e.preventDefault();
+  };
+  const fabEnd = e => {
+    if (!_fabDragging) return;
+    _fabDragging = false;
+    fab.style.cursor = 'grab';
+    fab.style.transition = 'transform 0.15s';
+    if (_fabMoved) {
+      try { localStorage.setItem('_fab_pos', JSON.stringify({ bottom: parseInt(fab.style.bottom), right: parseInt(fab.style.right) })); } catch(e) {}
+    }
+  };
+
+  fab.addEventListener('touchstart', fabStart, { passive: false });
+  fab.addEventListener('mousedown',  fabStart);
+  document.addEventListener('touchmove', fabMove, { passive: false });
+  document.addEventListener('mousemove',  fabMove);
+  document.addEventListener('touchend',  fabEnd);
+  document.addEventListener('mouseup',   fabEnd);
+
+  // Suppress click after a drag
+  fab.addEventListener('click', e => { if (_fabMoved) { _fabMoved = false; e.stopImmediatePropagation(); } }, true);
+}
+
 function enterApp(instant) {
   if (!window.CURRENT_USER) {
     window._pendingEnter = true;
@@ -4109,6 +4200,7 @@ function enterApp(instant) {
   if (!el) return;
   if (instant) {
     el.style.display = 'none';
+    _initDraggableFab();
     return;
   }
   el.style.transition = 'opacity 0.55s ease, visibility 0.55s ease';
@@ -4118,6 +4210,7 @@ function enterApp(instant) {
     el.style.display = 'none';
     // After landing page fades, nudge mobile users toward a bigger screen
     setTimeout(_showMobileHint, 600);
+    _initDraggableFab();
   }, { once: true });
 }
 
@@ -4205,16 +4298,20 @@ function renderEntourage() {
           </div>
           <button onclick="openEntourageMemberModal('${role.replace(/'/g,"\\'")}')" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(184,145,106,0.25);background:rgba(255,252,247,0.8);font-size:10.5px;font-weight:700;color:var(--gold-dark);cursor:pointer">+ Add</button>
         </div>
-        <div style="padding:0 10px 10px;display:flex;flex-direction:column;gap:5px">
-          ${members.map(m => `
-            <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r-sm);background:rgba(255,252,247,0.75);border:1px solid rgba(255,255,255,0.6)">
-              <div style="width:30px;height:30px;border-radius:8px;background:rgba(184,145,106,0.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-3);flex-shrink:0">${m.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+        <div style="padding:0 10px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px">
+          ${members.map(m => {
+            const initials = m.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+            const displayName = m.name.length > 18 ? m.name.substring(0,17) + '…' : m.name;
+            return `
+            <div style="display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--r-sm);background:rgba(255,252,247,0.75);border:1px solid rgba(255,255,255,0.6);min-width:0" title="${m.name}">
+              <div style="width:26px;height:26px;border-radius:7px;background:rgba(184,145,106,0.12);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ink-3);flex-shrink:0">${initials}</div>
               <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:700;color:var(--ink)">${m.name}</div>
-                ${m.note ? `<div style="font-size:10.5px;color:var(--ink-4);margin-top:1px;font-style:italic">${m.note}</div>` : ''}
+                <div style="font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${displayName}</div>
+                ${m.note ? `<div style="font-size:9.5px;color:var(--ink-4);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic">${m.note}</div>` : ''}
               </div>
-              <button onclick="removeEntourageMember(${m.id})" style="width:26px;height:26px;border-radius:7px;border:none;background:rgba(224,120,152,0.12);font-size:12px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">×</button>
-            </div>`).join('')}
+              <button onclick="removeEntourageMember(${m.id})" style="width:22px;height:22px;border-radius:6px;border:none;background:rgba(224,120,152,0.12);font-size:11px;cursor:pointer;color:var(--pink-deep);flex-shrink:0;padding:0">×</button>
+            </div>`;
+          }).join('')}
         </div>
       </div>`;
     }).join('')}`;
@@ -4357,47 +4454,82 @@ function _allNoteSections() {
   return [...NOTE_SECTIONS, ...(WED.noteCategories || [])];
 }
 
+let _activeNoteKey = null; // null = show card grid; 'key' = show that section's editor
+
+function _openNoteSection(key) { _activeNoteKey = key; renderNotes(); }
+function _closeNoteSection()   { _activeNoteKey = null; renderNotes(); }
+
 function renderNotes() {
   const el = document.getElementById('wed-notes-content');
   if (!el) return;
   const sections = _allNoteSections();
-  const totalChars = sections.reduce((a, s) => a + (WED.notes[s.key] || '').length, 0);
 
-  const sectionHTML = sections.map(s => {
+  /* ── Single section editor view ── */
+  if (_activeNoteKey) {
+    const s = sections.find(sec => sec.key === _activeNoteKey);
+    if (!s) { _activeNoteKey = null; renderNotes(); return; }
+
     const sectionPhotos = (WED.notePhotos || []).filter(p => p.sectionKey === s.key);
-    let photoArea;
-    if (sectionPhotos.length) {
-      photoArea = `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px">
-        ${sectionPhotos.map(p => `
-          <div onclick="openPhotoTagEditor(${p.id})" style="width:54px;height:54px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;border:1.5px solid rgba(184,145,106,0.2)">
-            <img src="${p.dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">
-            ${p.tags && p.tags.length ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(44,24,16,0.55);font-size:8px;color:#fff;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.tags.join(' ')}</div>` : ''}
-          </div>`).join('')}
-        <label style="width:54px;height:54px;border-radius:var(--r-sm);border:1.5px dashed rgba(184,145,106,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:rgba(245,235,215,0.4)">
-          <span style="font-size:22px;color:var(--gold-dark);line-height:1">+</span>
-          <input type="file" accept="image/*" style="display:none" onchange="addNotePhoto(event,'${s.key}')">
-        </label>
-      </div>`;
-    } else {
-      photoArea = `<div style="padding:0 14px 12px">
-        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:11.5px;color:var(--ink-4);border:1.5px dashed rgba(184,145,106,0.4);border-radius:var(--r-sm);padding:5px 10px;background:rgba(245,235,215,0.35)">
+    const photoArea = sectionPhotos.length
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 0 12px">
+          ${sectionPhotos.map(p => `
+            <div onclick="openPhotoTagEditor(${p.id})" style="width:54px;height:54px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;border:1.5px solid rgba(184,145,106,0.2)">
+              <img src="${p.dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">
+              ${p.tags && p.tags.length ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(44,24,16,0.55);font-size:8px;color:#fff;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.tags.join(' ')}</div>` : ''}
+            </div>`).join('')}
+          <label style="width:54px;height:54px;border-radius:var(--r-sm);border:1.5px dashed rgba(184,145,106,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:rgba(245,235,215,0.4)">
+            <span style="font-size:22px;color:var(--gold-dark);line-height:1">+</span>
+            <input type="file" accept="image/*" style="display:none" onchange="addNotePhoto(event,'${s.key}')">
+          </label>
+        </div>`
+      : `<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:11.5px;color:var(--ink-4);border:1.5px dashed rgba(184,145,106,0.4);border-radius:var(--r-sm);padding:5px 10px;background:rgba(245,235,215,0.35);margin-bottom:12px">
           📷 Add photo
           <input type="file" accept="image/*" style="display:none" onchange="addNotePhoto(event,'${s.key}')">
-        </label>
-      </div>`;
-    }
-    return `
-    <div class="glass" style="border-radius:var(--r-md);margin-bottom:12px;overflow:hidden">
-      <div style="display:flex;align-items:center;gap:8px;padding:11px 14px 8px;border-bottom:1px solid rgba(184,145,106,0.10)">
-        <span style="font-size:16px">${s.emoji}</span>
-        <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${s.label}</span>
+        </label>`;
+
+    const isCustom = s.key.startsWith('custom_');
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="_closeNoteSection()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+        <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0">
+          <span style="font-size:20px">${s.emoji}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.label}</span>
+        </div>
+        <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;flex-shrink:0">🖨 Print</button>
       </div>
-      <textarea
-        style="width:100%;padding:12px 14px;border:none;background:transparent;font-size:13px;color:var(--ink);line-height:1.65;resize:vertical;min-height:90px;font-family:var(--f);outline:none"
-        placeholder="${s.placeholder || 'Write your notes here…'}"
-        oninput="saveNoteField('${s.key}',this.value)"
-      >${WED.notes[s.key] || ''}</textarea>
+      <div class="glass" style="border-radius:var(--r-md);padding:14px;margin-bottom:12px">
+        <textarea
+          style="width:100%;border:none;background:transparent;font-size:13px;color:var(--ink);line-height:1.7;resize:vertical;min-height:160px;font-family:var(--f);outline:none"
+          placeholder="${s.placeholder || 'Write your notes here…'}"
+          oninput="saveNoteField('${s.key}',this.value)"
+          autofocus
+        >${WED.notes[s.key] || ''}</textarea>
+      </div>
       ${photoArea}
+      ${isCustom ? `<div style="text-align:center;margin-top:8px"><button onclick="deleteNoteSection('${s.key}')" style="padding:7px 14px;border-radius:var(--r-md);border:none;background:none;font-size:12px;color:var(--pink-deep);cursor:pointer">🗑 Delete this section</button></div>` : ''}`;
+    return;
+  }
+
+  /* ── Card grid view ── */
+  const totalChars = sections.reduce((a, s) => a + (WED.notes[s.key] || '').length, 0);
+
+  const cards = sections.map(s => {
+    const text   = WED.notes[s.key] || '';
+    const photos = (WED.notePhotos || []).filter(p => p.sectionKey === s.key);
+    const preview = text ? text.substring(0, 60).replace(/\n/g,' ') + (text.length > 60 ? '…' : '') : '';
+    const hasContent = text.length > 0 || photos.length > 0;
+    return `
+    <div onclick="_openNoteSection('${s.key}')" class="glass" style="border-radius:var(--r-md);padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:6px;position:relative;min-height:90px;transition:box-shadow 0.15s" onmouseenter="this.style.boxShadow='0 4px 18px rgba(201,169,110,0.22)'" onmouseleave="this.style.boxShadow=''">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:20px">${s.emoji}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--ink)">${s.label}</span>
+        <span style="margin-left:auto;font-size:16px;color:var(--ink-4)">›</span>
+      </div>
+      ${preview ? `<div style="font-size:11.5px;color:var(--ink-3);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${preview}</div>` : `<div style="font-size:11.5px;color:var(--ink-4);font-style:italic">Tap to write…</div>`}
+      <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+        ${hasContent ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">● Has notes</span>` : ''}
+        ${photos.length ? `<span style="font-size:10px;color:var(--ink-4)">📷 ${photos.length}</span>` : ''}
+      </div>
     </div>`;
   }).join('');
 
@@ -4405,11 +4537,13 @@ function renderNotes() {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div>
         <span class="sec-title" style="margin-bottom:0">Notes &amp; Mood Board</span>
-        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${totalChars ? totalChars.toLocaleString() + ' characters saved' : 'Write freely — auto-saved'}</div>
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${totalChars ? totalChars.toLocaleString() + ' characters saved' : 'Tap a section to start writing'}</div>
       </div>
       <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
     </div>
-    ${sectionHTML}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      ${cards}
+    </div>
     <div style="text-align:center;padding:4px 0 16px">
       <button onclick="openModal('add-note-category-modal')" style="padding:8px 18px;border-radius:var(--r-md);border:1.5px dashed rgba(184,145,106,0.45);background:rgba(245,235,215,0.4);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Note Section</button>
     </div>`;
@@ -4445,6 +4579,18 @@ function submitNoteCategory() {
   document.getElementById('new-note-cat-emoji').value = '';
   renderNotes();
   showToast('✅ Section added!');
+}
+
+function deleteNoteSection(key) {
+  if (!key.startsWith('custom_')) return;
+  if (!confirm('Delete this note section and all its content?')) return;
+  WED.noteCategories = (WED.noteCategories || []).filter(c => c.key !== key);
+  delete WED.notes[key];
+  WED.notePhotos = (WED.notePhotos || []).filter(p => p.sectionKey !== key);
+  saveState();
+  _activeNoteKey = null;
+  renderNotes();
+  showToast('🗑 Section deleted');
 }
 
 async function addNotePhoto(event, sectionKey) {
@@ -4852,6 +4998,9 @@ window.submitEntourageMember      = submitEntourageMember;
 window.removeEntourageMember      = removeEntourageMember;
 window.exportEntourage            = exportEntourage;
 window.renderNotes                = renderNotes;
+window._openNoteSection           = _openNoteSection;
+window._closeNoteSection          = _closeNoteSection;
+window.deleteNoteSection          = deleteNoteSection;
 window.saveNoteField              = saveNoteField;
 window.exportNotes                = exportNotes;
 window.submitNoteCategory         = submitNoteCategory;

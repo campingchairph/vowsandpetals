@@ -281,7 +281,97 @@
           <option value="others">Others ✨</option>
         </select>
       </div>
-      <div class="field"><label>Location / City</label><input type="text" id="f-location" placeholder="e.g. Quezon City, Metro Manila"></div>
+      <div class="field">
+        <label>Location / City <span style="color:var(--rose);font-size:11px">required</span></label>
+        <select id="f-location" class="glass-input" style="width:100%;padding:10px 12px;border-radius:var(--r-md);border:1.5px solid rgba(184,145,106,0.3);background:rgba(253,250,244,0.95);font-family:var(--f);font-size:13px;color:var(--ink);outline:none;appearance:auto">
+          <option value="">Select your city or province…</option>
+          <optgroup label="Metro Manila (NCR)">
+            <option>Caloocan</option>
+            <option>Las Piñas</option>
+            <option>Makati</option>
+            <option>Malabon</option>
+            <option>Mandaluyong</option>
+            <option>Manila</option>
+            <option>Marikina</option>
+            <option>Muntinlupa</option>
+            <option>Navotas</option>
+            <option>Parañaque</option>
+            <option>Pasay</option>
+            <option>Pasig</option>
+            <option>Quezon City</option>
+            <option>San Juan</option>
+            <option>Taguig</option>
+            <option>Valenzuela</option>
+          </optgroup>
+          <optgroup label="Cavite">
+            <option>Bacoor</option>
+            <option>Dasmariñas</option>
+            <option>General Trias</option>
+            <option>Imus</option>
+            <option>Tagaytay</option>
+            <option>Trece Martires</option>
+          </optgroup>
+          <optgroup label="Laguna">
+            <option>Biñan</option>
+            <option>Calamba</option>
+            <option>Los Baños</option>
+            <option>San Pablo</option>
+            <option>Santa Rosa</option>
+          </optgroup>
+          <optgroup label="Rizal">
+            <option>Antipolo</option>
+            <option>Cainta</option>
+            <option>Taytay</option>
+          </optgroup>
+          <optgroup label="Bulacan">
+            <option>Malolos</option>
+            <option>Meycauayan</option>
+            <option>San Jose del Monte</option>
+          </optgroup>
+          <optgroup label="Pampanga">
+            <option>Angeles City</option>
+            <option>San Fernando</option>
+          </optgroup>
+          <optgroup label="Batangas">
+            <option>Batangas City</option>
+            <option>Lipa</option>
+          </optgroup>
+          <optgroup label="Other Luzon">
+            <option>Baguio</option>
+            <option>Cabanatuan</option>
+            <option>Dagupan</option>
+            <option>Laoag</option>
+            <option>Legazpi</option>
+            <option>Lucena</option>
+            <option>Naga</option>
+            <option>Olongapo</option>
+            <option>San Fernando (La Union)</option>
+            <option>Tuguegarao</option>
+          </optgroup>
+          <optgroup label="Cebu">
+            <option>Cebu City</option>
+            <option>Lapu-Lapu</option>
+            <option>Mandaue</option>
+            <option>Talisay</option>
+          </optgroup>
+          <optgroup label="Visayas">
+            <option>Bacolod</option>
+            <option>Dumaguete</option>
+            <option>Iloilo City</option>
+            <option>Ormoc</option>
+            <option>Tacloban</option>
+          </optgroup>
+          <optgroup label="Mindanao">
+            <option>Butuan</option>
+            <option>Cagayan de Oro</option>
+            <option>Cotabato City</option>
+            <option>Davao City</option>
+            <option>General Santos</option>
+            <option>Iligan</option>
+            <option>Zamboanga City</option>
+          </optgroup>
+        </select>
+      </div>
       <div class="field"><label>About Your Business</label><textarea id="f-description" placeholder="Describe your services, experience, and what makes you special…"></textarea></div>
     </div>
 
@@ -691,8 +781,10 @@ function _populateForm(p) {
 async function saveProfile() {
   const nameVal = (document.getElementById('f-name')?.value || '').trim();
   const catVal  =  document.getElementById('f-category')?.value || '';
+  const locVal  =  document.getElementById('f-location')?.value  || '';
   if (!nameVal) { _showSetupErr('Please enter your business name.'); return; }
   if (!catVal)  { _showSetupErr('Please select a category.'); return; }
+  if (!locVal)  { _showSetupErr('Please select your city or province.'); return; }
 
   const btn = document.getElementById('setup-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
