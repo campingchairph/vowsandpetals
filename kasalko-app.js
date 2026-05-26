@@ -2699,7 +2699,8 @@ function _showTemplatePreview(code, data) {
         </div>
         ${_isAppAdmin()
           ? `<button onclick="_importTemplateFromCode('${code}')" class="cta-btn" style="background:linear-gradient(135deg,#2d6a4f,#1b4332)">🔍 Admin Preview — Import Free</button>`
-          : `<button onclick="_showTemplatePayment('${code}',${price})" class="cta-btn">💳 Get This Template — ₱${Number(price).toLocaleString()}</button>`}
+          : `<button onclick="_showTemplatePayment('${code}',${price})" class="cta-btn">💳 Get This Template — ₱${Number(price).toLocaleString()}</button>
+             <button onclick="_showBuyerActivation('${code}')" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.22);background:transparent;font-size:12px;font-weight:600;color:var(--ink-3);cursor:pointer;font-family:var(--f)">🔑 Already bought? Enter reference number →</button>`}
       ` : `
         <button onclick="_importTemplateFromCode('${code}')" class="cta-btn">📦 Use This Template — Free</button>
       `}
@@ -2711,82 +2712,188 @@ function _showTemplatePreview(code, data) {
 function _showTemplatePayment(code, price) {
   const sheet = document.querySelector('#tpl-preview-sheet .modal-sheet');
   if (!sheet) return;
+  const userEmail = window.CURRENT_USER?.email || '';
   sheet.innerHTML = `
     <div class="modal-handle"></div>
-    <div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:14px">💳 Complete Payment</div>
-    <div style="padding:14px;border-radius:12px;background:rgba(90,171,122,0.08);border:1px solid rgba(90,171,122,0.22);margin-bottom:14px">
-      <div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">GCash Payment</div>
-      <div style="font-size:15px;font-weight:800;color:var(--ink)">₱${Number(price).toLocaleString()}</div>
-      <div style="font-size:12px;color:var(--ink-3);margin-top:6px;line-height:1.55">
-        Send to the GCash number provided by the seller.<br>
-        Use reference: <b style="font-family:monospace;color:var(--ink)">VP-${code}</b>
-      </div>
+    <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px">💳 Buy Template VP-${code}</div>
+    <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55;margin-bottom:14px">Submit your purchase request, then email us your GCash receipt. We'll verify and send you a reference number to activate the template.</div>
+
+    <div style="padding:10px 14px;border-radius:10px;background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Template Price</div>
+      <div style="font-size:24px;font-weight:800;color:var(--tan-dark)">₱${Number(price).toLocaleString()}</div>
     </div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">GCash Reference Number</div>
-      <input id="gcash-ref-input" class="glass-input" placeholder="e.g. 1234567890" style="width:100%;font-size:13px">
+
+    <div class="input-group">
+      <div class="input-label">Your Email <span style="color:var(--rose)">*</span></div>
+      <input id="buyer-email-inp" type="email" class="glass-input" placeholder="your@email.com" value="${userEmail}" autocomplete="email">
+      <div style="font-size:10.5px;color:var(--ink-4);margin-top:4px">Your reference number will be sent here after payment is verified.</div>
     </div>
-    <div style="font-size:11px;color:var(--ink-4);margin-bottom:14px;line-height:1.5">After sending, enter your GCash reference. Template imports immediately — admin verifies payment separately.</div>
-    <button onclick="_submitTemplatePayment('${code}',${price})" class="cta-btn">✅ I've Paid — Import Template</button>
+
+    <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">How to complete your purchase:</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+      ${[
+        `Send <b>₱${Number(price).toLocaleString()}</b> via GCash to our number`,
+        `Screenshot your GCash receipt`,
+        `Click <b>Submit Request</b> below, then email us the receipt`,
+        `We'll verify and email you a reference number within 24–48 hrs`,
+        `Return here → click <b>Already bought?</b> → enter ref number to activate 🎉`
+      ].map((text, i) => `
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+          <span style="min-width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">${i+1}</span>
+          ${text}
+        </div>`).join('')}
+    </div>
+
+    <div id="buyer-req-err" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:rgba(192,112,104,0.1);border:1px solid rgba(192,112,104,0.22);font-size:12px;color:#c07068;font-weight:600"></div>
+    <button id="buyer-req-btn" onclick="_submitBuyerPurchaseRequest('${code}',${price})" class="cta-btn">📩 Submit Purchase Request</button>
     <button onclick="document.getElementById('tpl-preview-sheet')?.remove()" style="width:100%;padding:10px;margin-top:8px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.22);background:transparent;font-size:12.5px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f)">Cancel</button>`;
 }
 
-async function _submitTemplatePayment(code, price) {
-  const ref = (document.getElementById('gcash-ref-input')?.value || '').trim();
-  if (!ref) { showToast('⚠️ Enter your GCash reference number'); return; }
-  if (!window.CURRENT_USER) { showToast('⚠️ Sign in first'); return; }
+async function _submitBuyerPurchaseRequest(code, price) {
+  const email   = (document.getElementById('buyer-email-inp')?.value || '').trim().toLowerCase();
+  const errEl   = document.getElementById('buyer-req-err');
+  const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+  if (!email || !email.includes('@')) { showErr('Enter a valid email address.'); return; }
+  if (typeof DB === 'undefined' || !DB) { showErr('Sign in first.'); return; }
+  const btn = document.getElementById('buyer-req-btn');
+  if (btn) { btn.textContent = 'Submitting…'; btn.disabled = true; }
   try {
-    if (typeof DB !== 'undefined' && DB) {
-      await DB.collection('kasalko_template_sales').add({
-        code,
-        buyerUid:    window.CURRENT_USER.uid,
-        price,
-        platformFee: Math.ceil(price * .15),
-        sellerEarned:Math.floor(price * .85),
-        paymentRef:  ref,
-        status:      'unverified',
-        paidAt:      firebase.firestore.FieldValue.serverTimestamp(),
-      });
-    }
-    await _importTemplateFromCode(code);
-  } catch(e) { showToast('⚠️ ' + e.message); }
+    await DB.collection('kasalko_templates').doc(code).collection('purchases').add({
+      buyerEmail: email,
+      buyerUid:   window.CURRENT_USER?.uid || null,
+      status:     'pending',
+      refNumber:  null,
+      price:      price,
+      used:       false,
+      createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    const sheet = document.querySelector('#tpl-preview-sheet .modal-sheet');
+    if (!sheet) return;
+    const supportEmail = (typeof SUPPORT_EMAIL_TEMPLATES !== 'undefined') ? SUPPORT_EMAIL_TEMPLATES : 'hello@vowsandpetals.com';
+    sheet.innerHTML = `
+      <div class="modal-handle"></div>
+      <div style="text-align:center;padding:20px 16px">
+        <div style="font-size:48px;margin-bottom:10px">📩</div>
+        <div style="font-size:17px;font-weight:800;color:var(--ink);margin-bottom:8px">Purchase Request Submitted!</div>
+        <div style="font-size:12.5px;color:var(--ink-3);line-height:1.7;margin-bottom:16px">
+          Now email us your GCash receipt. Once we verify your payment, we'll email your reference number to <b>${email}</b>.
+          <br><br>
+          Then come back here and click <b>Already bought?</b> to activate your template.
+        </div>
+        <a href="mailto:${supportEmail}?subject=Template%20Purchase%20VP-${code}&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20have%20submitted%20a%20purchase%20request%20for%20template%20VP-${code}.%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0AMy%20email%20for%20the%20reference%20number%3A%20${encodeURIComponent(email)}"
+          style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box;margin-bottom:8px">
+          📧 Email GCash Receipt Now →
+        </a>
+        <button onclick="_showBuyerActivation('${code}')" style="width:100%;padding:11px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.5);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f);margin-bottom:8px">🔑 I already have a reference number →</button>
+        <button onclick="document.getElementById('tpl-preview-sheet')?.remove()" style="width:100%;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.18);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">Close</button>
+      </div>`;
+  } catch(e) {
+    showErr(e.message);
+    if (btn) { btn.textContent = '📩 Submit Purchase Request'; btn.disabled = false; }
+  }
 }
 
-async function _importTemplateFromCode(code) {
+function _showBuyerActivation(code) {
+  const sheet = document.querySelector('#tpl-preview-sheet .modal-sheet');
+  if (!sheet) return;
+  const userEmail = window.CURRENT_USER?.email || '';
+  sheet.innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px">🔑 Activate Template VP-${code}</div>
+    <div style="font-size:12px;color:var(--ink-3);line-height:1.55;margin-bottom:14px">Enter the email address you used for your purchase and the reference number we sent you.</div>
+    <div class="input-group">
+      <div class="input-label">Your Email <span style="color:var(--rose)">*</span></div>
+      <input id="activate-email" type="email" class="glass-input" placeholder="your@email.com" value="${userEmail}" autocomplete="email">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Reference Number <span style="color:var(--rose)">*</span></div>
+      <input id="activate-ref" class="glass-input" placeholder="Enter reference number" style="font-family:monospace;font-weight:700;letter-spacing:1px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      <div style="font-size:10.5px;color:var(--ink-4);margin-top:4px">Reference numbers are tied to your email — they won't work on a different email address.</div>
+    </div>
+    <div id="activate-err" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:rgba(192,112,104,0.1);border:1px solid rgba(192,112,104,0.22);font-size:12px;color:#c07068;font-weight:600;line-height:1.5"></div>
+    <button id="activate-btn" onclick="_validateAndActivate('${code}')" class="cta-btn">🔓 Activate Template</button>
+    <button onclick="document.getElementById('tpl-preview-sheet')?.remove()" style="width:100%;padding:10px;margin-top:8px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.22);background:transparent;font-size:12.5px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f)">Cancel</button>`;
+}
+
+async function _validateAndActivate(code) {
+  const email   = (document.getElementById('activate-email')?.value || '').trim().toLowerCase();
+  const ref     = (document.getElementById('activate-ref')?.value   || '').trim().toUpperCase();
+  const errEl   = document.getElementById('activate-err');
+  const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+  if (!email || !email.includes('@')) { showErr('Enter your email address.'); return; }
+  if (!ref) { showErr('Enter your reference number.'); return; }
+  const btn = document.getElementById('activate-btn');
+  if (btn) { btn.textContent = 'Verifying…'; btn.disabled = true; }
+  try {
+    if (typeof DB === 'undefined' || !DB) throw new Error('Sign in first.');
+    const snap = await DB.collection('kasalko_templates').doc(code)
+      .collection('purchases')
+      .where('buyerEmail', '==', email)
+      .where('refNumber',  '==', ref)
+      .where('status',     '==', 'verified')
+      .limit(1).get();
+    if (snap.empty) {
+      showErr('Reference number not found. Check that you entered the exact email and reference number we sent you. Contact hello@vowsandpetals.com if you need help.');
+      if (btn) { btn.textContent = '🔓 Activate Template'; btn.disabled = false; }
+      return;
+    }
+    const purchaseDoc = snap.docs[0];
+    if (purchaseDoc.data().used) {
+      showErr('This reference number has already been used to activate a template. Each reference number can only be used once.');
+      if (btn) { btn.textContent = '🔓 Activate Template'; btn.disabled = false; }
+      return;
+    }
+    // Mark as used before importing
+    await purchaseDoc.ref.update({
+      used:      true,
+      usedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+      usedByUid: window.CURRENT_USER?.uid || null,
+    });
+    // Import template — skip confirmation for paid activation
+    await _importTemplateFromCode(code, true);
+  } catch(e) {
+    showErr(e.message);
+    if (btn) { btn.textContent = '🔓 Activate Template'; btn.disabled = false; }
+  }
+}
+
+async function _importTemplateFromCode(code, skipConfirm) {
   const cleanCode = code.replace(/^VP-?/i, '').toUpperCase();
   if (typeof DB === 'undefined' || !DB) { showToast('⚠️ Sign in to import'); return; }
   try {
     const doc = await DB.collection('kasalko_templates').doc(cleanCode).get();
     if (!doc.exists || (!_isAppAdmin() && doc.data().status !== 'active')) { showToast('⚠️ Template not available'); return; }
     const td = doc.data().templateData || {};
+    const taskCount = (td.checklist || []).reduce((a,p) => a + (p.items?.length||0), 0);
     const hasData = WED.expenses.length > 0 || WED.vendors.length > 0 || WED.checklist.some(p => p.items?.length > 0);
-    let merge = false;
-    if (hasData) merge = confirm('Merge template into your existing plan?\n\nOK = Merge (adds to existing)\nCancel = Replace (overwrites current data)');
-    if (merge) {
-      if (td.expenses)  WED.expenses  = [...WED.expenses,  ...td.expenses.map(e  => ({...e,  id:Date.now()+Math.random()}))];
-      if (td.vendors)   WED.vendors   = [...WED.vendors,   ...td.vendors.map(v   => ({...v,  id:WED.nextVendorId++}))];
-      if (td.schedule && !WED.schedule?.length)                       WED.schedule  = td.schedule;
-      if (td.checklist && !WED.checklist.some(p => p.items?.length))  WED.checklist = td.checklist;
-      if (!WED.budget && td.budget)  WED.budget = td.budget;
-      // Restore planningMonths so the checklist tab shows tasks instead of setup screen
-      if (WED.planningMonths === null && td.checklist?.some(p => p.items?.length))
-        WED.planningMonths = td.planningMonths || 12;
-    } else {
-      if (td.budget    != null) WED.budget    = td.budget;
-      if (td.expenses)          WED.expenses  = td.expenses;
-      if (td.checklist)         WED.checklist = td.checklist;
-      if (td.vendors)           WED.vendors   = td.vendors;
-      if (td.schedule)          WED.schedule  = td.schedule;
-      if (td.nextVendorId)      WED.nextVendorId = td.nextVendorId;
-      // planningMonths must be set or the checklist tab shows the setup screen
-      if (td.checklist?.some(p => p.items?.length))
-        WED.planningMonths = td.planningMonths || 12;
+
+    // Always REPLACE (never merge) — only confirm if they have existing data
+    if (!skipConfirm && hasData) {
+      const lines = [];
+      if (td.expenses?.length)           lines.push(`• ${td.expenses.length} expense${td.expenses.length!==1?'s':''}`);
+      if (taskCount)                     lines.push(`• ${taskCount} checklist task${taskCount!==1?'s':''}`);
+      if (td.vendors?.length)            lines.push(`• ${td.vendors.length} vendor${td.vendors.length!==1?'s':''}`);
+      if (td.schedule?.length)           lines.push(`• ${td.schedule.length} program event${td.schedule.length!==1?'s':''}`);
+      const ok = confirm(`Load template VP-${cleanCode}?\n\nThis will REPLACE your current:\n${lines.join('\n')}\n\nYour guests, seating, and couple info will NOT be changed.\n\nOK = Load template   Cancel = Keep my data`);
+      if (!ok) return;
     }
+
+    // Always replace template-included sections — never merge
+    if (td.budget    != null) WED.budget    = td.budget;
+    if (td.expenses)          WED.expenses  = td.expenses.map(e => ({ ...e }));
+    if (td.checklist)         WED.checklist = td.checklist.map(p => ({ ...p, items: (p.items||[]).map(i => ({ ...i })) }));
+    if (td.vendors)           WED.vendors   = td.vendors.map(v => ({ ...v }));
+    if (td.schedule)          WED.schedule  = td.schedule.map(s => ({ ...s }));
+    if (td.nextVendorId)      WED.nextVendorId = td.nextVendorId;
+    // planningMonths must be set or the checklist tab shows the setup screen
+    if (td.checklist?.some(p => p.items?.length))
+      WED.planningMonths = td.planningMonths || 12;
+
     saveState();
     if (window.CURRENT_USER && typeof cloudSave === 'function') cloudSave();
     document.getElementById('tpl-preview-sheet')?.remove();
     wedTab(WED.activeTab || 'overview');
-    showToast('📦 Template imported successfully!');
+    showToast('📦 Template loaded! Expenses, checklist, vendors & program replaced.');
   } catch(e) { showToast('⚠️ ' + e.message); }
 }
 
@@ -5528,7 +5635,9 @@ window.saveMarketplaceSupplierToVendors = saveMarketplaceSupplierToVendors;
 window.lookupTemplateCode           = lookupTemplateCode;
 window._showTemplatePreview         = _showTemplatePreview;
 window._showTemplatePayment         = _showTemplatePayment;
-window._submitTemplatePayment       = _submitTemplatePayment;
+window._submitBuyerPurchaseRequest  = _submitBuyerPurchaseRequest;
+window._showBuyerActivation         = _showBuyerActivation;
+window._validateAndActivate         = _validateAndActivate;
 window._importTemplateFromCode      = _importTemplateFromCode;
 window.toggleMobileNav              = toggleMobileNav;
 window.closeMobileNav               = closeMobileNav;

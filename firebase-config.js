@@ -262,9 +262,12 @@ function _refreshSaveSellCard() {
             <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. Your template is no longer visible in the marketplace.</div>
             <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing — ₱99/month</button>
           ` : effectiveStatus === 'pending' ?
-            `<div style="font-size:11px;color:var(--ink-3)">Awaiting admin review — usually 24–48 hrs.</div>`
+            `<div style="font-size:11px;color:var(--ink-3)">⏳ Awaiting payment verification &amp; admin review. Email your GCash receipt to ${SUPPORT_EMAIL_TEMPLATES} with code VP-${code}.</div>`
           : `<div style="font-size:11px;color:#c07068">${t.adminNote||'Rejected. Contact support.'}</div>`}
         </div>`;
+      // Purchase requests section (loads asynchronously)
+      actionEl.insertAdjacentHTML('beforeend', `<div id="seller-purchases-wrap" style="margin-top:8px"><div style="font-size:11px;color:var(--ink-4);padding:4px 0">Loading purchase requests…</div></div>`);
+      _loadSellerPurchases(code);
     }).catch(() => {});
 }
 
@@ -523,21 +526,55 @@ async function submitPublishTemplate() {
       adminNote:    '',
     });
     document.getElementById('publish-tpl-sheet')?.remove();
-    // Success sheet
+    // Payment-required sheet — seller must pay listing fee to activate
     const s = document.createElement('div');
     s.id = 'tpl-success-sheet'; s.className = 'modal-overlay open';
     s.onclick = e => { if (e.target === s) { s.remove(); if (typeof renderOverview==='function') renderOverview(); } };
     s.innerHTML = `
-      <div class="modal-sheet" style="text-align:center;padding:30px 20px">
-        <div style="font-size:48px;margin-bottom:12px">🎉</div>
-        <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Submitted!</div>
-        <div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:16px">Pending admin review.<br>Usually 24–48 hours.</div>
-        <div style="padding:14px 16px;border-radius:12px;background:rgba(245,230,200,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:16px">
+      <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
+        <div class="modal-handle"></div>
+
+        <!-- Code block -->
+        <div style="text-align:center;padding:18px;border-radius:12px;background:rgba(245,230,200,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:14px">
+          <div style="font-size:36px;margin-bottom:6px">🎉</div>
           <div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Your Template Code</div>
           <div style="font-size:26px;font-weight:800;color:var(--ink);letter-spacing:3px;font-family:monospace">VP-${code}</div>
-          <div style="font-size:11px;color:var(--ink-3);margin-top:4px">Share this on TikTok/IG once approved</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:4px">Note this down!</div>
         </div>
-        <button onclick="this.closest('.modal-overlay').remove();if(typeof renderOverview==='function')renderOverview();" class="cta-btn">Done!</button>
+
+        <!-- Pay to activate -->
+        <div style="padding:12px 14px;border-radius:10px;background:rgba(224,120,152,0.1);border:1.5px solid rgba(224,120,152,0.25);margin-bottom:14px">
+          <div style="font-size:13px;font-weight:800;color:#b04060;margin-bottom:4px">⏳ One more step — pay to activate</div>
+          <div style="font-size:12px;color:#8b3050;line-height:1.6">Your listing is ready but needs payment to go live in the marketplace. <b>Pay now</b> and we'll activate your template within a few hours after verifying.</div>
+        </div>
+
+        <!-- Fee -->
+        <div style="padding:10px 14px;border-radius:10px;background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:3px">Monthly Listing Fee</div>
+          <div style="font-size:24px;font-weight:800;color:var(--tan-dark)">₱${LISTING_FEE}</div>
+          <div style="font-size:10.5px;color:var(--ink-4)">per month · keeps your listing active for 30 days</div>
+        </div>
+
+        <!-- Steps -->
+        <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">How to pay:</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+          ${[
+            `Open GCash and send <b>₱${LISTING_FEE}</b> to our number`,
+            `Screenshot your GCash receipt`,
+            `Email the receipt to us with your code <b>VP-${code}</b>`,
+            `We'll activate your listing within 24–48 hrs ✅`
+          ].map((text, i) => `
+            <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+              <span style="min-width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">${i+1}</span>
+              ${text}
+            </div>`).join('')}
+        </div>
+
+        <a href="mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=New%20Listing%20Payment%20VP-${code}&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI've%20submitted%20a%20new%20template%20listing%20VP-${code}%20and%20have%20sent%20the%20GCash%20payment%20of%20%E2%82%B1${LISTING_FEE}.%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}"
+          style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box">
+          📧 Email Payment Proof →
+        </a>
+        <button onclick="this.closest('.modal-overlay').remove();if(typeof renderOverview==='function')renderOverview();" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.2);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">I'll pay later</button>
       </div>`;
     document.body.appendChild(s);
     if (typeof renderOverview === 'function') renderOverview();
@@ -888,6 +925,62 @@ function saveInvitePublic() {
   }).catch(() => {});
 }
 
+/* ── SELLER: PURCHASE REQUEST MANAGEMENT ────── */
+async function _loadSellerPurchases(code) {
+  const wrap = document.getElementById('seller-purchases-wrap');
+  if (!wrap || typeof DB === 'undefined' || !DB) return;
+  try {
+    const snap = await DB.collection('kasalko_templates').doc(code)
+      .collection('purchases').orderBy('createdAt', 'desc').limit(50).get();
+    if (snap.empty) {
+      wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4);padding:4px 0">No purchase requests yet.</div>`;
+      return;
+    }
+    const rows = snap.docs.map(d => {
+      const p   = d.data();
+      const pid = d.id;
+      const statusColors = { pending:'#8C6640', verified:'#3a7a54', rejected:'#c07068' };
+      const statusColor  = statusColors[p.status] || '#8C6640';
+      return `
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.18);margin-bottom:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
+            <div style="font-size:11.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.buyerEmail||'—'}</div>
+            <span style="font-size:9px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:6px;padding:1px 6px;flex-shrink:0">${(p.status||'pending').toUpperCase()}</span>
+          </div>
+          ${p.refNumber
+            ? `<div style="font-size:11px;color:var(--ink-4)">Ref: <b style="font-family:monospace;letter-spacing:1px">${p.refNumber}</b>${p.used?' · <span style="color:var(--green-deep)">✓ Activated</span>':''}</div>`
+            : `<div style="display:flex;gap:5px;margin-top:4px">
+                <input id="ref-inp-${pid}" placeholder="Enter ref number" class="glass-input" style="flex:1;font-size:11px;padding:5px 8px;height:auto;min-height:unset;font-family:monospace;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+                <button onclick="_setRefNumber('${code}','${pid}')" style="padding:5px 10px;border-radius:8px;border:1.5px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f);white-space:nowrap;flex-shrink:0">Set ✓</button>
+              </div>`}
+        </div>`;
+    }).join('');
+    wrap.innerHTML = `
+      <div style="font-size:11.5px;font-weight:700;color:var(--ink);margin:6px 0 6px">📬 Purchase Requests (${snap.docs.length})</div>
+      ${rows}`;
+  } catch(e) {
+    wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4)">Could not load purchases.</div>`;
+    console.warn('_loadSellerPurchases error:', e);
+  }
+}
+
+async function _setRefNumber(code, purchaseId) {
+  const inp = document.getElementById(`ref-inp-${purchaseId}`);
+  const ref = (inp?.value || '').trim().toUpperCase();
+  if (!ref) { showToast('⚠️ Enter a reference number first'); return; }
+  try {
+    await DB.collection('kasalko_templates').doc(code)
+      .collection('purchases').doc(purchaseId).update({
+        refNumber:     ref,
+        status:        'verified',
+        verifiedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+        verifiedByUid: window.CURRENT_USER?.uid || null,
+      });
+    showToast('✅ Reference number set! Buyer can now activate the template.');
+    _loadSellerPurchases(code);
+  } catch(e) { showToast('⚠️ ' + e.message); }
+}
+
 /* ── WINDOW EXPORTS ──────────────────────────── */
 window.cloudSave              = cloudSave;
 window.saveInvitePublic       = saveInvitePublic;
@@ -908,6 +1001,8 @@ window.updateAuthUI           = updateAuthUI;
 window.openPublishAgreement       = openPublishAgreement;
 window._submitAgreementAndPublish = _submitAgreementAndPublish;
 window.openRenewListing           = openRenewListing;
+window._loadSellerPurchases       = _loadSellerPurchases;
+window._setRefNumber              = _setRefNumber;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;
