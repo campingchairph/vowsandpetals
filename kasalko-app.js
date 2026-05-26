@@ -3153,14 +3153,30 @@ function drawFurniture(f) {
     cx.fill();
     cx.strokeStyle = selected ? '#e07898' : 'rgba(201,169,110,0.65)';
     cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
-    const num = parseInt(f.label.replace(/\D/g,''));
+    // 2-line label: "Round Table" on line 1, the number on line 2
+    const labelMatch = f.label.match(/^(.*)\s+(\d+)$/);
+    const labelType  = labelMatch ? labelMatch[1] : f.label; // "Round Table"
+    const labelNum   = labelMatch ? labelMatch[2] : '';       // "1"
+    const fs1 = Math.max(6,  Math.min(9,  Math.floor(r / 5)));  // type text
+    const fs2 = Math.max(10, Math.min(18, Math.floor(r / 3)));  // number
+    cx.textAlign = 'center';
+    cx.fillStyle = 'rgba(44,31,14,0.45)';
+    cx.font = `500 ${fs1}px Figtree,sans-serif`;
+    cx.fillText(labelType, rx, ry - fs2 * 0.35);
+    cx.fillStyle = 'rgba(44,31,14,0.78)';
+    cx.font = `700 ${fs2}px Figtree,sans-serif`;
+    cx.fillText(labelNum, rx, ry + fs2 * 0.75);
+    // Assigned-guest badge — small green circle at top of table
+    const num = parseInt(labelNum) || parseInt(f.label.replace(/\D/g,''));
     const assignedCount = WED.guests.filter(g => g.table === num).length;
     if (assignedCount > 0) {
-      cx.fillStyle = 'rgba(90,171,122,0.18)';
-      cx.beginPath(); cx.arc(rx,ry,r*0.55,0,Math.PI*2); cx.fill();
-      cx.fillStyle='rgba(44,31,14,0.6)';
-      cx.font='700 11px Figtree,sans-serif'; cx.textAlign='center';
-      cx.fillText(assignedCount+'👤', rx, ry+4);
+      const bR = Math.max(8, Math.round(r * 0.22));
+      const bX = rx + r * 0.62, bY = ry - r * 0.62;
+      cx.beginPath(); cx.arc(bX, bY, bR, 0, Math.PI * 2);
+      cx.fillStyle = 'rgba(90,171,122,0.92)'; cx.fill();
+      cx.fillStyle = '#fff';
+      cx.font = `700 ${Math.max(6, bR - 2)}px Figtree,sans-serif`;
+      cx.fillText(assignedCount, bX, bY + Math.max(3, bR * 0.4));
     }
   } else if (f.type === 'long') {
     // Subtle dashed chair-band zone shown when table is selected — height adapts to actual chairs
