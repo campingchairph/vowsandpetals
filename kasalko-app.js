@@ -2346,6 +2346,16 @@ function submitAddVendor() {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   saveState();
+  // Write lead to Firestore for admin prospecting — silent, never blocks UX
+  if (window.CURRENT_USER && typeof DB !== 'undefined' && DB) {
+    DB.collection('kasalko_vendor_leads').add({
+      uid: window.CURRENT_USER.uid,
+      name, category, phone, link,
+      price: price || 0,
+      notes,
+      addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
+  }
   closeModal('wed-add-vendor-modal');
   renderSuppliers();
   showToast('🤝 ' + name + ' saved!');

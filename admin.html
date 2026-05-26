@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Vows & Petals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ivory:  #FAF6EE; --gold: #B8916A; --gold-dk: #8C6640;
+      --rose:   #C07068; --sage: #6A8E70;
+      --ink:    #2C1810; --ink-2: #5C3A24; --ink-3: #8C6848; --ink-4: #B89870;
+      --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+      --f: 'Inter', system-ui, sans-serif;
+    }
+    html, body { min-height: 100%; font-family: var(--f); background: #f0ebe2; color: var(--ink); }
+
+    /* ── HEADER ── */
+    .adm-header { background: var(--ink); padding: 11px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .adm-brand  { display: flex; align-items: center; gap: 10px; }
+    .adm-brand-name { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+    .adm-badge  { padding: 2px 8px; border-radius: 20px; background: var(--rose); font-size: 9.5px; font-weight: 800; color: #fff; letter-spacing: 0.5px; text-transform: uppercase; }
+    .adm-header-right { display: flex; align-items: center; gap: 10px; }
+    .adm-email  { font-size: 11px; color: rgba(255,255,255,0.5); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .adm-signout { padding: 5px 11px; border-radius: var(--r-sm); border: 1px solid rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--f); }
+    .adm-signout:hover { background: rgba(255,255,255,0.08); }
+
+    /* ── TAB NAV ── */
+    .adm-tabs { background: #fff; border-bottom: 1px solid rgba(184,145,106,0.15); display: flex; padding: 0 12px; overflow-x: auto; }
+    .adm-tab { padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--ink-3); border: none; background: none; cursor: pointer; border-bottom: 2.5px solid transparent; font-family: var(--f); white-space: nowrap; flex-shrink: 0; }
+    .adm-tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+    .adm-tab:hover:not(.active) { color: var(--ink-2); background: rgba(184,145,106,0.04); }
+
+    /* ── WRAP ── */
+    .adm-wrap { max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* ── SCREENS ── */
+    .adm-screen { display: none; }
+    .adm-screen.on { display: block; }
+
+    /* ── LOADING ── */
+    .adm-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 14px; color: var(--ink-3); font-size: 13px; }
+    .spinner { width: 28px; height: 28px; border: 3px solid rgba(184,145,106,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .spinner-sm { width: 18px; height: 18px; border-width: 2px; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── AUTH / BLOCKED ── */
+    .auth-box { max-width: 400px; margin: 80px auto; background: #fff; border-radius: 18px; padding: 36px 28px; border: 1px solid rgba(184,145,106,0.18); box-shadow: 0 4px 24px rgba(44,24,16,0.08); text-align: center; }
+    .auth-box h2 { font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+    .auth-box p  { font-size: 13px; color: var(--ink-3); line-height: 1.6; margin-bottom: 20px; }
+    .auth-box pre { background: rgba(44,24,16,0.05); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--ink-2); word-break: break-all; white-space: pre-wrap; text-align: left; margin: 12px 0; border: 1px solid rgba(44,24,16,0.1); }
+    .google-btn { width: 100%; padding: 12px 16px; border-radius: var(--r-md); border: 1.5px solid rgba(184,145,106,0.28); background: #fff; font-size: 13.5px; font-weight: 700; color: #3c3c3c; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--f); }
+    .google-btn:hover { background: #f8f8f8; }
+    .google-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* ── TAB BAR (stats + filters) ── */
+    .tab-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .tab-stats { font-size: 12px; font-weight: 700; color: var(--ink-3); }
+    .filter-row { display: flex; gap: 5px; flex-wrap: wrap; }
+    .filt-btn { padding: 4px 11px; border-radius: 20px; border: 1px solid rgba(184,145,106,0.28); background: #fff; font-size: 11.5px; font-weight: 600; color: var(--ink-3); cursor: pointer; font-family: var(--f); text-transform: capitalize; }
+    .filt-btn.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* ── ADMIN CARDS ── */
+    .admin-list { display: flex; flex-direction: column; gap: 10px; }
+    .admin-card { background: #fff; border-radius: var(--r-lg); border: 1px solid rgba(184,145,106,0.16); padding: 14px; box-shadow: 0 1px 4px rgba(44,24,16,0.04); }
+    .admin-card.dimmed { opacity: 0.55; }
+    .admin-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .admin-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: rgba(184,145,106,0.1); }
+    .admin-thumb-empty { width: 52px; height: 52px; border-radius: 8px; background: rgba(184,145,106,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .admin-card-info { flex: 1; min-width: 0; }
+    .admin-card-name { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-card-sub  { font-size: 11.5px; color: var(--ink-3); margin-bottom: 6px; }
+    .admin-card-meta { font-size: 10.5px; color: var(--ink-4); margin-top: 6px; }
+
+    /* ── BADGES ── */
+    .badge-row { display: flex; flex-wrap: wrap; gap: 4px; }
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
+    .badge-pro      { background: rgba(184,145,106,0.13); color: var(--ink-2); border: 1px solid rgba(184,145,106,0.28); }
+    .badge-free     { background: rgba(184,145,106,0.06); color: var(--ink-4); border: 1px solid rgba(184,145,106,0.14); }
+    .badge-verified { background: rgba(90,171,122,0.11); color: #3a7a54; border: 1px solid rgba(90,171,122,0.24); }
+    .badge-hidden   { background: rgba(192,112,104,0.11); color: var(--rose); border: 1px solid rgba(192,112,104,0.24); }
+    .badge-pending  { background: rgba(184,145,106,0.12); color: var(--gold-dk); border: 1px solid rgba(184,145,106,0.25); }
+    .badge-active   { background: rgba(90,171,122,0.11); color: #3a7a54; border: 1px solid rgba(90,171,122,0.24); }
+    .badge-code     { background: rgba(44,24,16,0.05); color: var(--ink-2); border: 1px solid rgba(44,24,16,0.1); font-family: monospace; letter-spacing: 1.2px; font-size: 10.5px; }
+
+    /* ── ACTION ROW ── */
+    .action-row { display: flex; gap: 7px; flex-wrap: wrap; }
+    .act-btn { padding: 6px 13px; border-radius: var(--r-sm); border: 1px solid rgba(184,145,106,0.22); background: #fff; font-size: 12px; font-weight: 700; color: var(--ink-2); cursor: pointer; font-family: var(--f); white-space: nowrap; }
+    .act-btn:hover { background: rgba(184,145,106,0.06); }
+    .act-btn.act-on      { background: rgba(90,171,122,0.09); color: #3a7a54; border-color: rgba(90,171,122,0.28); }
+    .act-btn.act-pro     { background: rgba(184,145,106,0.11); color: var(--ink-2); border-color: rgba(184,145,106,0.32); }
+    .act-btn.act-danger  { background: rgba(192,112,104,0.08); color: var(--rose); border-color: rgba(192,112,104,0.24); }
+    .act-btn.act-restore { background: rgba(90,171,122,0.08); color: #3a7a54; border-color: rgba(90,171,122,0.24); }
+
+    /* ── TEMPLATE EXTRAS ── */
+    .tpl-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--ink-3); font-weight: 600; }
+    .tpl-quality-warn { font-size: 10.5px; color: var(--rose); font-weight: 700; margin-top: 5px; }
+    .social-link { font-size: 11.5px; color: var(--gold); font-weight: 700; text-decoration: none; }
+    .social-link:hover { text-decoration: underline; }
+    .reject-note { margin-top: 8px; padding: 7px 11px; border-radius: var(--r-sm); background: rgba(192,112,104,0.07); font-size: 11.5px; color: var(--rose); border: 1px solid rgba(192,112,104,0.15); line-height: 1.4; }
+
+    /* ── LEADS TABLE ── */
+    .leads-table-wrap { overflow-x: auto; border-radius: var(--r-lg); border: 1px solid rgba(184,145,106,0.16); }
+    .leads-table { width: 100%; border-collapse: collapse; font-size: 12.5px; background: #fff; }
+    .leads-table th { background: rgba(184,145,106,0.07); padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-3); white-space: nowrap; border-bottom: 1px solid rgba(184,145,106,0.14); }
+    .leads-table td { padding: 9px 12px; border-bottom: 1px solid rgba(184,145,106,0.09); vertical-align: middle; }
+    .leads-table tr:last-child td { border-bottom: none; }
+    .leads-table tr:hover td { background: rgba(184,145,106,0.025); }
+    .notes-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-3); }
+    .leads-table a { color: var(--gold); text-decoration: none; font-weight: 600; }
+    .leads-table a:hover { text-decoration: underline; }
+
+    /* ── EMPTY / LOADING ── */
+    .empty { text-align: center; padding: 48px 24px; color: var(--ink-3); font-size: 13px; line-height: 1.7; background: #fff; border-radius: var(--r-lg); border: 1px solid rgba(184,145,106,0.14); }
+    .empty small { display: block; margin-top: 4px; color: var(--ink-4); font-size: 11.5px; }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--ink-3); font-size: 13px; background: #fff; border-radius: var(--r-lg); border: 1px solid rgba(184,145,106,0.14); }
+
+    /* ── TOAST ── */
+    #adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; opacity: 0; }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 640px) {
+      .admin-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div id="s-loading" class="adm-screen on">
+  <div class="adm-loading">
+    <div class="spinner"></div>
+    Loading admin panel…
+  </div>
+</div>
+
+<!-- ── AUTH ── -->
+<div id="s-auth" class="adm-screen">
+  <div class="auth-box">
+    <div style="font-size:36px;margin-bottom:12px">🌸</div>
+    <h2>Admin Login</h2>
+    <p>Sign in with the Google account registered as an admin for Vows & Petals.</p>
+    <button class="google-btn" onclick="googleSignIn()">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ── BLOCKED ── -->
+<div id="s-blocked" class="adm-screen">
+  <div class="auth-box">
+    <div style="font-size:36px;margin-bottom:12px">🚫</div>
+    <h2>Access Denied</h2>
+    <p>Your account is not on the admin whitelist. Copy your UID below and add it to <code style="font-size:12px;background:rgba(44,24,16,0.06);padding:1px 5px;border-radius:4px">ADMIN_UIDS</code> at the top of <code style="font-size:12px;background:rgba(44,24,16,0.06);padding:1px 5px;border-radius:4px">admin.html</code>, then push and revisit.</p>
+    <pre id="uid-display">—</pre>
+    <button onclick="AUTH.signOut()" style="margin-top:8px;padding:8px 16px;border-radius:8px;border:1px solid rgba(192,112,104,0.28);background:transparent;color:var(--rose);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">Sign Out</button>
+  </div>
+</div>
+
+<!-- ── ADMIN MAIN ── -->
+<div id="s-admin" class="adm-screen">
+
+  <header class="adm-header">
+    <div class="adm-brand">
+      <span class="adm-brand-name">🌸 Vows & Petals</span>
+      <span class="adm-badge">Admin</span>
+    </div>
+    <div class="adm-header-right">
+      <span class="adm-email" id="admin-email"></span>
+      <button class="adm-signout" onclick="AUTH.signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <nav class="adm-tabs">
+    <button id="tab-btn-suppliers" class="adm-tab" onclick="aTab('suppliers')">🏪 Suppliers</button>
+    <button id="tab-btn-leads"     class="adm-tab" onclick="aTab('leads')">📋 Vendor Leads</button>
+    <button id="tab-btn-templates" class="adm-tab" onclick="aTab('templates')">💰 Templates</button>
+  </nav>
+
+  <div class="adm-wrap">
+    <div id="p-suppliers"></div>
+    <div id="p-leads"     style="display:none"></div>
+    <div id="p-templates" style="display:none"></div>
+  </div>
+</div>
+
+<div id="adm-toast"></div>
+
+<script>
+/*
+ ╔══════════════════════════════════════════════════════╗
+ ║  VOWS & PETALS — ADMIN PANEL                         ║
+ ║  Not linked from the public app. Access by URL only. ║
+ ╚══════════════════════════════════════════════════════╝
+
+ FIRESTORE RULES REQUIRED — publish these in Firebase Console:
+
+   match /kasalko_marketplace/{id} {
+     allow read: if true;
+     allow write: if request.auth != null && (
+       resource == null ||
+       resource.data.uid == request.auth.uid ||
+       request.auth.uid in ['YOUR_ADMIN_UID']
+     );
+   }
+   match /kasalko_vendor_leads/{id} {
+     allow create: if request.auth != null;
+     allow read, delete: if request.auth.uid in ['YOUR_ADMIN_UID'];
+   }
+   match /kasalko_templates/{code} {
+     allow read: if true;
+     allow create: if request.auth != null;
+     allow update: if request.auth != null;
+   }
+   match /kasalko_template_sales/{id} {
+     allow create: if request.auth != null;
+     allow read: if request.auth.uid in ['YOUR_ADMIN_UID'];
+   }
+*/
+
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs',
+  authDomain:        'weddingthings.firebaseapp.com',
+  projectId:         'weddingthings',
+  storageBucket:     'weddingthings.firebasestorage.app',
+  messagingSenderId: '732042029649',
+  appId:             '1:732042029649:web:21bbe63214e8b36770e670',
+};
+
+// ⚠️  Replace with your Firebase UID.
+// Visit this page signed in — your UID shows on the blocked screen.
+const ADMIN_UIDS = ['REPLACE_WITH_YOUR_UID'];
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const AUTH = firebase.auth();
+const DB   = firebase.firestore();
+let _user  = null;
+
+/* ── AUTH STATE ─────────────────────────────────── */
+function show(id) {
+  ['s-loading','s-auth','s-blocked','s-admin'].forEach(s =>
+    document.getElementById(s).classList.toggle('on', s === id)
+  );
+}
+
+AUTH.onAuthStateChanged(user => {
+  _user = user;
+  if (!user) { show('s-auth'); return; }
+  if (!ADMIN_UIDS.includes(user.uid)) {
+    document.getElementById('uid-display').textContent = user.uid;
+    show('s-blocked'); return;
+  }
+  document.getElementById('admin-email').textContent = user.email;
+  show('s-admin');
+  aTab('suppliers');
+});
+
+function googleSignIn() {
+  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(e => alert('Sign-in error: ' + e.message));
+}
+
+/* ── TABS ───────────────────────────────────────── */
+function aTab(tab) {
+  ['suppliers','leads','templates'].forEach(t => {
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+    document.getElementById('p-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'suppliers') loadSuppliers();
+  if (tab === 'leads')     loadLeads();
+  if (tab === 'templates') loadTemplates();
+}
+
+/* ── TOAST ──────────────────────────────────────── */
+function toast(msg) {
+  const t = document.getElementById('adm-toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+
+/* ── ESCAPE HTML ────────────────────────────────── */
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════════
+   🏪  SUPPLIERS TAB
+══════════════════════════════════════════════════ */
+let _suppFilter = 'all';
+let _suppCache  = [];
+
+async function loadSuppliers() {
+  const el = document.getElementById('p-suppliers');
+  el.innerHTML = '<div class="loading"><div class="spinner spinner-sm"></div>Loading suppliers…</div>';
+  try {
+    let snap;
+    try   { snap = await DB.collection('kasalko_marketplace').orderBy('createdAt','desc').get(); }
+    catch { snap = await DB.collection('kasalko_marketplace').get(); }
+    _suppCache = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    renderSuppliers();
+  } catch(e) {
+    el.innerHTML = `<div class="empty">⚠️ Error loading suppliers<small>${esc(e.message)}</small></div>`;
+  }
+}
+
+function renderSuppliers() {
+  let list = _suppCache;
+  if (_suppFilter === 'verified') list = list.filter(s => s.verified);
+  if (_suppFilter === 'pro')      list = list.filter(s => s.plan === 'pro');
+  if (_suppFilter === 'hidden')   list = list.filter(s => s.hidden || s.status === 'suspended');
+
+  const total    = _suppCache.length;
+  const verified = _suppCache.filter(s => s.verified).length;
+  const pro      = _suppCache.filter(s => s.plan === 'pro').length;
+  const hidden   = _suppCache.filter(s => s.hidden || s.status === 'suspended').length;
+
+  document.getElementById('p-suppliers').innerHTML = `
+    <div class="tab-bar">
+      <div class="tab-stats">${total} total · ${verified} verified · ${pro} pro · ${hidden} hidden</div>
+      <div class="filter-row">
+        ${['all','verified','pro','hidden'].map(f =>
+          `<button class="filt-btn ${_suppFilter===f?'on':''}" onclick="_suppFilter='${f}';renderSuppliers()">${f}</button>`
+        ).join('')}
+        <button class="filt-btn" onclick="loadSuppliers()" title="Refresh">↺</button>
+      </div>
+    </div>
+    ${list.length === 0
+      ? `<div class="empty">No suppliers in this filter.<small>Registered suppliers appear here once they complete sign-up.</small></div>`
+      : `<div class="admin-list">${list.map(renderSupplierCard).join('')}</div>`}`;
+}
+
+function renderSupplierCard(s) {
+  const verified = !!s.verified;
+  const isPro    = s.plan === 'pro';
+  const isHidden = !!(s.hidden || s.status === 'suspended');
+  const photo    = s.coverPhoto || (Array.isArray(s.photos) && s.photos[0]) || '';
+  const cats     = esc(s.category || '—');
+  const loc      = esc(s.location  || '—');
+
+  return `
+    <div class="admin-card${isHidden ? ' dimmed' : ''}">
+      <div class="admin-card-top">
+        ${photo
+          ? `<img src="${photo}" class="admin-thumb" onerror="this.style.display='none'">`
+          : '<div class="admin-thumb-empty">📷</div>'}
+        <div class="admin-card-info">
+          <div class="admin-card-name">${esc(s.businessName || '—')}</div>
+          <div class="admin-card-sub">${cats} · ${loc}</div>
+          <div class="badge-row">
+            ${isPro    ? '<span class="badge badge-pro">PRO</span>'            : '<span class="badge badge-free">Free</span>'}
+            ${verified ? '<span class="badge badge-verified">✓ Verified</span>' : ''}
+            ${isHidden ? '<span class="badge badge-hidden">Suspended</span>'   : ''}
+          </div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="act-btn${verified ? ' act-on' : ''}"
+          onclick="toggleVerified('${s._docId}',${verified})">
+          ${verified ? '✓ Verified' : 'Grant Verified'}
+        </button>
+        <button class="act-btn${isPro ? ' act-pro' : ''}"
+          onclick="togglePro('${s._docId}',${isPro})">
+          ${isPro ? '⬇ Downgrade' : '⬆ Pro'}
+        </button>
+        <button class="act-btn${isHidden ? ' act-restore' : ' act-danger'}"
+          onclick="toggleHidden('${s._docId}',${isHidden})">
+          ${isHidden ? '✅ Restore' : '🚫 Ban'}
+        </button>
+      </div>
+      ${s.ownerEmail ? `<div class="admin-card-meta">📧 ${esc(s.ownerEmail)}</div>` : ''}
+    </div>`;
+}
+
+async function toggleVerified(docId, current) {
+  try {
+    await DB.collection('kasalko_marketplace').doc(docId).update({ verified: !current });
+    const s = _suppCache.find(s => s._docId === docId);
+    if (s) s.verified = !current;
+    renderSuppliers();
+    toast(current ? '✗ Verified badge removed' : '✅ Verified badge granted');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function togglePro(docId, isPro) {
+  try {
+    const newPlan = isPro ? 'free' : 'pro';
+    await DB.collection('kasalko_marketplace').doc(docId).update({ plan: newPlan });
+    const s = _suppCache.find(s => s._docId === docId);
+    if (s) s.plan = newPlan;
+    renderSuppliers();
+    toast(isPro ? '⬇ Downgraded to Free' : '⬆ Upgraded to Pro');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function toggleHidden(docId, isHidden) {
+  if (!isHidden && !confirm('Ban and hide this supplier from the marketplace?')) return;
+  try {
+    const newHidden = !isHidden;
+    await DB.collection('kasalko_marketplace').doc(docId).update({
+      hidden: newHidden,
+      status: newHidden ? 'suspended' : 'active',
+    });
+    const s = _suppCache.find(s => s._docId === docId);
+    if (s) { s.hidden = newHidden; s.status = newHidden ? 'suspended' : 'active'; }
+    renderSuppliers();
+    toast(isHidden ? '✅ Supplier restored' : '🚫 Supplier banned');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+/* ══════════════════════════════════════════════════
+   📋  VENDOR LEADS TAB
+══════════════════════════════════════════════════ */
+async function loadLeads() {
+  const el = document.getElementById('p-leads');
+  el.innerHTML = '<div class="loading"><div class="spinner spinner-sm"></div>Loading leads…</div>';
+  try {
+    let snap;
+    try   { snap = await DB.collection('kasalko_vendor_leads').orderBy('addedAt','desc').get(); }
+    catch { snap = await DB.collection('kasalko_vendor_leads').get(); }
+    const leads = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+
+    if (leads.length === 0) {
+      el.innerHTML = `
+        <div class="tab-bar"><div class="tab-stats">0 leads</div></div>
+        <div class="empty">No vendor leads yet.
+          <small>When app users add private vendors, they appear here for prospecting.</small>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="tab-bar">
+        <div class="tab-stats">${leads.length} lead${leads.length!==1?'s':''}</div>
+        <button class="filt-btn" onclick="loadLeads()" title="Refresh">↺ Refresh</button>
+      </div>
+      <div class="leads-table-wrap">
+        <table class="leads-table">
+          <thead><tr>
+            <th>Vendor Name</th>
+            <th>Category</th>
+            <th>Phone / Link</th>
+            <th>Price</th>
+            <th>Notes</th>
+            <th>Added</th>
+            <th></th>
+          </tr></thead>
+          <tbody>
+            ${leads.map(l => {
+              const date = l.addedAt
+                ? new Date(l.addedAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'2-digit' })
+                : '—';
+              return `<tr>
+                <td><b>${esc(l.name || '—')}</b></td>
+                <td>${esc(l.category || '—')}</td>
+                <td>
+                  ${l.phone ? esc(l.phone) : ''}
+                  ${l.link  ? `${l.phone?' · ':''}<a href="${esc(l.link)}" target="_blank">Link ↗</a>` : ''}
+                  ${!l.phone && !l.link ? '—' : ''}
+                </td>
+                <td>${l.price ? '₱' + Number(l.price).toLocaleString() : '—'}</td>
+                <td class="notes-cell" title="${esc(l.notes || '')}">${esc(l.notes || '—')}</td>
+                <td style="white-space:nowrap;color:var(--ink-4)">${date}</td>
+                <td><button class="act-btn act-danger" onclick="deleteLead('${l._docId}')">✓ Done</button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `
+      <div class="empty">⚠️ Error: ${esc(e.message)}
+        <small>Ensure Firestore rules allow admin UID to read <code>kasalko_vendor_leads</code>.</small>
+      </div>`;
+  }
+}
+
+async function deleteLead(docId) {
+  if (!confirm('Mark as processed and remove from list?')) return;
+  try {
+    await DB.collection('kasalko_vendor_leads').doc(docId).delete();
+    toast('✓ Lead removed');
+    loadLeads();
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+/* ══════════════════════════════════════════════════
+   💰  TEMPLATES TAB
+══════════════════════════════════════════════════ */
+let _tplFilter = 'pending';
+let _tplCache  = [];
+
+async function loadTemplates() {
+  const el = document.getElementById('p-templates');
+  el.innerHTML = '<div class="loading"><div class="spinner spinner-sm"></div>Loading templates…</div>';
+  try {
+    let snap;
+    try   { snap = await DB.collection('kasalko_templates').orderBy('publishedAt','desc').get(); }
+    catch { snap = await DB.collection('kasalko_templates').get(); }
+    _tplCache = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    renderTemplates();
+  } catch(e) {
+    el.innerHTML = `<div class="empty">⚠️ Error loading templates<small>${esc(e.message)}</small></div>`;
+  }
+}
+
+function renderTemplates() {
+  let list = _tplCache;
+  if (_tplFilter !== 'all') list = list.filter(t => t.status === _tplFilter);
+
+  const pending  = _tplCache.filter(t => t.status === 'pending').length;
+  const active   = _tplCache.filter(t => t.status === 'active').length;
+  const rejected = _tplCache.filter(t => t.status === 'rejected').length;
+
+  document.getElementById('p-templates').innerHTML = `
+    <div class="tab-bar">
+      <div class="tab-stats">${_tplCache.length} total · ${pending} pending · ${active} live · ${rejected} rejected</div>
+      <div class="filter-row">
+        ${['pending','active','rejected','all'].map(f =>
+          `<button class="filt-btn ${_tplFilter===f?'on':''}" onclick="_tplFilter='${f}';renderTemplates()">${f}</button>`
+        ).join('')}
+        <button class="filt-btn" onclick="loadTemplates()" title="Refresh">↺</button>
+      </div>
+    </div>
+    ${list.length === 0
+      ? `<div class="empty">No templates in this filter.<small>Sellers publish templates from the app — they appear here for review.</small></div>`
+      : `<div class="admin-list">${list.map(renderTemplateCard).join('')}</div>`}`;
+}
+
+function renderTemplateCard(t) {
+  const isPending  = t.status === 'pending';
+  const isActive   = t.status === 'active';
+  const isRejected = t.status === 'rejected';
+
+  const expenses  = (t.templateData?.expenses  || []).length;
+  const checklist = (t.templateData?.checklist || []).length;
+  const vendors   = (t.templateData?.vendors   || []).length;
+  const schedule  = (t.templateData?.schedule  || []).length;
+
+  // Quality gate check
+  const qualIssues = [];
+  if (expenses  < 5)  qualIssues.push(`${expenses}/5+ expenses`);
+  if (checklist < 10) qualIssues.push(`${checklist}/10+ tasks`);
+  if (vendors   < 3)  qualIssues.push(`${vendors}/3+ vendors`);
+
+  const date = t.publishedAt
+    ? new Date(t.publishedAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'2-digit' })
+    : '—';
+
+  const statusBadgeClass = isPending ? 'badge-pending' : isActive ? 'badge-active' : 'badge-hidden';
+
+  return `
+    <div class="admin-card${isRejected ? ' dimmed' : ''}">
+      <div class="admin-card-top" style="align-items:flex-start">
+        <div class="admin-card-info" style="flex:1">
+          <div class="admin-card-name">${esc(t.title || 'Untitled Template')}</div>
+          <div class="admin-card-sub">
+            ${esc(t.sellerName || 'Unknown seller')} · <b>₱${Number(t.price || 0).toLocaleString()}</b> · ${date}
+          </div>
+          ${t.description ? `<div style="margin-top:5px;font-size:11.5px;color:var(--ink-3);line-height:1.5">${esc(t.description)}</div>` : ''}
+          <div class="badge-row" style="margin-top:8px">
+            <span class="badge ${statusBadgeClass}">${(t.status || '?').toUpperCase()}</span>
+            <span class="badge badge-code">VP-${t._docId.toUpperCase()}</span>
+          </div>
+          <div class="tpl-stats">
+            <span>💸 ${expenses} expenses</span>
+            <span>✅ ${checklist} tasks</span>
+            <span>🤝 ${vendors} vendors</span>
+            <span>📅 ${schedule} events</span>
+            ${t.salesCount ? `<span>🛒 ${t.salesCount} sales</span>` : ''}
+            ${t.totalEarned ? `<span>💰 ₱${Number(t.totalEarned).toLocaleString()} earned</span>` : ''}
+          </div>
+          ${qualIssues.length > 0 && isPending
+            ? `<div class="tpl-quality-warn">⚠️ Thin content: ${qualIssues.join(' · ')}</div>`
+            : ''}
+          ${t.sellerTikTok || t.sellerIG ? `
+          <div style="margin-top:8px;display:flex;gap:12px">
+            ${t.sellerTikTok ? `<a href="${esc(t.sellerTikTok)}" target="_blank" class="social-link">TikTok ↗</a>` : ''}
+            ${t.sellerIG     ? `<a href="${esc(t.sellerIG)}"     target="_blank" class="social-link">Instagram ↗</a>` : ''}
+          </div>` : ''}
+          ${isRejected && t.adminNote
+            ? `<div class="reject-note">Rejection reason: ${esc(t.adminNote)}</div>`
+            : ''}
+        </div>
+      </div>
+      ${isPending || isActive ? `
+      <div class="action-row" style="margin-top:10px">
+        ${isPending ? `<button class="act-btn act-on" onclick="approveTemplate('${t._docId}')">✅ Approve & Publish</button>` : ''}
+        <button class="act-btn act-danger" onclick="rejectTemplate('${t._docId}',${isActive})">${isActive ? '❌ Suspend' : '❌ Reject'}</button>
+      </div>` : ''}
+    </div>`;
+}
+
+async function approveTemplate(docId) {
+  if (!confirm('Approve this template and make it live?')) return;
+  try {
+    await DB.collection('kasalko_templates').doc(docId).update({ status: 'active', adminNote: '' });
+    const t = _tplCache.find(t => t._docId === docId);
+    if (t) { t.status = 'active'; t.adminNote = ''; }
+    renderTemplates();
+    toast('✅ Template approved and live!');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function rejectTemplate(docId, isActive) {
+  const label = isActive ? 'Suspension' : 'Rejection';
+  const reason = prompt(`${label} reason (shown to seller):`);
+  if (reason === null) return; // cancelled
+  try {
+    await DB.collection('kasalko_templates').doc(docId).update({
+      status: 'rejected',
+      adminNote: reason || 'Does not meet quality requirements.',
+    });
+    const t = _tplCache.find(t => t._docId === docId);
+    if (t) { t.status = 'rejected'; t.adminNote = reason || 'Does not meet quality requirements.'; }
+    renderTemplates();
+    toast(isActive ? '❌ Template suspended' : '❌ Template rejected');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+</script>
+</body>
+</html>
