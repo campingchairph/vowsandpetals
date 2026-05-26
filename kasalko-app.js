@@ -3153,21 +3153,20 @@ function drawFurniture(f) {
     cx.fill();
     cx.strokeStyle = selected ? '#e07898' : 'rgba(201,169,110,0.65)';
     cx.lineWidth = selected ? 2.5 : 1.5; cx.stroke();
-    // 2-line label: "Round Table" on line 1, the number on line 2
-    const labelMatch = f.label.match(/^(.*)\s+(\d+)$/);
-    const labelType  = labelMatch ? labelMatch[1] : f.label; // "Round Table"
-    const labelNum   = labelMatch ? labelMatch[2] : '';       // "1"
-    const fs1 = Math.max(6,  Math.min(9,  Math.floor(r / 5)));  // type text
-    const fs2 = Math.max(10, Math.min(18, Math.floor(r / 3)));  // number
+    // 2-line label: "Round" on line 1, "Table N" on line 2
+    const labelParts = f.label.split(' ');
+    const line1 = labelParts[0];                  // "Round"
+    const line2 = labelParts.slice(1).join(' ');  // "Table 1"
+    const lineH = Math.max(9, Math.min(13, Math.floor(r / 4)));
     cx.textAlign = 'center';
-    cx.fillStyle = 'rgba(44,31,14,0.45)';
-    cx.font = `500 ${fs1}px Figtree,sans-serif`;
-    cx.fillText(labelType, rx, ry - fs2 * 0.35);
-    cx.fillStyle = 'rgba(44,31,14,0.78)';
-    cx.font = `700 ${fs2}px Figtree,sans-serif`;
-    cx.fillText(labelNum, rx, ry + fs2 * 0.75);
+    cx.fillStyle = 'rgba(44,31,14,0.52)';
+    cx.font = `500 ${lineH}px Figtree,sans-serif`;
+    cx.fillText(line1, rx, ry - lineH * 0.65);
+    cx.fillStyle = 'rgba(44,31,14,0.82)';
+    cx.font = `700 ${lineH}px Figtree,sans-serif`;
+    cx.fillText(line2, rx, ry + lineH * 0.75);
     // Assigned-guest badge — small green circle at top of table
-    const num = parseInt(labelNum) || parseInt(f.label.replace(/\D/g,''));
+    const num = parseInt(f.label.replace(/\D/g,''));
     const assignedCount = WED.guests.filter(g => g.table === num).length;
     if (assignedCount > 0) {
       const bR = Math.max(8, Math.round(r * 0.22));
