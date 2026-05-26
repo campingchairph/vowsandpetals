@@ -812,8 +812,8 @@ async function saveProfile() {
       ownerName:   _user.displayName || _user.email.split('@')[0],
       ownerUid:    _user.uid,
       updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-      ...(_activeBiz === 1 && !_profile    && { verified: false, pro: false, rating_avg: 0, review_count: 0 }),
-      ...(_activeBiz === 2 && !_profile2   && { verified: false, pro: _profile?.pro || false, rating_avg: 0, review_count: 0 }),
+      ...(_activeBiz === 1 && !_profile  && { verified: false, pro: false, rating_avg: 0, review_count: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() }),
+      ...(_activeBiz === 2 && !_profile2 && { verified: false, pro: _profile?.pro || false, rating_avg: 0, review_count: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() }),
     };
 
     const docId = _activeBiz === 2 ? _user.uid + '_b2' : _user.uid;

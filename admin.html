@@ -303,7 +303,7 @@ async function loadSuppliers() {
   el.innerHTML = '<div class="loading"><div class="spinner spinner-sm"></div>Loading suppliers…</div>';
   try {
     let snap;
-    try   { snap = await DB.collection('kasalko_marketplace').orderBy('createdAt','desc').get(); }
+    try   { snap = await DB.collection('kasalko_marketplace').orderBy('updatedAt','desc').get(); }
     catch { snap = await DB.collection('kasalko_marketplace').get(); }
     _suppCache = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
     renderSuppliers();
