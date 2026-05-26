@@ -219,6 +219,11 @@
         </button>
         <button class="btn-edit-details" onclick="openSetupModal()">Edit Details</button>
       </div>
+      <!-- Mobile hamburger — hidden on desktop via CSS -->
+      <button class="mob-nav-btn" id="mob-nav-btn" onclick="toggleMobileNav()" aria-label="Open navigation menu">
+        <span class="mob-nav-icon">☰</span>
+        <span id="mob-nav-label">Menu</span>
+      </button>
     </div>
   </header>
 
@@ -238,18 +243,26 @@
     <div class="wedding-countdown" id="wed-hero-countdown"></div>
   </div>
 
-  <!-- ── TABS ───────────────────────────────────── -->
-  <nav class="wed-tabs-wrap" role="tablist" aria-label="Wedding planner sections">
-    <button class="wed-tab active" id="tab-overview"  role="tab" aria-selected="true"  onclick="wedTab('overview')" >Overview</button>
-    <button class="wed-tab"        id="tab-budget"    role="tab" aria-selected="false" onclick="wedTab('budget')"   >Budget</button>
-    <button class="wed-tab"        id="tab-guests"    role="tab" aria-selected="false" onclick="wedTab('guests')"   >Guests</button>
-    <button class="wed-tab"        id="tab-suppliers" role="tab" aria-selected="false" onclick="wedTab('suppliers')" >Suppliers</button>
-    <button class="wed-tab"        id="tab-seating"   role="tab" aria-selected="false" onclick="wedTab('seating')"  >Seating</button>
-    <button class="wed-tab"        id="tab-checklist"  role="tab" aria-selected="false" onclick="wedTab('checklist')" >Checklist</button>
-    <button class="wed-tab"        id="tab-schedule"   role="tab" aria-selected="false" onclick="wedTab('schedule')"  >Program</button>
-    <button class="wed-tab"        id="tab-entourage"  role="tab" aria-selected="false" onclick="wedTab('entourage')">Entourage</button>
-    <button class="wed-tab"        id="tab-notes"      role="tab" aria-selected="false" onclick="wedTab('notes')"   >Notes</button>
-    <button class="wed-tab"        id="tab-gallery"    role="tab" aria-selected="false" onclick="wedTab('gallery')" >Gallery</button>
+  <!-- Mobile nav backdrop (tap to close) -->
+  <div class="mob-nav-backdrop" id="mob-nav-backdrop" onclick="closeMobileNav()"></div>
+
+  <!-- ── TABS (mobile = slide-in drawer; desktop = sidebar nav list) ── -->
+  <nav class="wed-tabs-wrap" id="wed-tabs-wrap" role="tablist" aria-label="Wedding planner sections">
+    <!-- Drawer header row (mobile only) -->
+    <div class="wed-tabs-drawer-hdr">
+      <span class="wed-tabs-drawer-title">Navigate</span>
+      <button class="wed-tabs-close-btn" onclick="closeMobileNav()" aria-label="Close menu">✕</button>
+    </div>
+    <button class="wed-tab active" id="tab-overview"  role="tab" aria-selected="true"  onclick="wedTab('overview')" >🏠 Overview</button>
+    <button class="wed-tab"        id="tab-budget"    role="tab" aria-selected="false" onclick="wedTab('budget')"   >💸 Budget</button>
+    <button class="wed-tab"        id="tab-guests"    role="tab" aria-selected="false" onclick="wedTab('guests')"   >👥 Guests</button>
+    <button class="wed-tab"        id="tab-suppliers" role="tab" aria-selected="false" onclick="wedTab('suppliers')" >🏪 Suppliers</button>
+    <button class="wed-tab"        id="tab-seating"   role="tab" aria-selected="false" onclick="wedTab('seating')"  >🪑 Seating</button>
+    <button class="wed-tab"        id="tab-checklist"  role="tab" aria-selected="false" onclick="wedTab('checklist')" >✅ Checklist</button>
+    <button class="wed-tab"        id="tab-schedule"   role="tab" aria-selected="false" onclick="wedTab('schedule')"  >📅 Program</button>
+    <button class="wed-tab"        id="tab-entourage"  role="tab" aria-selected="false" onclick="wedTab('entourage')">💍 Entourage</button>
+    <button class="wed-tab"        id="tab-notes"      role="tab" aria-selected="false" onclick="wedTab('notes')"   >📝 Notes</button>
+    <button class="wed-tab"        id="tab-gallery"    role="tab" aria-selected="false" onclick="wedTab('gallery')" >🖼 Gallery</button>
   </nav>
 
   <!-- Desktop/Tablet sidebar ad slot (≥900px only) -->

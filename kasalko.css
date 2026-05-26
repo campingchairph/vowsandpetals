@@ -564,49 +564,114 @@ body {
   letter-spacing: 0.3px;
 }
 
-/* ── TABS ────────────────────────────────────── */
-.wed-tabs-wrap {
-  position: sticky;
-  top: 57px;
-  z-index: 90;
+/* ── MOBILE NAV HAMBURGER ────────────────────── */
+.mob-nav-btn {
   display: flex;
-  flex-wrap: wrap;         /* allow 2-line wrap on mobile */
-  justify-content: stretch;
-  gap: 4px;
-  padding: 8px 10px;
-  background: rgba(250,246,238,0.97);
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(201,169,110,0.28);
+  background: rgba(245,230,200,0.55);
+  cursor: pointer;
+  font-family: var(--f);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tan-dark);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.mob-nav-btn .mob-nav-icon { font-size: 14px; line-height: 1; }
+.mob-nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 24, 16, 0.38);
+  z-index: 298;
+}
+.mob-nav-backdrop.open { display: block; }
+
+/* ── TABS — mobile = slide-in drawer from right ── */
+.wed-tabs-wrap {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 220px;
+  height: 100vh;
+  overflow-y: auto;
+  background: rgba(252,248,242,0.99);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
-  border-bottom: 1px solid rgba(184,145,106,0.12);
+  box-shadow: -6px 0 28px rgba(44,24,16,0.16);
+  border-left: 1px solid rgba(184,145,106,0.18);
+  z-index: 299;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  padding: 14px 10px 24px;
+  gap: 3px;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.wed-tabs-wrap.open { transform: translateX(0); }
+/* Drawer heading row */
+.wed-tabs-drawer-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(184,145,106,0.14);
+}
+.wed-tabs-drawer-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink-4);
+}
+.wed-tabs-close-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(184,145,106,0.2);
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--ink-3);
 }
 .wed-tab {
-  flex: 1 1 calc(25% - 4px);  /* ~4 per row on mobile */
-  min-width: 0;
-  padding: 7px 4px;
+  flex: none;
+  width: 100%;
+  padding: 10px 14px;
   border-radius: var(--r-md);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  color: var(--ink-4);
+  color: var(--ink-3);
   border: 1px solid transparent;
   background: transparent;
   transition: all 0.18s;
   white-space: nowrap;
   font-family: var(--f);
-  text-align: center;
+  text-align: left;
   letter-spacing: 0.1px;
 }
-.wed-tab:active { transform: scale(0.93); }
+.wed-tab:active { transform: scale(0.97); }
 .wed-tab.active {
   background: rgba(255,252,247,0.95);
   color: var(--gold-dark);
   border-color: rgba(184,145,106,0.28);
   box-shadow: var(--shadow-sm);
+  font-weight: 700;
 }
-/* On wider screens: all tabs in one row */
-@media (min-width: 540px) {
-  .wed-tabs-wrap { flex-wrap: nowrap; }
-  .wed-tab { flex: 1; font-size: 11.5px; padding: 7px 8px; }
+
+/* ── VENDOR GRID — responsive per category count ── */
+.vendor-grid { display: grid; gap: 8px; grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .vendor-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .vendor-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .vendor-grid-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ── PANELS ──────────────────────────────────── */
@@ -1165,7 +1230,6 @@ textarea.glass-input {
   .app-shell { box-shadow: 0 0 60px rgba(44,24,16,0.10); }
   .panel { padding: 24px 20px; }
   .hero-name-line { font-size: 62px; }
-  .wed-tab { padding: 8px 18px; font-size: 12.5px; }
   .lp-headline { letter-spacing: -2.5px; }
 }
 
@@ -1256,11 +1320,23 @@ textarea.glass-input {
   .app-left-panel .wedding-amp { font-size: 16px; margin: 1px 0; }
   .app-left-panel .hero-rule { max-width: 180px; }
 
+  /* Hamburger hidden on desktop */
+  .mob-nav-btn { display: none; }
+  .mob-nav-backdrop { display: none !important; }
+  .wed-tabs-drawer-hdr { display: none !important; }
+
   /* Tabs become vertical nav list */
   .app-left-panel .wed-tabs-wrap {
     position: relative;
     top: auto;
+    right: auto;
     z-index: auto;
+    width: auto;
+    height: auto;
+    transform: none;
+    transition: none;
+    box-shadow: none;
+    border-left: none;
     flex-direction: column;
     flex-wrap: nowrap !important;
     padding: 10px 10px;

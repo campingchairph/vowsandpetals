@@ -216,7 +216,7 @@ function _buildSaveSellCard() {
       Publish your complete plan and earn from it.
     </div>
     <div id="save-sell-action">
-      <button onclick="openPublishTemplate()"
+      <button onclick="openPublishAgreement()"
         style="padding:8px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;color:var(--ivory);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f)">
         💰 Publish My Plan →
       </button>
@@ -250,6 +250,103 @@ function _refreshSaveSellCard() {
     }).catch(() => {});
 }
 
+/* ── PUBLISH AGREEMENT (shown before the form) ── */
+function openPublishAgreement() {
+  if (!window.CURRENT_USER) { openAuthModal(); return; }
+  document.getElementById('publish-agree-sheet')?.remove();
+  const el = document.createElement('div');
+  el.id = 'publish-agree-sheet';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+
+      <!-- Big warning header -->
+      <div style="padding:14px 16px;border-radius:12px;background:rgba(224,120,152,0.10);border:2px solid rgba(224,120,152,0.35);margin-bottom:16px">
+        <div style="font-size:20px;margin-bottom:6px;text-align:center">⚠️</div>
+        <div style="font-size:13.5px;font-weight:800;color:#b04060;text-align:center;margin-bottom:8px;line-height:1.3">READ THIS BEFORE PUBLISHING<br>— PERSONAL INFORMATION WARNING —</div>
+        <div style="font-size:12px;color:#8b3050;line-height:1.65;font-weight:600">
+          When you publish a template, real content from your wedding plan is shared with anyone who buys it.
+          <b style="display:block;margin-top:6px">You are responsible for making sure NO private or sensitive information is in the content you share.</b>
+          Check your checklist tasks, expense notes, vendor details, and program descriptions — remove any phone numbers, addresses, personal messages, or anything you would not want a stranger to read.
+        </div>
+      </div>
+
+      <!-- What IS shared -->
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px">✅ WHAT WILL BE SHARED WITH BUYERS:</div>
+      <div style="padding:10px 12px;border-radius:10px;background:rgba(90,171,122,0.08);border:1px solid rgba(90,171,122,0.2);margin-bottom:12px;font-size:11.5px;color:var(--ink-3);line-height:1.8">
+        💸 <b>Budget</b> — total budget amount<br>
+        🧾 <b>All expense entries</b> — labels, amounts, categories, paid status<br>
+        ✅ <b>Checklist tasks</b> — every phase and to-do item with notes<br>
+        🤝 <b>Vendors & suppliers</b> — names, categories, prices, notes, links<br>
+        📅 <b>Program / Schedule</b> — full event timeline with times and descriptions
+      </div>
+
+      <!-- What is NOT shared -->
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px">🚫 WHAT WILL NOT BE SHARED:</div>
+      <div style="padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18);margin-bottom:16px;font-size:11.5px;color:var(--ink-3);line-height:1.8">
+        👥 Your guest list (names, contacts, RSVP status)<br>
+        🪑 Seating chart and seat assignments<br>
+        💑 Your couple names, wedding date, venue (hero section)<br>
+        📸 Gallery photos and invitation card images<br>
+        📝 Personal notes
+      </div>
+
+      <!-- Agreement checkbox -->
+      <div style="padding:12px 14px;border-radius:10px;background:rgba(255,252,247,0.8);border:1.5px solid rgba(184,145,106,0.28);margin-bottom:16px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+          <input type="checkbox" id="publish-agree-chk" style="margin-top:2px;width:18px;height:18px;accent-color:var(--gold-dark);flex-shrink:0">
+          <span style="font-size:12px;color:var(--ink);line-height:1.6;font-weight:600">
+            I confirm that I have reviewed my checklist, expenses, vendors, and program entries, and I am confident that no sensitive personal information is included. I understand that published content is shared with buyers and consent to publishing it on Vows &amp; Petals.
+          </span>
+        </label>
+      </div>
+
+      <button id="publish-agree-btn" onclick="_submitAgreementAndPublish()" class="cta-btn" disabled style="opacity:0.5;cursor:not-allowed">
+        I Agree — Proceed to Publish →
+      </button>
+      <button onclick="document.getElementById('publish-agree-sheet')?.remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.2);background:transparent;font-size:12.5px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">
+        Cancel — Let me review first
+      </button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+  // Enable button only when checkbox is checked
+  setTimeout(() => {
+    const chk = document.getElementById('publish-agree-chk');
+    const btn = document.getElementById('publish-agree-btn');
+    if (chk && btn) chk.addEventListener('change', () => {
+      btn.disabled = !chk.checked;
+      btn.style.opacity = chk.checked ? '1' : '0.5';
+      btn.style.cursor  = chk.checked ? 'pointer' : 'not-allowed';
+    });
+  }, 100);
+}
+
+async function _submitAgreementAndPublish() {
+  const chk = document.getElementById('publish-agree-chk');
+  if (!chk?.checked) return;
+  const btn = document.getElementById('publish-agree-btn');
+  if (btn) { btn.textContent = 'Recording agreement…'; btn.disabled = true; }
+  // Record agreement in Firestore
+  if (window.CURRENT_USER && typeof DB !== 'undefined' && DB) {
+    try {
+      await DB.collection('kasalko_agreements').doc(window.CURRENT_USER.uid).set({
+        uid:         window.CURRENT_USER.uid,
+        email:       window.CURRENT_USER.email,
+        agreedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+        version:     1, // increment this when terms change
+        type:        'template_publish',
+      }, { merge: true });
+    } catch(e) {
+      console.warn('Agreement record failed (non-blocking):', e);
+    }
+  }
+  document.getElementById('publish-agree-sheet')?.remove();
+  openPublishTemplate();
+}
+
 function openPublishTemplate() {
   if (!window.CURRENT_USER) { openAuthModal(); return; }
   document.getElementById('publish-tpl-sheet')?.remove();
@@ -259,7 +356,7 @@ function openPublishTemplate() {
     vendors:   (typeof WED !== 'undefined' && WED.vendors)   || [],
     schedule:  (typeof WED !== 'undefined' && WED.schedule)  || [],
   };
-  const taskCount = td.checklist.reduce((a,p) => a + (p.items?.length||0), 0);
+  const taskCount    = td.checklist.reduce((a,p) => a + (p.items?.length||0), 0);
   const el = document.createElement('div');
   el.id = 'publish-tpl-sheet';
   el.className = 'modal-overlay';
@@ -560,7 +657,7 @@ function openUserMenu() {
         <div style="padding:14px 16px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:linear-gradient(135deg,rgba(245,230,200,0.6),rgba(252,232,238,0.45));text-align:left">
           <div style="font-size:12.5px;font-weight:800;color:var(--tan-dark);margin-bottom:4px">💰 Save &amp; Sell Your Wedding Plan</div>
           <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55">Couples on TikTok always ask about your budget, suppliers &amp; planning. Publish your plan and earn from it.</div>
-          <button onclick="document.getElementById('user-menu-sheet').remove();openPublishTemplate();" style="margin-top:8px;padding:8px 16px;border-radius:20px;background:linear-gradient(135deg,var(--tan),var(--gold));border:none;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)">💰 Publish My Plan →</button>
+          <button onclick="document.getElementById('user-menu-sheet').remove();openPublishAgreement();" style="margin-top:8px;padding:8px 16px;border-radius:20px;background:linear-gradient(135deg,var(--tan),var(--gold));border:none;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)">💰 Publish My Plan →</button>
         </div>
         <button onclick="kasalkoSignOut();document.getElementById('user-menu-sheet').remove()"
           style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f);text-align:left">
@@ -734,6 +831,8 @@ window.openUserMenu           = openUserMenu;
 window.kasalkoSignOut         = kasalkoSignOut;
 window.renderCloudSection     = renderCloudSection;
 window.updateAuthUI           = updateAuthUI;
+window.openPublishAgreement       = openPublishAgreement;
+window._submitAgreementAndPublish = _submitAgreementAndPublish;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;

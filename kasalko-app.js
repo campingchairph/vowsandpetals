@@ -221,8 +221,32 @@ function getCountdown() {
 }
 
 /* ── TAB SWITCH ──────────────────────────────── */
+/* ── MOBILE NAV DRAWER ──────────────────────── */
+function toggleMobileNav() {
+  const nav      = document.getElementById('wed-tabs-wrap');
+  const backdrop = document.getElementById('mob-nav-backdrop');
+  if (!nav) return;
+  const isOpen = nav.classList.contains('open');
+  if (isOpen) { closeMobileNav(); } else {
+    nav.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+  }
+}
+function closeMobileNav() {
+  const nav      = document.getElementById('wed-tabs-wrap');
+  const backdrop = document.getElementById('mob-nav-backdrop');
+  if (nav)      nav.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+}
+
 function wedTab(name) {
   WED.activeTab = name;
+  // Close mobile nav when any tab is selected
+  closeMobileNav();
+  // Update label on hamburger button
+  const tabEl = document.getElementById('tab-' + name);
+  const mobLbl = document.getElementById('mob-nav-label');
+  if (mobLbl && tabEl) mobLbl.textContent = tabEl.textContent.replace(/^[^\w]*/, '').trim();
   ['overview','budget','guests','suppliers','seating','checklist','schedule','entourage','notes','gallery'].forEach(t => {
     const panel = document.getElementById('panel-'+t);
     const tab   = document.getElementById('tab-'+t);
@@ -2138,10 +2162,11 @@ function _renderSuppliersMain(el) {
             <button onclick="deleteVendor(${v.id})" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep);margin-left:auto">🗑</button>
           </div>
         </div>`).join('');
+      const gridClass = vendors.length >= 4 ? 'vendor-grid-4' : vendors.length === 3 ? 'vendor-grid-3' : vendors.length === 2 ? 'vendor-grid-2' : '';
       return `
         <div style="margin-bottom:14px">
           <div style="font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;font-size:11px">(${vendors.length})</span></div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+          <div class="vendor-grid ${gridClass}">
             ${cards}
           </div>
         </div>`;
@@ -5478,3 +5503,5 @@ window._showTemplatePreview         = _showTemplatePreview;
 window._showTemplatePayment         = _showTemplatePayment;
 window._submitTemplatePayment       = _submitTemplatePayment;
 window._importTemplateFromCode      = _importTemplateFromCode;
+window.toggleMobileNav              = toggleMobileNav;
+window.closeMobileNav               = closeMobileNav;
