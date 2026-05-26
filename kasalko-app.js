@@ -990,13 +990,13 @@ function _guestCard(g) {
 
   // Shared action buttons (used in both desktop col and mobile expand row)
   const sendBtn = chair
-    ? `<button onclick="event.stopPropagation();shareGuestInvite(${g.id})" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(252,232,238,0.7);font-size:11.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap">${g._inviteSent?'💌 Resend':'💌 Send'}</button>`
-    : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(184,145,106,0.2);background:rgba(245,230,200,0.3);font-size:11.5px;font-weight:700;color:var(--ink-4);cursor:not-allowed;white-space:nowrap;opacity:0.5">💌 Send</button>`;
+    ? `<button onclick="event.stopPropagation();shareGuestInvite(${g.id})" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(192,112,104,0.1);font-size:11.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;white-space:nowrap;font-family:var(--f)">${g._inviteSent?'💌 Resend':'💌 Invite'}</button>`
+    : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(201,169,110,0.07);font-size:11.5px;font-weight:600;color:var(--ink-4);cursor:not-allowed;white-space:nowrap;opacity:0.45;font-family:var(--f)">💌 Invite</button>`;
   const linkBtn = chair
-    ? `<button onclick="event.stopPropagation();copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(106,142,112,0.28);background:rgba(232,245,237,0.7);font-size:11.5px;font-weight:700;color:var(--green-deep);cursor:pointer">🔗</button>`
-    : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 9px;border-radius:8px;border:1px solid rgba(184,145,106,0.18);background:rgba(245,230,200,0.25);font-size:11.5px;font-weight:700;color:var(--ink-4);cursor:not-allowed;opacity:0.45">🔗</button>`;
-  const editBtn = `<button onclick="event.stopPropagation();openEditGuest(${g.id})" style="padding:5px 9px;border-radius:8px;border:none;background:rgba(245,230,200,0.7);font-size:13px;cursor:pointer;color:var(--tan-dark)">✏️</button>`;
-  const delBtn  = `<button onclick="event.stopPropagation();removeGuest(${g.id})" style="padding:5px 9px;border-radius:8px;border:none;background:rgba(224,120,152,0.15);font-size:13px;cursor:pointer;color:var(--pink-deep)">🗑</button>`;
+    ? `<button onclick="event.stopPropagation();copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(90,171,122,0.1);font-size:11.5px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f)">🔗 Link</button>`
+    : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(201,169,110,0.07);font-size:11.5px;color:var(--ink-4);cursor:not-allowed;opacity:0.4;font-family:var(--f)">🔗 Link</button>`;
+  const editBtn = `<button onclick="event.stopPropagation();openEditGuest(${g.id})" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(245,230,200,0.55);font-size:11.5px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:var(--f)">✏️ Edit</button>`;
+  const delBtn  = `<button onclick="event.stopPropagation();removeGuest(${g.id})" style="padding:5px 11px;border-radius:14px;border:none;background:transparent;font-size:11.5px;font-weight:600;color:var(--rose);cursor:pointer;opacity:0.75;font-family:var(--f)">🗑 Remove</button>`;
   const rsvpSel = (extraStyle='') => `<select onchange="updateGuestRSVP(${g.id},this.value)" onclick="event.stopPropagation()" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.9);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none${extraStyle}">
     <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
     <option value="pending"   ${g.rsvp==='pending'  ?'selected':''}>⏳ Pending</option>
@@ -1122,9 +1122,12 @@ function renderGuests() {
         <div style="font-size:10.5px;color:var(--pink-deep);font-weight:700">Declined</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button onclick="openModal('wed-add-guest-modal')" style="flex:1;padding:10px;border-radius:var(--r-md);background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">+ Add Guest</button>
-      <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:10px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.22);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer" title="Manage Groups">👥 Groups</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11.5px;font-weight:600;color:var(--ink-4)">${WED.guests.length} guest${WED.guests.length!==1?'s':''}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:5px 10px;border-radius:16px;background:transparent;border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:600;color:var(--ink-3);cursor:pointer;font-family:var(--f)">👥 Groups</button>
+        <button onclick="openModal('wed-add-guest-modal')" style="padding:7px 16px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;font-size:12.5px;font-weight:700;color:white;cursor:pointer;font-family:var(--f)">+ Add</button>
+      </div>
     </div>
     <div style="position:relative;margin-bottom:8px">
       <input id="guest-search-input" type="search" placeholder="🔍 Search guests or groups…" value="${_guestSearch}"
@@ -1142,8 +1145,8 @@ function renderGuests() {
       ].map(f => {
         const active = _guestFilter === f.val;
         return `<button onclick="setGuestFilter('${f.val}')"
-          style="padding:5px 11px;border-radius:20px;border:1.5px solid ${active ? f.bd : 'rgba(201,169,110,0.18)'};background:${active ? f.bg : 'rgba(255,253,248,0.7)'};font-size:11px;font-weight:${active?'700':'600'};color:${active ? f.col : 'var(--ink-4)'};cursor:pointer;transition:all 0.15s;white-space:nowrap">
-          ${f.label} <span style="opacity:0.75">${f.count}</span>
+          style="padding:4px 10px;border-radius:20px;border:1px solid ${active ? f.bd : 'rgba(201,169,110,0.15)'};background:${active ? f.bg : 'transparent'};font-size:10.5px;font-weight:${active?'700':'500'};color:${active ? f.col : 'var(--ink-4)'};cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:var(--f)">
+          ${f.label} <span style="opacity:${active?'0.75':'0.6'}">${f.count}</span>
         </button>`;
       }).join('')}
     </div>

@@ -424,8 +424,7 @@ body {
   padding: 10px 14px;
   gap: 6px;
 }
-/* Compensate for fixed header height on mobile */
-.wedding-hero { padding-top: 72px; }
+/* (mobile hero padding override is in @media max-width:899px below) */
 .app-header-logo {
   display: flex;
   align-items: center;
@@ -1097,7 +1096,36 @@ textarea.glass-input {
 }
 
 @media (max-width: 899px) {
-  /* Compact card: hide tags + desktop action column */
+  /* ── Hero: clear fixed header + compact height ── */
+  .wedding-hero {
+    padding: 64px 20px 16px; /* 64px = header height + buffer; reduced bottom */
+  }
+  /* Names on one line — smaller font, row layout */
+  .wedding-couple-names {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .hero-name-line {
+    font-size: 26px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 42vw;
+  }
+  .wedding-amp {
+    font-size: 20px;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .hero-of-label { margin-bottom: 4px; }
+  .hero-rule     { margin: 6px auto 4px; }
+  .wedding-countdown { margin-top: 4px; }
+
+  /* ── Guest cards: compact + tappable ─────────── */
   .gc-tags-row       { display: none; }
   .guest-actions-col { display: none; }
 
@@ -1126,9 +1154,9 @@ textarea.glass-input {
   .guest-card.gc-expanded .gc-mobile-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
-    padding: 8px 14px 12px 62px;
+    padding: 8px 12px 10px 14px;
     border-top: 1px solid rgba(184,145,106,0.1);
     margin-top: 2px;
   }
