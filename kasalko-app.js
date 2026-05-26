@@ -3165,18 +3165,7 @@ function drawFurniture(f) {
     cx.fillStyle = 'rgba(44,31,14,0.82)';
     cx.font = `700 ${lineH}px Figtree,sans-serif`;
     cx.fillText(line2, rx, ry + lineH * 0.75);
-    // Assigned-guest badge — small green circle at top of table
-    const num = parseInt(f.label.replace(/\D/g,''));
-    const assignedCount = WED.guests.filter(g => g.table === num).length;
-    if (assignedCount > 0) {
-      const bR = Math.max(8, Math.round(r * 0.22));
-      const bX = rx + r * 0.62, bY = ry - r * 0.62;
-      cx.beginPath(); cx.arc(bX, bY, bR, 0, Math.PI * 2);
-      cx.fillStyle = 'rgba(90,171,122,0.92)'; cx.fill();
-      cx.fillStyle = '#fff';
-      cx.font = `700 ${Math.max(6, bR - 2)}px Figtree,sans-serif`;
-      cx.fillText(assignedCount, bX, bY + Math.max(3, bR * 0.4));
-    }
+    cx.restore(); return;
   } else if (f.type === 'long') {
     // Subtle dashed chair-band zone shown when table is selected — height adapts to actual chairs
     if (selected) {
