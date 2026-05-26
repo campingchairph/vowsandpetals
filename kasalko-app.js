@@ -548,6 +548,12 @@ function submitSetup() {
 }
 
 /* ── BUDGET ──────────────────────────────────── */
+const _collapsedExpenseCats = new Set(); // UI-only collapse state for expense groups
+function toggleExpenseCat(cat) {
+  if (_collapsedExpenseCats.has(cat)) _collapsedExpenseCats.delete(cat);
+  else _collapsedExpenseCats.add(cat);
+  renderBudget();
+}
 const CAT_COLORS = { venue:'glass-cream', catering:'glass-green', florals:'glass-pink', photography:'glass-cream', attire:'glass-pink', music:'glass-cream', cake:'glass-cream', invites:'glass-green' };
 const CAT_EMOJIS = { venue:'🏛️', catering:'🍽️', florals:'💐', photography:'📸', attire:'👗', music:'🎵', cake:'🎂', invites:'💌' };
 // Dynamic category helpers — merges built-ins with WED.expenseCategories
@@ -599,6 +605,7 @@ function renderBudget() {
         <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(90,171,122,0.15);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">Paid ₱${paid.toLocaleString()}</span>
         <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(224,120,152,0.12);color:var(--pink-deep);border:1px solid rgba(224,120,152,0.2)">Pending ₱${(totalSpent-paid).toLocaleString()}</span>
       </div>
+      ${WED.expenses.length ? `<button onclick="generateFullReceipt()" style="margin-top:12px;width:100%;padding:10px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.55);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🧾 Generate Full Receipt</button>` : ''}
     </div>
 
     ${Object.keys(byCat).length ? `
@@ -633,23 +640,54 @@ function renderBudget() {
       <span class="sec-title" style="margin-bottom:0">All Expenses</span>
       <button onclick="populateExpenseCatSelect();openModal('wed-add-expense-modal')" class="icon-btn">+ Add</button>
     </div>
-    ${WED.expenses.length ? WED.expenses.map((e,i)=>`
-      <div class="glass" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);margin-bottom:7px">
-        <div style="width:36px;height:36px;border-radius:var(--r-sm);background:rgba(245,230,200,0.6);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${catIcon(e.category)}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:700;color:var(--ink)">${e.label}</div>
-          <div style="font-size:11px;color:var(--ink-4);text-transform:capitalize">${allExpenseCats().find(c=>c.key===e.category)?.label||e.category}</div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:14px;font-weight:700;color:var(--ink)">₱${e.amount.toLocaleString()}</div>
-          <div style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:2px;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.12)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'};">${e.paid?'Paid':'Pending'}</div>
-        </div>
-        <div class="expense-actions">
-          <button onclick="toggleExpensePaid(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer;white-space:nowrap">${e.paid?'Unpay':'Mark Paid'}</button>
-          <button onclick="openEditExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(184,145,106,0.25);background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
-          <button onclick="deleteExpense(${i})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
-        </div>
-      </div>`).join('') : `<div style="text-align:center;padding:24px;font-size:13px;color:var(--ink-4)">No expenses yet — click "+ Add" to start tracking.</div>`}
+    ${(() => {
+      if (!WED.expenses.length) return `<div style="text-align:center;padding:24px;font-size:13px;color:var(--ink-4)">No expenses yet — click "+ Add" to start tracking.</div>`;
+      // Group expenses by category
+      const groups = {};
+      WED.expenses.forEach((e, i) => {
+        const cat = e.category || 'other';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push({ ...e, _idx: i });
+      });
+      const cats = allExpenseCats();
+      return Object.entries(groups).map(([cat, items]) => {
+        const catInfo = cats.find(c => c.key === cat);
+        const catLabel = catInfo ? catInfo.label : (cat.charAt(0).toUpperCase() + cat.slice(1));
+        const catEmoji = catInfo ? catInfo.icon : '🏷️';
+        const collapsed = _collapsedExpenseCats.has(cat);
+        const groupTotal = items.reduce((s, e) => s + (e.amount || 0), 0);
+        const paidCount = items.filter(e => e.paid).length;
+        return `
+        <div style="margin-bottom:8px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(201,169,110,0.18)">
+          <div onclick="toggleExpenseCat('${cat.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(245,230,200,0.45);cursor:pointer;user-select:none">
+            <span style="font-size:17px;flex-shrink:0">${catEmoji}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${catLabel}</div>
+              <div style="font-size:10.5px;color:var(--ink-4)">${items.length} item${items.length!==1?'s':''} · ${paidCount}/${items.length} paid</div>
+            </div>
+            <span style="font-size:12.5px;font-weight:700;color:var(--tan-dark);flex-shrink:0">₱${groupTotal.toLocaleString()}</span>
+            <span style="font-size:13px;color:var(--ink-4);flex-shrink:0;margin-left:4px">${collapsed?'▶':'▼'}</span>
+          </div>
+          ${collapsed ? '' : `<div style="padding:6px 8px;background:rgba(255,252,247,0.6)">
+            ${items.map(e => `
+            <div class="glass" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);margin-bottom:6px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;color:var(--ink)">${e.label}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:14px;font-weight:700;color:var(--ink)">₱${e.amount.toLocaleString()}</div>
+                <div style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:2px;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.12)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'};">${e.paid?'Paid':'Pending'}</div>
+              </div>
+              <div class="expense-actions">
+                <button onclick="toggleExpensePaid(${e._idx})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer;white-space:nowrap">${e.paid?'Unpay':'Mark Paid'}</button>
+                <button onclick="openEditExpense(${e._idx})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(184,145,106,0.25);background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
+                <button onclick="deleteExpense(${e._idx})" style="padding:4px 7px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
+              </div>
+            </div>`).join('')}
+          </div>`}
+        </div>`;
+      }).join('');
+    })()}
     <button onclick="populateExpenseCatSelect();openModal('wed-add-expense-modal')" class="cta-btn" style="margin-top:8px">+ Add Expense</button>`;
 }
 
@@ -764,6 +802,81 @@ function removeExpenseCat(i) {
   showToast('🗑 Category removed');
 }
 
+function generateFullReceipt() {
+  if (!WED.expenses.length) { showToast('No expenses to generate receipt for'); return; }
+  const d      = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  const total  = WED.expenses.reduce((a, e) => a + e.amount, 0);
+  const paid   = WED.expenses.filter(e => e.paid).reduce((a, e) => a + e.amount, 0);
+  // Group by category, sort within each category small → large
+  const byCat  = {};
+  WED.expenses.forEach(e => { (byCat[e.category] = byCat[e.category] || []).push(e); });
+  Object.values(byCat).forEach(arr => arr.sort((a, b) => a.amount - b.amount));
+  // Sort categories by category total, large → small
+  const sortedCats = Object.entries(byCat).sort((a, b) =>
+    b[1].reduce((s,e) => s+e.amount, 0) - a[1].reduce((s,e) => s+e.amount, 0));
+
+  const catRows = sortedCats.map(([cat, expenses]) => {
+    const catTotal = expenses.reduce((a, e) => a + e.amount, 0);
+    const catLabel = allExpenseCats().find(c => c.key === cat)?.label || cat;
+    return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:7px;padding:6px 4px;border-bottom:1.5px solid rgba(201,169,110,0.22);margin-bottom:6px">
+          <span style="font-size:15px">${catIcon(cat)}</span>
+          <span style="font-size:12px;font-weight:800;color:var(--tan-dark);text-transform:capitalize;flex:1">${catLabel}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--ink)">₱${catTotal.toLocaleString()}</span>
+        </div>
+        ${expenses.map(e => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px 6px 14px;border-bottom:1px solid rgba(201,169,110,0.07)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;color:var(--ink)">${e.label}</div>
+              <div style="font-size:10px;font-weight:700;color:${e.paid ? 'var(--green-deep)' : 'var(--pink-deep)'}">${e.paid ? '✅ Paid' : '⏳ Pending'}</div>
+            </div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--ink);flex-shrink:0">₱${e.amount.toLocaleString()}</div>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+
+  document.getElementById('receipt-modal')?.remove();
+  const el = document.createElement('div');
+  el.id = 'receipt-modal'; el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div style="text-align:center;padding:16px 0 10px">
+        <div style="font-size:28px;margin-bottom:4px">🧾</div>
+        <div style="font-size:18px;font-weight:800;color:var(--ink)">Wedding Budget Receipt</div>
+        ${WED.couple.p1 && WED.couple.p2 ? `<div style="font-size:12px;font-weight:700;color:var(--tan-dark);margin-top:2px">${WED.couple.p1} &amp; ${WED.couple.p2}</div>` : ''}
+        <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${d}</div>
+      </div>
+      <div style="border-top:1px dashed rgba(201,169,110,0.3);margin:0 0 14px"></div>
+      ${catRows}
+      <div style="border-top:1.5px solid rgba(201,169,110,0.3);padding-top:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11.5px;color:var(--green-deep);font-weight:700">✅ Total Paid</span>
+          <span style="font-size:11.5px;color:var(--green-deep);font-weight:700">₱${paid.toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">⏳ Total Pending</span>
+          <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">₱${(total-paid).toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.5);border:1.5px solid rgba(201,169,110,0.25)">
+          <span style="font-size:15px;font-weight:800;color:var(--ink)">Grand Total</span>
+          <span style="font-size:15px;font-weight:800;color:var(--ink)">₱${total.toLocaleString()}</span>
+        </div>
+        ${WED.budget ? `
+        <div style="display:flex;justify-content:space-between;margin-top:8px;padding:8px 12px;border-radius:10px;background:${total<=WED.budget?'rgba(90,171,122,0.1)':'rgba(224,120,152,0.1)'};border:1px solid ${total<=WED.budget?'rgba(90,171,122,0.2)':'rgba(224,120,152,0.2)'}">
+          <span style="font-size:12px;font-weight:700;color:${total<=WED.budget?'var(--green-deep)':'var(--pink-deep)'}">Budget ${total<=WED.budget?'Remaining':'Over Budget'}</span>
+          <span style="font-size:12px;font-weight:700;color:${total<=WED.budget?'var(--green-deep)':'var(--pink-deep)'}">₱${Math.abs(WED.budget-total).toLocaleString()}</span>
+        </div>` : ''}
+      </div>
+      <button onclick="window.print()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.3);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print Receipt</button>
+      <button onclick="document.getElementById('receipt-modal').remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;background:none;border:none;font-size:13px;color:var(--ink-4);cursor:pointer">Close</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
 function generateCategoryReceipt(catKey) {
   const catInfo  = allExpenseCats().find(c => c.key === catKey);
   const catLabel = catInfo?.label || catKey;
@@ -822,6 +935,13 @@ function generateCategoryReceipt(catKey) {
 /* ── GUESTS ──────────────────────────────────── */
 let _guestSearch = '';
 let _guestFilter = 'all'; // 'all' | 'attending' | 'pending' | 'declined' | 'not-sent'
+const _collapsedGuestGroups = new Set(); // UI-only collapse state — not persisted
+
+function toggleGuestGroup(grp) {
+  if (_collapsedGuestGroups.has(grp)) _collapsedGuestGroups.delete(grp);
+  else _collapsedGuestGroups.add(grp);
+  renderGuests();
+}
 
 function updateGuestSearch(val) {
   _guestSearch = (val || '').toLowerCase();
@@ -866,7 +986,7 @@ function _guestCard(g) {
         <div style="font-size:13.5px;font-weight:700;color:var(--ink)">${g.name}</div>
         <div class="gc-tags-row">
           ${g.group ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.14);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.22)">${g.group}</span>` : ''}
-          ${chair   ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${chair.label}</span>` : ''}
+          ${chair   ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.12);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">🪑 ${_formatSeatLabel(chair)}</span>` : ''}
           ${g.meal  ? `<span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(255,253,248,0.8);color:var(--ink-3);border:1px solid rgba(201,169,110,0.12)">${g.meal}</span>` : ''}
           ${g.phone ? `<a href="tel:${g.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(90,171,122,0.1);color:var(--green-deep);border:1px solid rgba(90,171,122,0.18);text-decoration:none;font-weight:700">📞 ${g.phone}</a>` : ''}
           ${g._inviteSent ? `<span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.18);color:var(--tan-dark);border:1px solid rgba(201,169,110,0.28)">💌 Sent${sentAt?' · '+sentAt:''}</span>` : ''}
@@ -932,22 +1052,35 @@ function renderGuests() {
     const members = groups[grp];
     if (!members || !members.length) return;
     const att = members.filter(g => g.rsvp === 'attending').length;
+    const collapsed = _collapsedGuestGroups.has(grp);
     guestHTML += `
       <div style="margin-bottom:4px">
-        <div class="guest-group-hdr">
+        <div class="guest-group-hdr" onclick="toggleGuestGroup('${grp.replace(/'/g,"\\'")}') " style="cursor:pointer;user-select:none">
           <span>${grp}</span>
-          <span style="font-size:10.5px;font-weight:400;opacity:0.7">${members.length} guest${members.length!==1?'s':''} · ${att} attending</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10.5px;font-weight:400;opacity:0.7">${members.length} guest${members.length!==1?'s':''} · ${att} attending</span>
+            <span style="font-size:13px;opacity:0.6">${collapsed ? '▶' : '▼'}</span>
+          </div>
         </div>
-        ${members.map(_guestCard).join('')}
+        ${collapsed ? '' : members.map(_guestCard).join('')}
       </div>`;
   });
   if (ungrouped.length) {
-    guestHTML += ungrouped.length === filtered.length
-      ? ungrouped.map(_guestCard).join('')   // all ungrouped — no header
-      : `<div style="margin-bottom:4px">
-           <div class="guest-group-hdr"><span>Other / Ungrouped</span><span style="font-size:10.5px;font-weight:400;opacity:0.7">${ungrouped.length}</span></div>
-           ${ungrouped.map(_guestCard).join('')}
-         </div>`;
+    if (ungrouped.length === filtered.length) {
+      guestHTML += ungrouped.map(_guestCard).join(''); // all ungrouped — no header
+    } else {
+      const collapsed = _collapsedGuestGroups.has('__ungrouped__');
+      guestHTML += `<div style="margin-bottom:4px">
+        <div class="guest-group-hdr" onclick="toggleGuestGroup('__ungrouped__')" style="cursor:pointer;user-select:none">
+          <span>Other / Ungrouped</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10.5px;font-weight:400;opacity:0.7">${ungrouped.length}</span>
+            <span style="font-size:13px;opacity:0.6">${collapsed ? '▶' : '▼'}</span>
+          </div>
+        </div>
+        ${collapsed ? '' : ungrouped.map(_guestCard).join('')}
+      </div>`;
+    }
   }
 
   el.innerHTML = `
@@ -1302,6 +1435,21 @@ function _generateRSVPQR() {
   new QRCode(qrEl, { text: rsvpUrl, width: 120, height: 120, colorDark:'#2c1f0e', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
 }
 
+/* Build a human-readable seat label: "Round Table 1 · Chair 2" */
+function _formatSeatLabel(chair) {
+  if (!chair) return null;
+  const parentTable = chair.parentTableId ? WED.furniture.find(f => f.id === chair.parentTableId) : null;
+  const chairNum = (chair.label.match(/Chair\s*(\d+)/i) || [])[1] || chair.label;
+  if (parentTable) return `${parentTable.label} · Chair ${chairNum}`;
+  // Fallback: parse RT1/Chair 2 or LT3/Chair 1 without parent
+  const m = chair.label.match(/^(RT|LT)(\d+)\/Chair\s*(\d+)/i);
+  if (m) {
+    const type = m[1].toUpperCase() === 'RT' ? 'Round Table' : 'Long Table';
+    return `${type} ${m[2]} · Chair ${m[3]}`;
+  }
+  return chair.label; // last resort
+}
+
 /* 💌 Share personalised invite (Page 1 with QR + Page 2 details) for a specific guest */
 async function shareGuestInvite(guestId) {
   const guest = WED.guests.find(g => g.id === guestId);
@@ -1313,7 +1461,8 @@ async function shareGuestInvite(guestId) {
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
   const ck  = encodeURIComponent(_rsvpCoupleKey());
-  const seatParam = chair ? `&seat=${encodeURIComponent(chair.label)}` : '';
+  const seatLabel = _formatSeatLabel(chair);
+  const seatParam = seatLabel ? `&seat=${encodeURIComponent(seatLabel)}` : '';
   const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
 
   showToast('💌 Generating invitation…');
@@ -1590,7 +1739,8 @@ async function copyGuestLink(guestId) {
   const dt = encodeURIComponent(WED.date || '');
   const vn = encodeURIComponent(WED.venue || '');
   const ck = encodeURIComponent(_rsvpCoupleKey());
-  const seatParam = chair ? `&seat=${encodeURIComponent(chair.label)}` : '';
+  const seatLabel = _formatSeatLabel(chair);
+  const seatParam = seatLabel ? `&seat=${encodeURIComponent(seatLabel)}` : '';
   const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
   try {
     await navigator.clipboard.writeText(url);
@@ -1957,26 +2107,46 @@ function renderSuppliers() {
 }
 
 function _renderSuppliersMain(el) {
-  const vendorList = WED.vendors.length
-    ? WED.vendors.map(v => `
-      <div class="glass" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);margin-bottom:7px">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${getSupplierEmoji(v.category)}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:700;color:var(--ink)">${v.name}</div>
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:1px">
-            <span style="font-size:11px;color:var(--ink-4);text-transform:capitalize">${v.category}${v.phone?' · '+v.phone:''}</span>
-            ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.16);border-radius:4px;padding:1px 5px">🏪 Marketplace</span>` : ''}
+  let vendorList;
+  if (!WED.vendors.length) {
+    vendorList = `<div style="text-align:center;padding:24px 16px;font-size:13px;color:var(--ink-4)">No vendors saved yet.<br><span style="font-size:11.5px">Add your own or browse the marketplace below.</span></div>`;
+  } else {
+    // Group vendors by category
+    const groups = {};
+    WED.vendors.forEach(v => {
+      const cat = v.category || 'other';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(v);
+    });
+    vendorList = Object.entries(groups).map(([cat, vendors]) => {
+      const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
+      const catEmoji = getSupplierEmoji(cat);
+      const cards = vendors.map(v => `
+        <div class="glass" style="padding:12px;border-radius:var(--r-md);display:flex;flex-direction:column;gap:6px;position:relative">
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div style="width:34px;height:34px;border-radius:8px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${catEmoji}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3">${v.name}</div>
+              ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.16);border-radius:4px;padding:1px 5px">🏪 Listed</span>` : ''}
+            </div>
           </div>
-          ${v.price?`<div style="font-size:11px;color:var(--tan-dark);font-weight:700;margin-top:1px">₱${Number(v.price).toLocaleString()}</div>`:''}
-          ${v.notes?`<div style="font-size:10.5px;color:var(--ink-4);margin-top:2px;font-style:italic">${v.notes}</div>`:''}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-          ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);text-decoration:none;text-align:center">📞</a>`:''}
-          ${v.link?`<a href="${v.link}" target="_blank" rel="noopener" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);text-decoration:none;text-align:center">🔗</a>`:''}
-          <button onclick="deleteVendor(${v.id})" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
-        </div>
-      </div>`).join('')
-    : `<div style="text-align:center;padding:24px 16px;font-size:13px;color:var(--ink-4)">No vendors saved yet.<br><span style="font-size:11.5px">Add your own or browse the marketplace below.</span></div>`;
+          ${v.price?`<div style="font-size:11px;color:var(--tan-dark);font-weight:700">₱${Number(v.price).toLocaleString()}</div>`:''}
+          ${v.notes?`<div style="font-size:10.5px;color:var(--ink-4);font-style:italic;line-height:1.4">${v.notes}</div>`:''}
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:auto">
+            ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);text-decoration:none">📞</a>`:''}
+            ${v.link?`<a href="${v.link}" target="_blank" rel="noopener" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗</a>`:''}
+            <button onclick="deleteVendor(${v.id})" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep);margin-left:auto">🗑</button>
+          </div>
+        </div>`).join('');
+      return `
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;font-size:11px">(${vendors.length})</span></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+            ${cards}
+          </div>
+        </div>`;
+    }).join('');
+  }
 
   el.innerHTML = `
     <!-- My Vendors -->
@@ -5295,6 +5465,9 @@ window.populateExpenseCatSelect   = populateExpenseCatSelect;
 window.addExpenseCat              = addExpenseCat;
 window.removeExpenseCat           = removeExpenseCat;
 window.generateCategoryReceipt    = generateCategoryReceipt;
+window.generateFullReceipt        = generateFullReceipt;
+window.toggleExpenseCat           = toggleExpenseCat;
+window.toggleGuestGroup           = toggleGuestGroup;
 window.setSupplierView            = setSupplierView;
 window.openSupplierProfile        = openSupplierProfile;
 window.openLeaveReview              = openLeaveReview;

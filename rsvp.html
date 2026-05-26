@@ -253,19 +253,86 @@
       border-color: rgba(201,169,110,0.20) !important;
     }
 
-    /* Seat chip */
-    .seat-chip {
+    /* Seat block */
+    .seat-block {
+      margin: 14px 0 0;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: rgba(90,171,122,0.1);
+      border: 1.5px solid rgba(90,171,122,0.28);
+      text-align: center;
+    }
+    .seat-block-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #3a7a4a;
+      margin-bottom: 6px;
+    }
+    .seat-block-value {
+      font-family: var(--f2);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .seat-block-hint {
+      font-size: 10.5px;
+      color: #3a7a4a;
+      margin-top: 4px;
+    }
+
+    /* Save button */
+    .save-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      background: rgba(90,171,122,0.14);
-      border: 1px solid rgba(90,171,122,0.32);
-      font-size: 12px;
+      gap: 7px;
+      margin-top: 16px;
+      padding: 10px 22px;
+      border-radius: 30px;
+      background: rgba(44,31,14,0.06);
+      border: 1.5px solid rgba(201,169,110,0.3);
+      font-family: var(--f);
+      font-size: 12.5px;
       font-weight: 700;
-      color: #3a7a4a;
-      margin: 8px 0 0;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .save-btn:hover { background: rgba(201,169,110,0.15); }
+
+    /* Invite link block */
+    .invite-link-block {
+      margin: 14px 22px 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(245,235,215,0.5);
+      border: 1px solid rgba(201,169,110,0.18);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .invite-link-url {
+      flex: 1;
+      font-size: 10.5px;
+      color: var(--ink-4);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    .copy-link-btn {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(201,169,110,0.3);
+      background: rgba(245,230,200,0.6);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold-dk);
+      cursor: pointer;
+      font-family: var(--f);
+      white-space: nowrap;
     }
 
   </style>
@@ -292,9 +359,14 @@
       <div id="hero-date"></div>
       <div id="hero-venue" class="venue-text"></div>
     </div>
-    <!-- Seat chip — shown only when seat param is present -->
-    <div id="hero-seat" style="display:none;margin-top:10px">
-      <span class="seat-chip">🪑 <span id="hero-seat-label"></span></span>
+    <!-- Seat assignment — shown only when seat param is present -->
+    <div id="hero-seat" style="display:none">
+      <div class="seat-block">
+        <div class="seat-block-label">🪑 Your Reception Seat</div>
+        <div class="seat-block-value" id="hero-seat-label"></div>
+        <div class="seat-block-hint">Screenshot this page to remember your seat assignment</div>
+      </div>
+      <button class="save-btn" onclick="saveInvitePage()">📸 Save / Share This Page</button>
     </div>
   </div>
 
@@ -352,6 +424,31 @@
     <div class="success-emoji">🎊</div>
     <div class="success-title">Thank you!</div>
     <div class="success-sub">Your RSVP has been received.<br>The couple can't wait to celebrate with you!</div>
+
+    <!-- Seat reminder on success -->
+    <div id="success-seat" style="display:none;margin-top:20px;padding:0 24px">
+      <div class="seat-block">
+        <div class="seat-block-label">🪑 Your Reception Seat</div>
+        <div class="seat-block-value" id="success-seat-label"></div>
+        <div class="seat-block-hint">Screenshot this to remember your assigned seat!</div>
+      </div>
+    </div>
+
+    <!-- Save/share button -->
+    <div style="margin-top:16px">
+      <button class="save-btn" onclick="saveInvitePage()">📸 Save / Share This Page</button>
+    </div>
+  </div>
+
+  <!-- Invitation link (shown below success or below form) -->
+  <div id="invite-link-section" style="display:none;padding-bottom:8px">
+    <div class="invite-link-block">
+      <div>
+        <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold-dk);margin-bottom:3px">🔗 Your Invitation Link</div>
+        <div class="invite-link-url" id="invite-link-url"></div>
+      </div>
+      <button class="copy-link-btn" onclick="copyInviteLink()">Copy</button>
+    </div>
   </div>
 
   <div class="footer-note">
@@ -398,11 +495,53 @@ if (DATE) {
 }
 if (VENUE) document.getElementById('hero-venue').textContent = VENUE;
 
-/* ── Seat chip ── */
+/* ── Seat block ── */
 if (SEAT) {
-  const seatEl = document.getElementById('hero-seat');
+  const seatEl  = document.getElementById('hero-seat');
   const seatLbl = document.getElementById('hero-seat-label');
   if (seatEl && seatLbl) { seatLbl.textContent = SEAT; seatEl.style.display = 'block'; }
+  // Also prepare success seat reminder
+  const ssEl  = document.getElementById('success-seat');
+  const ssLbl = document.getElementById('success-seat-label');
+  if (ssEl && ssLbl) { ssLbl.textContent = SEAT; ssEl.style.display = 'block'; }
+}
+
+/* ── Invitation link ── */
+if (GUEST_NAME || SEAT) {
+  const linkSection = document.getElementById('invite-link-section');
+  const linkUrl     = document.getElementById('invite-link-url');
+  if (linkSection && linkUrl) {
+    linkUrl.textContent = window.location.href;
+    linkSection.style.display = 'block';
+  }
+}
+
+function copyInviteLink() {
+  const url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.copy-link-btn');
+      if (btn) { btn.textContent = '✅ Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); }
+    }).catch(() => { _fallbackCopy(url); });
+  } else { _fallbackCopy(url); }
+}
+function _fallbackCopy(url) {
+  const ta = document.createElement('textarea');
+  ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function saveInvitePage() {
+  const url  = window.location.href;
+  const text = `My wedding invitation from ${P1 && P2 ? P1 + ' & ' + P2 : 'the couple'}` + (SEAT ? ` — Seat: ${SEAT}` : '');
+  if (navigator.share) {
+    navigator.share({ title: document.title, text, url }).catch(() => {});
+  } else {
+    copyInviteLink();
+    alert('Link copied! Paste it to save or share your invitation.\n\nTip: You can also take a screenshot of this page to save your seat assignment.');
+  }
 }
 
 document.title = P1 && P2 ? `RSVP — ${P1} & ${P2}'s Wedding` : 'RSVP — Wedding Invitation';
@@ -515,6 +654,11 @@ async function submitRSVP() {
   // Show success regardless (UX: don't block on Firestore rule issues)
   document.getElementById('rsvp-form-section').style.display = 'none';
   document.getElementById('success-screen').style.display = 'block';
+  // Keep invitation link section visible below success
+  const invLinkSec = document.getElementById('invite-link-section');
+  if (invLinkSec) invLinkSec.style.display = 'block';
+  const invLinkUrl = document.getElementById('invite-link-url');
+  if (invLinkUrl) invLinkUrl.textContent = window.location.href;
 }
 
 function showError(msg) {
