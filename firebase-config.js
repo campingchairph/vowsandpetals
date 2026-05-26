@@ -40,6 +40,23 @@ if (AUTH) {
     window.CURRENT_USER = user;
     updateAuthUI(user);
     if (user) {
+      // Guard: if localStorage belongs to a different account, wipe it first
+      // so the previous user's data doesn't bleed into the new account.
+      const storedUid = localStorage.getItem('kasalko_uid');
+      if (storedUid && storedUid !== user.uid) {
+        localStorage.removeItem('kasalko_data');
+        // Reset WED in memory to defaults so renderOverview shows a clean slate
+        if (typeof WED !== 'undefined') {
+          WED.couple = { p1:'', p2:'' };
+          WED.date = ''; WED.venue = ''; WED.budget = 0;
+          WED.guests = []; WED.expenses = []; WED.vendors = [];
+          WED.checklist = []; WED.schedule = []; WED.furniture = [];
+          WED.notes = { general:'', budget:'', venue:'', vendors:'', themes:'' };
+          WED.planningMonths = null;
+          WED.customCardImage = null; WED._invitationImg = null;
+        }
+      }
+      localStorage.setItem('kasalko_uid', user.uid);
       cloudLoadWedding();
       if (window._pendingEnter && typeof enterApp === 'function') {
         window._pendingEnter = false;
@@ -124,7 +141,13 @@ async function cloudLoadWedding() {
   try {
     const doc = await DB.collection('users').doc(CURRENT_USER.uid)
                         .collection('data').doc('wedding').get();
-    if (!doc.exists) { cloudSave(); return; } // first login — push local up
+    if (!doc.exists) {
+      // First login for this account — only push local data up if it was created
+      // by this same user (not leaked from a previous account on this device).
+      const storedUid = localStorage.getItem('kasalko_uid');
+      if (!storedUid || storedUid === CURRENT_USER.uid) cloudSave();
+      return;
+    }
     const cloudData = doc.data();
     // Cloud is always authoritative for signed-in users — apply immediately,
     // no conflict dialog. Local data is just a session cache.
