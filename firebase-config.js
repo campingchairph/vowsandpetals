@@ -40,21 +40,14 @@ if (AUTH) {
     window.CURRENT_USER = user;
     updateAuthUI(user);
     if (user) {
-      // Guard: if localStorage belongs to a different account, wipe it first
-      // so the previous user's data doesn't bleed into the new account.
+      // If a DIFFERENT account signed in on this device (without explicit sign-out),
+      // wipe local data and do a hard reload so the page starts completely clean.
       const storedUid = localStorage.getItem('kasalko_uid');
       if (storedUid && storedUid !== user.uid) {
         localStorage.removeItem('kasalko_data');
-        // Reset WED in memory to defaults so renderOverview shows a clean slate
-        if (typeof WED !== 'undefined') {
-          WED.couple = { p1:'', p2:'' };
-          WED.date = ''; WED.venue = ''; WED.budget = 0;
-          WED.guests = []; WED.expenses = []; WED.vendors = [];
-          WED.checklist = []; WED.schedule = []; WED.furniture = [];
-          WED.notes = { general:'', budget:'', venue:'', vendors:'', themes:'' };
-          WED.planningMonths = null;
-          WED.customCardImage = null; WED._invitationImg = null;
-        }
+        localStorage.setItem('kasalko_uid', user.uid);
+        window.location.reload();
+        return;
       }
       localStorage.setItem('kasalko_uid', user.uid);
       cloudLoadWedding();
@@ -142,10 +135,11 @@ async function cloudLoadWedding() {
     const doc = await DB.collection('users').doc(CURRENT_USER.uid)
                         .collection('data').doc('wedding').get();
     if (!doc.exists) {
-      // First login for this account — only push local data up if it was created
-      // by this same user (not leaked from a previous account on this device).
-      const storedUid = localStorage.getItem('kasalko_uid');
-      if (!storedUid || storedUid === CURRENT_USER.uid) cloudSave();
+      // No Firestore data yet for this account.
+      // Only push local data up if it was created by THIS user (pre-login usage),
+      // not if we just cleared and reloaded for an account switch (localStorage is empty).
+      const hasLocalData = !!localStorage.getItem('kasalko_data');
+      if (hasLocalData) cloudSave();
       return;
     }
     const cloudData = doc.data();
@@ -578,7 +572,16 @@ function openUserMenu() {
 
 function kasalkoSignOut() {
   if (!AUTH) return;
-  AUTH.signOut().then(() => showToast('👋 Signed out'));
+  AUTH.signOut().then(() => {
+    // Wipe this account's local cache so the next user who signs in
+    // on this device starts completely clean.
+    localStorage.removeItem('kasalko_data');
+    localStorage.removeItem('kasalko_uid');
+    // Hard reload → landing page shows (it's visible by default in HTML),
+    // WED resets to defaults, no stale data in memory.
+    showToast('👋 Signed out');
+    setTimeout(() => window.location.reload(), 700);
+  });
 }
 
 /* ── OVERVIEW CLOUD SECTION ──────────────────── */
