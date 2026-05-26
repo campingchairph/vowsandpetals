@@ -478,7 +478,29 @@ function renderOverview() {
     <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
       <span class="sec-title">📦 Templates &amp; Backup</span>
       <div style="font-size:12px;color:var(--ink-4);margin-bottom:10px">Loading cloud features…</div>
-    </div>`}`;
+    </div>`}
+
+    <!-- ── TEMPLATE CODE ENTRY ── -->
+    <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:26px;flex-shrink:0">📦</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--ink)">Use a Wedding Template</div>
+          <div style="font-size:11.5px;color:var(--ink-3)">Got a VP code from a creator? Enter it below to import their plan.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input id="tpl-code-input" class="glass-input"
+          placeholder="VP-XXXX"
+          style="flex:1;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:10px 12px"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'').substring(0,7)"
+          onkeydown="if(event.key==='Enter')lookupTemplateCode()">
+        <button onclick="lookupTemplateCode()"
+          style="padding:10px 18px;border-radius:var(--r-md);background:var(--tan);color:var(--ivory);border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);flex-shrink:0;white-space:nowrap">
+          Look Up →
+        </button>
+      </div>
+    </div>`;
 
   // Auto-generate cards if not yet saved
   if (!WED._invitationImg && !WED.customCardImage) {
@@ -1816,9 +1838,10 @@ function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
    SUPPLIER MARKETPLACE — inline browse within the Suppliers tab
    View states: 'main' | 'browse' | { cat, catLabel } | { profile: supplierId, suppData }
 ═══════════════════════════════════════════════ */
-let _supplierView     = 'main';
-let _prevSupplierView = null;  // tracks where to go when pressing Back from profile
-let _marketplaceCache = null;  // { cat: [supplier,...] }
+let _supplierView        = 'main';
+let _prevSupplierView    = null;  // tracks where to go when pressing Back from profile
+let _marketplaceCache    = null;  // { cat: [supplier,...] }
+let _cachedSupplierProfile = null; // holds last-loaded profile for inline save
 
 function setSupplierView(view) {
   _supplierView = view;
@@ -1976,7 +1999,10 @@ function _renderSuppliersMain(el) {
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${getSupplierEmoji(v.category)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--ink)">${v.name}</div>
-          <div style="font-size:11px;color:var(--ink-4);text-transform:capitalize">${v.category}${v.phone?' · '+v.phone:''}</div>
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:1px">
+            <span style="font-size:11px;color:var(--ink-4);text-transform:capitalize">${v.category}${v.phone?' · '+v.phone:''}</span>
+            ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.16);border-radius:4px;padding:1px 5px">🏪 Marketplace</span>` : ''}
+          </div>
           ${v.price?`<div style="font-size:11px;color:var(--tan-dark);font-weight:700;margin-top:1px">₱${Number(v.price).toLocaleString()}</div>`:''}
           ${v.notes?`<div style="font-size:10.5px;color:var(--ink-4);margin-top:2px;font-style:italic">${v.notes}</div>`:''}
         </div>
@@ -2193,6 +2219,7 @@ function _renderSupplierProfileView(el, supplierId) {
     const profileEl = document.getElementById('supplier-profile-content');
     if (!profileEl) return;
     if (!s) { profileEl.innerHTML = '<div style="padding:30px;color:var(--ink-4)">Supplier not found.</div>'; return; }
+    _cachedSupplierProfile = s;
 
     const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 8px">✔ Verified</span>` : '';
     const proBadge      = s.pro      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#b5522b;background:rgba(181,82,43,0.1);border:1px solid rgba(181,82,43,0.22);border-radius:6px;padding:2px 8px">⭐ Featured Pro</span>` : '';
@@ -2227,7 +2254,9 @@ function _renderSupplierProfileView(el, supplierId) {
         })()}
 
         <!-- Save to vendors -->
-        <button onclick="openAddVendorModal('${s.category||''}','${s.name||''}')" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:linear-gradient(135deg,var(--rose),#c03060);border:none;color:white;font-size:13px;font-weight:700;cursor:pointer">+ Save to My Vendors</button>
+        ${WED.vendors.some(v => v._marketplaceId === s.id)
+          ? `<div style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(90,171,122,0.1);border:1.5px solid rgba(90,171,122,0.3);color:var(--green-deep);font-size:13px;font-weight:700;text-align:center">✓ Saved in My Vendors</div>`
+          : `<button onclick="saveMarketplaceSupplierToVendors()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:linear-gradient(135deg,var(--rose),#c03060);border:none;color:white;font-size:13px;font-weight:700;cursor:pointer">+ Save to My Vendors</button>`}
       </div>
 
       <!-- Photos gallery -->
@@ -2368,6 +2397,178 @@ function deleteVendor(id) {
   saveState();
   renderSuppliers();
   showToast('🗑 Vendor removed');
+}
+
+/* ── SAVE FROM MARKETPLACE ───────────────────── */
+function saveMarketplaceSupplierToVendors() {
+  const s = _cachedSupplierProfile;
+  if (!s) { showToast('⚠️ Profile not loaded — try again'); return; }
+  if (WED.vendors.some(v => v._marketplaceId === s.id)) {
+    showToast('✓ Already in your vendors!'); return;
+  }
+  WED.vendors.push({
+    id:             WED.nextVendorId++,
+    name:           s.name      || '',
+    category:       s.category  || 'other',
+    phone:          s.phone     || '',
+    link:           s.website   || s.fb || s.ig || '',
+    notes:          '',
+    price:          s.price_from || 0,
+    _marketplaceId: s.id,  // link back — skips lead write, shows badge
+  });
+  saveState();
+  if (window.CURRENT_USER && typeof cloudSave === 'function') cloudSave();
+  // Swap button to "✓ Saved" in-place
+  const btn = document.querySelector('#supplier-profile-content button[onclick="saveMarketplaceSupplierToVendors()"]');
+  if (btn) btn.outerHTML = `<div style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(90,171,122,0.1);border:1.5px solid rgba(90,171,122,0.3);color:var(--green-deep);font-size:13px;font-weight:700;text-align:center">✓ Saved in My Vendors</div>`;
+  showToast('✅ ' + (s.name || 'Supplier') + ' saved to your vendors!');
+  // No lead write — supplier is already in the marketplace
+}
+
+/* ── TEMPLATE CODE LOOKUP (buyer flow) ───────── */
+async function lookupTemplateCode() {
+  const raw  = (document.getElementById('tpl-code-input')?.value || '').trim().toUpperCase();
+  const code = raw.replace(/^VP-?/, '');
+  if (code.length < 4) { showToast('⚠️ Enter a VP-XXXX code'); return; }
+  if (typeof DB === 'undefined' || !DB) { showToast('⚠️ Sign in to use template codes'); return; }
+  showToast('🔍 Looking up…');
+  try {
+    const doc = await DB.collection('kasalko_templates').doc(code).get();
+    if (!doc.exists || doc.data().status !== 'active') {
+      showToast('⚠️ Code not found or not active yet'); return;
+    }
+    _showTemplatePreview(code, doc.data());
+  } catch(e) { showToast('⚠️ ' + e.message); }
+}
+
+function _showTemplatePreview(code, data) {
+  document.getElementById('tpl-preview-sheet')?.remove();
+  const td        = data.templateData || {};
+  const expenses  = (td.expenses  || []).length;
+  const tasks     = (td.checklist || []).reduce((a,p) => a + p.items.length, 0);
+  const vendors   = (td.vendors   || []).length;
+  const schedule  = (td.schedule  || []).length;
+  const price     = data.price || 0;
+  const budgetStr = td.budget ? '₱' + Number(td.budget).toLocaleString() : '';
+
+  const el = document.createElement('div');
+  el.id = 'tpl-preview-sheet';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--ink-4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Template Preview · VP-${code}</div>
+      <div style="font-family:var(--f2);font-size:21px;font-style:italic;font-weight:600;color:var(--ink);margin-bottom:4px">${data.title || 'Wedding Template'}</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">
+        by ${data.sellerName || 'Anonymous'}
+        ${data.sellerTikTok ? ` · <a href="${data.sellerTikTok}" target="_blank" style="color:var(--gold);font-weight:700">TikTok ↗</a>` : ''}
+        ${data.sellerIG     ? ` · <a href="${data.sellerIG}"     target="_blank" style="color:var(--gold);font-weight:700">IG ↗</a>` : ''}
+      </div>
+      ${data.description ? `<div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:12px;padding:11px 13px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18)">${data.description}</div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        ${[['💸',expenses,'Budget Items'],[`✅`,tasks,'Tasks'],['🤝',vendors,'Vendors'],['📅',schedule,'Events']].map(([e,n,l])=>`
+        <div style="padding:11px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18);text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--ink)">${n}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--ink-4)">${e} ${l}</div>
+        </div>`).join('')}
+      </div>
+      ${budgetStr ? `<div style="margin-bottom:12px;font-size:12.5px;color:var(--ink-3)">💰 Budget: <b style="color:var(--ink)">${budgetStr}</b></div>` : ''}
+      <div style="font-size:11px;color:var(--ink-4);margin-bottom:14px;line-height:1.6;font-style:italic">
+        ✅ Includes: budget breakdown, expenses, checklist, vendors, program<br>
+        ✗ Excludes: couple names, date, venue, guests, seating layout
+      </div>
+      ${price > 0 ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;background:rgba(245,230,200,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:14px">
+          <div>
+            <div style="font-size:10px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Price</div>
+            <div style="font-size:22px;font-weight:800;color:var(--ink)">₱${Number(price).toLocaleString()}</div>
+          </div>
+          <div style="font-size:10.5px;color:var(--ink-3);text-align:right">Platform: ₱${Math.ceil(price*.15)}<br>Seller: ₱${Math.floor(price*.85)}</div>
+        </div>
+        <button onclick="_showTemplatePayment('${code}',${price})" class="cta-btn">💳 Get This Template — ₱${Number(price).toLocaleString()}</button>
+      ` : `
+        <button onclick="_importTemplateFromCode('${code}')" class="cta-btn">📦 Use This Template — Free</button>
+      `}
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+function _showTemplatePayment(code, price) {
+  const sheet = document.querySelector('#tpl-preview-sheet .modal-sheet');
+  if (!sheet) return;
+  sheet.innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:14px">💳 Complete Payment</div>
+    <div style="padding:14px;border-radius:12px;background:rgba(90,171,122,0.08);border:1px solid rgba(90,171,122,0.22);margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">GCash Payment</div>
+      <div style="font-size:15px;font-weight:800;color:var(--ink)">₱${Number(price).toLocaleString()}</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:6px;line-height:1.55">
+        Send to the GCash number provided by the seller.<br>
+        Use reference: <b style="font-family:monospace;color:var(--ink)">VP-${code}</b>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">GCash Reference Number</div>
+      <input id="gcash-ref-input" class="glass-input" placeholder="e.g. 1234567890" style="width:100%;font-size:13px">
+    </div>
+    <div style="font-size:11px;color:var(--ink-4);margin-bottom:14px;line-height:1.5">After sending, enter your GCash reference. Template imports immediately — admin verifies payment separately.</div>
+    <button onclick="_submitTemplatePayment('${code}',${price})" class="cta-btn">✅ I've Paid — Import Template</button>
+    <button onclick="document.getElementById('tpl-preview-sheet')?.remove()" style="width:100%;padding:10px;margin-top:8px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.22);background:transparent;font-size:12.5px;font-weight:700;color:var(--ink-3);cursor:pointer;font-family:var(--f)">Cancel</button>`;
+}
+
+async function _submitTemplatePayment(code, price) {
+  const ref = (document.getElementById('gcash-ref-input')?.value || '').trim();
+  if (!ref) { showToast('⚠️ Enter your GCash reference number'); return; }
+  if (!window.CURRENT_USER) { showToast('⚠️ Sign in first'); return; }
+  try {
+    if (typeof DB !== 'undefined' && DB) {
+      await DB.collection('kasalko_template_sales').add({
+        code,
+        buyerUid:    window.CURRENT_USER.uid,
+        price,
+        platformFee: Math.ceil(price * .15),
+        sellerEarned:Math.floor(price * .85),
+        paymentRef:  ref,
+        status:      'unverified',
+        paidAt:      firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    await _importTemplateFromCode(code);
+  } catch(e) { showToast('⚠️ ' + e.message); }
+}
+
+async function _importTemplateFromCode(code) {
+  const cleanCode = code.replace(/^VP-?/i, '').toUpperCase();
+  if (typeof DB === 'undefined' || !DB) { showToast('⚠️ Sign in to import'); return; }
+  try {
+    const doc = await DB.collection('kasalko_templates').doc(cleanCode).get();
+    if (!doc.exists || doc.data().status !== 'active') { showToast('⚠️ Template not available'); return; }
+    const td = doc.data().templateData || {};
+    const hasData = WED.expenses.length > 0 || WED.vendors.length > 0 || WED.checklist.some(p => p.items?.length > 0);
+    let merge = false;
+    if (hasData) merge = confirm('Merge template into your existing plan?\n\nOK = Merge (adds to existing)\nCancel = Replace (overwrites current data)');
+    if (merge) {
+      if (td.expenses)  WED.expenses  = [...WED.expenses,  ...td.expenses.map(e  => ({...e,  id:Date.now()+Math.random()}))];
+      if (td.vendors)   WED.vendors   = [...WED.vendors,   ...td.vendors.map(v   => ({...v,  id:WED.nextVendorId++}))];
+      if (td.schedule && !WED.schedule?.length)            WED.schedule  = td.schedule;
+      if (td.checklist && !WED.checklist.some(p => p.items?.length)) WED.checklist = td.checklist;
+      if (!WED.budget && td.budget)  WED.budget = td.budget;
+    } else {
+      if (td.budget    != null) WED.budget    = td.budget;
+      if (td.expenses)          WED.expenses  = td.expenses;
+      if (td.checklist)         WED.checklist = td.checklist;
+      if (td.vendors)           WED.vendors   = td.vendors;
+      if (td.schedule)          WED.schedule  = td.schedule;
+      if (td.nextVendorId)      WED.nextVendorId = td.nextVendorId;
+    }
+    saveState();
+    if (window.CURRENT_USER && typeof cloudSave === 'function') cloudSave();
+    document.getElementById('tpl-preview-sheet')?.remove();
+    wedTab(WED.activeTab || 'overview');
+    showToast('📦 Template imported successfully!');
+  } catch(e) { showToast('⚠️ ' + e.message); }
 }
 
 /* ── QUICK DIALS ─────────────────────────────── */
@@ -5099,5 +5300,11 @@ window.removeExpenseCat           = removeExpenseCat;
 window.generateCategoryReceipt    = generateCategoryReceipt;
 window.setSupplierView            = setSupplierView;
 window.openSupplierProfile        = openSupplierProfile;
-window.openLeaveReview            = openLeaveReview;
-window.submitReview               = submitReview;
+window.openLeaveReview              = openLeaveReview;
+window.submitReview                 = submitReview;
+window.saveMarketplaceSupplierToVendors = saveMarketplaceSupplierToVendors;
+window.lookupTemplateCode           = lookupTemplateCode;
+window._showTemplatePreview         = _showTemplatePreview;
+window._showTemplatePayment         = _showTemplatePayment;
+window._submitTemplatePayment       = _submitTemplatePayment;
+window._importTemplateFromCode      = _importTemplateFromCode;

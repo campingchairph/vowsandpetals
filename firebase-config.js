@@ -189,6 +189,185 @@ async function syncRSVPsFromCloud() {
 window.syncRSVPsFromCloud = syncRSVPsFromCloud;
 
 
+/* ── TEMPLATE PUBLISH (Seller flow) ─────────── */
+function _buildSaveSellCard() {
+  return `
+  <div style="margin-top:10px;padding:14px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,rgba(245,230,200,0.65),rgba(252,232,238,0.5));border:1px solid rgba(201,169,110,0.22)">
+    <div style="font-size:13px;font-weight:800;color:var(--tan-dark);margin-bottom:5px">💰 Save &amp; Sell Your Wedding Plan</div>
+    <div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin-bottom:10px">
+      Couples on TikTok always ask — <em>"What's your budget?"</em> <em>"Who did your florals?"</em><br>
+      Publish your complete plan and earn from it.
+    </div>
+    <div id="save-sell-action">
+      <button onclick="openPublishTemplate()"
+        style="padding:8px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;color:var(--ivory);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f)">
+        💰 Publish My Plan →
+      </button>
+    </div>
+  </div>`;
+}
+
+function _refreshSaveSellCard() {
+  const el = document.getElementById('save-sell-action');
+  if (!el || !window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
+  DB.collection('kasalko_templates')
+    .where('sellerUid','==', window.CURRENT_USER.uid).limit(1).get()
+    .then(snap => {
+      const actionEl = document.getElementById('save-sell-action');
+      if (!actionEl || snap.empty) return;
+      const t    = snap.docs[0].data();
+      const code = snap.docs[0].id;
+      const statusColor = t.status==='active' ? '#3a7a54' : t.status==='rejected' ? '#c07068' : '#8C6640';
+      actionEl.innerHTML = `
+        <div style="padding:10px 12px;border-radius:10px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.22)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+            <span style="font-family:monospace;font-size:17px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
+            <span style="font-size:10px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${(t.status||'?').toUpperCase()}</span>
+          </div>
+          ${t.status==='active'
+            ? `<div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>`
+            : t.status==='pending'
+            ? `<div style="font-size:11px;color:var(--ink-3)">Awaiting admin review — usually 24–48 hrs.</div>`
+            : `<div style="font-size:11px;color:#c07068">${t.adminNote||'Rejected. Contact support.'}</div>`}
+        </div>`;
+    }).catch(() => {});
+}
+
+function openPublishTemplate() {
+  if (!window.CURRENT_USER) { openAuthModal(); return; }
+  document.getElementById('publish-tpl-sheet')?.remove();
+  const td = {
+    expenses:  (typeof WED !== 'undefined' && WED.expenses)  || [],
+    checklist: (typeof WED !== 'undefined' && WED.checklist) || [],
+    vendors:   (typeof WED !== 'undefined' && WED.vendors)   || [],
+    schedule:  (typeof WED !== 'undefined' && WED.schedule)  || [],
+  };
+  const taskCount = td.checklist.reduce((a,p) => a + (p.items?.length||0), 0);
+  const el = document.createElement('div');
+  el.id = 'publish-tpl-sheet';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px">💰 Publish Your Wedding Plan</div>
+      <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5;margin-bottom:14px">Help other couples plan — and earn from it.</div>
+      <div style="padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.2);margin-bottom:14px;font-size:11.5px;color:var(--ink-3)">
+        <b style="color:var(--ink)">What buyers will receive:</b><br>
+        💸 ${td.expenses.length} expenses · ✅ ${taskCount} tasks · 🤝 ${td.vendors.length} vendors · 📅 ${td.schedule.length} events
+      </div>
+      <div class="input-group">
+        <div class="input-label">Title <span style="color:var(--rose)">*</span></div>
+        <input id="ptl-title" class="glass-input" placeholder="e.g. Metro Manila Garden Wedding ₱500K" maxlength="80">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Description <span style="color:var(--rose)">*</span></div>
+        <textarea id="ptl-desc" class="glass-input" rows="3" placeholder="Describe your wedding — venue type, theme, budget breakdown, what makes it helpful for other couples…" maxlength="300" style="resize:vertical"></textarea>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Price <span style="color:var(--rose)">*</span></div>
+        <input id="ptl-price" class="glass-input" type="number" min="0" max="9999" placeholder="e.g. 199" style="font-size:18px;font-weight:700">
+        <div style="font-size:10.5px;color:var(--ink-4);margin-top:4px">₱0 = free · Suggested ₱99–₱499 · You keep 85%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="input-group" style="margin-bottom:0">
+          <div class="input-label">TikTok URL</div>
+          <input id="ptl-tiktok" class="glass-input" placeholder="https://tiktok.com/@you">
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <div class="input-label">Instagram URL</div>
+          <input id="ptl-ig" class="glass-input" placeholder="https://instagram.com/you">
+        </div>
+      </div>
+      <div id="ptl-err" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(192,112,104,0.1);border:1px solid rgba(192,112,104,0.22);font-size:12px;color:#c07068;font-weight:600"></div>
+      <button id="ptl-submit-btn" onclick="submitPublishTemplate()" class="cta-btn" style="margin-top:16px">Submit for Review →</button>
+      <div style="font-size:10.5px;color:var(--ink-4);text-align:center;margin-top:8px;line-height:1.5">Admin reviews within 24–48 hrs. You'll receive your VP-XXXX code when approved.</div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+}
+
+async function submitPublishTemplate() {
+  const title  = (document.getElementById('ptl-title')?.value  || '').trim();
+  const desc   = (document.getElementById('ptl-desc')?.value   || '').trim();
+  const price  = parseInt(document.getElementById('ptl-price')?.value || '0') || 0;
+  const tiktok = (document.getElementById('ptl-tiktok')?.value || '').trim();
+  const ig     = (document.getElementById('ptl-ig')?.value     || '').trim();
+  const errEl  = document.getElementById('ptl-err');
+  const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+
+  if (!title) { showErr('Please add a title.'); return; }
+  if (!desc)  { showErr('Please add a description.'); return; }
+  if (!window.CURRENT_USER || typeof DB === 'undefined' || !DB) { showErr('Sign in first.'); return; }
+
+  const btn = document.getElementById('ptl-submit-btn');
+  if (btn) { btn.textContent = 'Submitting…'; btn.disabled = true; }
+
+  try {
+    const existing = await DB.collection('kasalko_templates')
+      .where('sellerUid','==', window.CURRENT_USER.uid).limit(1).get();
+    if (!existing.empty) {
+      showErr('You already have a template submitted. Check your VP code in the Save & Sell card.');
+      if (btn) { btn.textContent = 'Submit for Review →'; btn.disabled = false; }
+      return;
+    }
+    const code = await _generateUniqueTemplateCode();
+    await DB.collection('kasalko_templates').doc(code).set({
+      sellerUid:    window.CURRENT_USER.uid,
+      sellerName:   window.CURRENT_USER.displayName || window.CURRENT_USER.email.split('@')[0],
+      sellerEmail:  window.CURRENT_USER.email,
+      sellerTikTok: tiktok,
+      sellerIG:     ig,
+      title, description: desc, price,
+      status:       'pending',
+      salesCount:   0,
+      totalEarned:  0,
+      templateData: {
+        budget:      (typeof WED!=='undefined' && WED.budget)    || 0,
+        expenses:    (typeof WED!=='undefined' && WED.expenses)  || [],
+        checklist:   (typeof WED!=='undefined' && WED.checklist) || [],
+        vendors:     (typeof WED!=='undefined' && WED.vendors)   || [],
+        schedule:    (typeof WED!=='undefined' && WED.schedule)  || [],
+        nextVendorId:(typeof WED!=='undefined' && WED.nextVendorId) || 1,
+      },
+      publishedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      adminNote:    '',
+    });
+    document.getElementById('publish-tpl-sheet')?.remove();
+    // Success sheet
+    const s = document.createElement('div');
+    s.id = 'tpl-success-sheet'; s.className = 'modal-overlay open';
+    s.onclick = e => { if (e.target === s) { s.remove(); if (typeof renderOverview==='function') renderOverview(); } };
+    s.innerHTML = `
+      <div class="modal-sheet" style="text-align:center;padding:30px 20px">
+        <div style="font-size:48px;margin-bottom:12px">🎉</div>
+        <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Submitted!</div>
+        <div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:16px">Pending admin review.<br>Usually 24–48 hours.</div>
+        <div style="padding:14px 16px;border-radius:12px;background:rgba(245,230,200,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Your Template Code</div>
+          <div style="font-size:26px;font-weight:800;color:var(--ink);letter-spacing:3px;font-family:monospace">VP-${code}</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:4px">Share this on TikTok/IG once approved</div>
+        </div>
+        <button onclick="this.closest('.modal-overlay').remove();if(typeof renderOverview==='function')renderOverview();" class="cta-btn">Done!</button>
+      </div>`;
+    document.body.appendChild(s);
+    if (typeof renderOverview === 'function') renderOverview();
+  } catch(e) {
+    showErr('Error: ' + e.message);
+    if (btn) { btn.textContent = 'Submit for Review →'; btn.disabled = false; }
+  }
+}
+
+async function _generateUniqueTemplateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+  for (let i = 0; i < 10; i++) {
+    const code = Array.from({length:4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const doc  = await DB.collection('kasalko_templates').doc(code).get();
+    if (!doc.exists) return code;
+  }
+  throw new Error('Could not generate unique code — please try again');
+}
+
 /* ── TEMPLATE EXPORT (Save & Sell) ──────────── */
 // Only shareable fields: budget, expenses, checklist, vendors, schedule.
 // Personal info (couple names, date, venue, guests, seating) is NOT included —
@@ -362,8 +541,8 @@ function openUserMenu() {
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="padding:14px 16px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:linear-gradient(135deg,rgba(245,230,200,0.6),rgba(252,232,238,0.45));text-align:left">
           <div style="font-size:12.5px;font-weight:800;color:var(--tan-dark);margin-bottom:4px">💰 Save &amp; Sell Your Wedding Plan</div>
-          <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55">Couples on TikTok always ask about your budget, suppliers &amp; planning. Coming soon — publish your plan and earn from it.</div>
-          <div style="margin-top:8px;display:inline-block;padding:3px 10px;border-radius:20px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:10px;font-weight:700;color:var(--tan-dark)">Coming Soon ✨</div>
+          <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55">Couples on TikTok always ask about your budget, suppliers &amp; planning. Publish your plan and earn from it.</div>
+          <button onclick="document.getElementById('user-menu-sheet').remove();openPublishTemplate();" style="margin-top:8px;padding:8px 16px;border-radius:20px;background:linear-gradient(135deg,var(--tan),var(--gold));border:none;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--f)">💰 Publish My Plan →</button>
         </div>
         <button onclick="kasalkoSignOut();document.getElementById('user-menu-sheet').remove()"
           style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f);text-align:left">
@@ -380,29 +559,24 @@ function kasalkoSignOut() {
 }
 
 /* ── OVERVIEW CLOUD SECTION ──────────────────── */
-const _saveSellCard = `
-  <div style="margin-top:10px;padding:14px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,rgba(245,230,200,0.65),rgba(252,232,238,0.5));border:1px solid rgba(201,169,110,0.22)">
-    <div style="font-size:13px;font-weight:800;color:var(--tan-dark);margin-bottom:5px">💰 Save &amp; Sell Your Wedding Plan</div>
-    <div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin-bottom:8px">
-      Couples on TikTok always ask — <em>"What's your budget?"</em> <em>"Who did your florals?"</em> <em>"Can I see your full plan?"</em><br>
-      Why not earn from it? Publish your complete wedding plan and help other couples plan their dream day — while making a little extra too.
-    </div>
-    <div style="display:inline-block;padding:4px 12px;border-radius:20px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:10.5px;font-weight:700;color:var(--tan-dark)">Coming Soon ✨</div>
-  </div>`;
+// _saveSellCard replaced by _buildSaveSellCard() — dynamic with real publish button
 
 function renderCloudSection() {
+  const sellCard = _buildSaveSellCard();
+
   if (!_fbReady) {
     return `
       <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
         <span class="sec-title">☁️ Cloud &amp; Backup</span>
         <div style="font-size:12px;color:var(--ink-4);margin-bottom:4px;line-height:1.5">Create a free account to keep your plans safe and synced across all your devices.</div>
-        ${_saveSellCard}
+        ${sellCard}
       </div>`;
   }
 
   if (window.CURRENT_USER) {
     const user = window.CURRENT_USER;
     const name = user.displayName || user.email.split('@')[0];
+    setTimeout(_refreshSaveSellCard, 200); // async-update seller status chip
     return `
       <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -414,7 +588,7 @@ function renderCloudSection() {
           <button onclick="openUserMenu()" style="flex:1;padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);text-align:left;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);color:var(--tan-dark)">👤 Account &amp; Settings</button>
           <button onclick="syncRSVPsFromCloud()" style="padding:10px 14px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);color:var(--pink-deep);white-space:nowrap">💌 Sync RSVPs</button>
         </div>
-        ${_saveSellCard}
+        ${sellCard}
       </div>`;
   }
 
@@ -424,7 +598,7 @@ function renderCloudSection() {
       <span class="sec-title">☁️ Cloud Sync</span>
       <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px;line-height:1.5">Sign in to save your plans to the cloud and keep everything synced across all your devices — for free.</div>
       <button onclick="openAuthModal()" class="cta-btn">☁️ Sign In / Create Account</button>
-      ${_saveSellCard}
+      ${sellCard}
     </div>`;
 }
 
@@ -462,3 +636,6 @@ window.openUserMenu           = openUserMenu;
 window.kasalkoSignOut         = kasalkoSignOut;
 window.renderCloudSection     = renderCloudSection;
 window.updateAuthUI           = updateAuthUI;
+window.openPublishTemplate    = openPublishTemplate;
+window.submitPublishTemplate  = submitPublishTemplate;
+window._refreshSaveSellCard   = _refreshSaveSellCard;
