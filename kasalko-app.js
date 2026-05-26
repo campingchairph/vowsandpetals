@@ -1850,6 +1850,12 @@ let _marketplaceCache    = null;  // { cat: [supplier,...] }
 let _cachedSupplierProfile = null; // holds last-loaded profile for inline save
 
 function setSupplierView(view) {
+  // Reset search state when going back to main
+  if (view === 'main') {
+    _supplierSearchQ   = '';
+    _supplierLocFilter = '';
+    _supplierCatFilter = '';
+  }
   _supplierView = view;
   renderSuppliers();
   // scroll tab to top
@@ -1951,56 +1957,8 @@ function renderSuppliers() {
 }
 
 function _renderSuppliersMain(el) {
-  const byCategory = {};
-  WED.vendors.forEach(v => { (byCategory[v.category] = byCategory[v.category]||[]).push(v); });
-
-  el.innerHTML = `
-    <!-- Marketplace banner -->
-    <div onclick="setSupplierView('browse')" class="glass" style="padding:18px 16px;border-radius:var(--r-lg);margin-bottom:16px;cursor:pointer;background:linear-gradient(135deg,rgba(245,230,200,0.5),rgba(232,245,237,0.5));border:1.5px solid rgba(201,169,110,0.3)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="font-size:36px">🏪</div>
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--ink)">Browse Supplier Marketplace</div>
-          <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">Find verified wedding suppliers for Philippine weddings</div>
-        </div>
-        <div style="font-size:18px;color:var(--tan-dark);margin-left:auto">›</div>
-      </div>
-    </div>
-
-    <!-- Category quick-access -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-      ${SUGGESTED_SUPPLIERS.map(s => {
-        const mine = byCategory[s.cat] || [];
-        return `
-        <div class="glass" style="padding:12px;border-radius:var(--r-md)">
-          <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
-            <span style="font-size:19px">${s.emoji}</span>
-            <span style="font-size:11.5px;font-weight:700;color:var(--ink)">${s.label}</span>
-          </div>
-          <div style="font-size:9.5px;color:var(--ink-4);margin-bottom:8px;line-height:1.4">${s.tip}</div>
-          ${mine.map(v => `
-            <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(90,171,122,0.1);border:1px solid rgba(90,171,122,0.18);margin-bottom:4px">
-              <span style="font-size:10.5px;font-weight:700;color:var(--green-deep);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.name}</span>
-              ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="font-size:11px;font-weight:700;text-decoration:none;color:var(--green-deep)" title="${v.phone}">Call</a>`:''}
-              <button onclick="deleteVendor(${v.id})" style="font-size:11px;border:none;background:none;color:var(--pink-deep);cursor:pointer;padding:0;line-height:1">×</button>
-            </div>`).join('')}
-          <div style="display:flex;gap:5px;margin-top:4px">
-            <button onclick="openPartnerBrowse('${s.cat}','${s.label}')"
-               style="flex:1;padding:6px 4px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:9.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">
-               Browse →</button>
-            <button onclick="openAddVendorModal('${s.cat}','${s.label}')"
-              style="padding:6px 9px;border-radius:8px;border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:9.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">
-              + Add</button>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <span class="sec-title" style="margin-bottom:0">My Vendors</span>
-      <button onclick="openAddVendorModal('','')" class="icon-btn">+ Add Vendor</button>
-    </div>
-    ${WED.vendors.length ? WED.vendors.map(v => `
+  const vendorList = WED.vendors.length
+    ? WED.vendors.map(v => `
       <div class="glass" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-md);margin-bottom:7px">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${getSupplierEmoji(v.category)}</div>
         <div style="flex:1;min-width:0">
@@ -2018,38 +1976,61 @@ function _renderSuppliersMain(el) {
           <button onclick="deleteVendor(${v.id})" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
         </div>
       </div>`).join('')
-    : `<div style="text-align:center;padding:28px;font-size:13px;color:var(--ink-4)">No vendors saved yet — click <b>+ Add</b> next to any category above.</div>`}
+    : `<div style="text-align:center;padding:24px 16px;font-size:13px;color:var(--ink-4)">No vendors saved yet.<br><span style="font-size:11.5px">Add your own or browse the marketplace below.</span></div>`;
 
-    <!-- Supplier portal CTA -->
-    <div style="margin-top:20px;padding:16px;border-radius:var(--r-lg);background:rgba(245,230,200,0.35);border:1px solid rgba(184,145,106,0.2);display:flex;align-items:center;gap:12px">
-      <span style="font-size:26px;flex-shrink:0">🏪</span>
+  el.innerHTML = `
+    <!-- My Vendors -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span class="sec-title" style="margin-bottom:0">My Vendors</span>
+      <button onclick="openAddVendorModal('','')"
+        style="padding:7px 13px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.28);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">
+        + Add Own Vendor</button>
+    </div>
+    ${vendorList}
+
+    <!-- Browse Marketplace button -->
+    <div onclick="setSupplierView('browse')" class="glass"
+      style="margin-top:16px;padding:16px;border-radius:var(--r-lg);cursor:pointer;background:linear-gradient(135deg,rgba(245,230,200,0.55),rgba(232,245,237,0.5));border:1.5px solid rgba(201,169,110,0.3);display:flex;align-items:center;gap:12px">
+      <div style="font-size:32px;flex-shrink:0">🏪</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">Browse Supplier Marketplace</div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">Find verified wedding suppliers for Philippine weddings</div>
+      </div>
+      <div style="font-size:20px;color:var(--tan-dark);flex-shrink:0">›</div>
+    </div>
+
+    <!-- Are you a supplier CTA -->
+    <div style="margin-top:10px;padding:14px 16px;border-radius:var(--r-lg);background:rgba(245,230,200,0.3);border:1px solid rgba(184,145,106,0.18);display:flex;align-items:center;gap:12px">
+      <span style="font-size:24px;flex-shrink:0">🤝</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:2px">Are you a wedding supplier?</div>
-        <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5">Get your business listed in our directory — free, no setup needed.</div>
+        <div style="font-size:11px;color:var(--ink-3);line-height:1.5">Get your business listed in our directory — free, no setup needed.</div>
       </div>
-      <a href="https://campingchairph.github.io/vowsandpetals/" target="_blank" rel="noopener"
+      <a href="https://campingchairph.github.io/vowsandpetals/supplier.html" target="_blank" rel="noopener"
         style="flex-shrink:0;padding:8px 13px;border-radius:var(--r-md);background:var(--tan);color:var(--ivory);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;font-family:var(--f)">
-        Get Listed →
-      </a>
+        Get Listed →</a>
     </div>
   `;
 }
 
 let _supplierSearchQ    = '';
 let _supplierLocFilter  = '';
+let _supplierCatFilter  = '';
 let _supplierSearchResults = null; // null = not searching
 
 function supplierSearch() {
   const q   = (document.getElementById('sup-search-input')?.value || '').trim().toLowerCase();
-  const loc = (document.getElementById('sup-loc-filter')?.value || '').toLowerCase();
+  const loc = (document.getElementById('sup-loc-filter')?.value  || '').toLowerCase();
+  const cat = (document.getElementById('sup-cat-filter')?.value  || '').toLowerCase();
   _supplierSearchQ   = q;
   _supplierLocFilter = loc;
+  _supplierCatFilter = cat;
 
   const resultsEl = document.getElementById('sup-search-results');
   if (!resultsEl) return;
 
-  if (!q && !loc) {
-    resultsEl.innerHTML = '';
+  if (!q && !loc && !cat) {
+    resultsEl.innerHTML = `<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:12.5px">Select a category or type a name to browse suppliers.</div>`;
     _supplierSearchResults = null;
     return;
   }
@@ -2061,25 +2042,29 @@ function supplierSearch() {
     return;
   }
 
-  DB.collection('kasalko_marketplace').limit(100).get().then(snap => {
+  DB.collection('kasalko_marketplace').limit(200).get().then(snap => {
     let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Filter
+    // Filter by all three dimensions
+    if (cat) {
+      const aliases = CAT_ALIASES[cat] || [cat];
+      docs = docs.filter(d => aliases.some(a => (d.category||'').toLowerCase() === a));
+    }
     if (q) docs = docs.filter(d => {
       const haystack = ((d.name||'') + ' ' + (d.category||'') + ' ' + (d.description||'') + ' ' + (d.location||'')).toLowerCase();
       return haystack.includes(q);
     });
     if (loc) docs = docs.filter(d => (d.location||'').toLowerCase().includes(loc));
-    // Sort: verified+pro first
+    // Sort: pro first, then verified, then alphabetical
     docs.sort((a, b) => {
-      const rank = s => (s.verified ? 2 : 0) + (s.pro ? 1 : 0);
+      const rank = s => (s.pro ? 2 : 0) + (s.verified ? 1 : 0);
       return rank(b) - rank(a);
     });
     _supplierSearchResults = docs;
     if (!docs.length) {
-      resultsEl.innerHTML = `<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px">No results found — try different keywords or location.</div>`;
+      resultsEl.innerHTML = `<div style="text-align:center;padding:28px;color:var(--ink-4);font-size:13px">No suppliers found — try changing the filters.</div>`;
     } else {
       resultsEl.innerHTML = `
-        <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">${docs.length} result${docs.length!==1?'s':''}</div>
+        <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">${docs.length} supplier${docs.length!==1?'s':''} found</div>
         ${docs.map(s => _supplierCard(s)).join('')}`;
     }
   }).catch(() => {
@@ -2114,8 +2099,12 @@ function _buildLocFilter() {
 }
 
 function _renderSuppliersBrowse(el) {
+  const catOptions = SUGGESTED_SUPPLIERS.map(s =>
+    `<option value="${s.cat}" ${_supplierCatFilter === s.cat ? 'selected' : ''}>${s.emoji} ${s.label}</option>`
+  ).join('');
+
   el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <button onclick="setSupplierView('main')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--ink)">Supplier Marketplace</div>
@@ -2123,44 +2112,38 @@ function _renderSuppliersBrowse(el) {
       </div>
     </div>
 
-    <!-- Search + Location -->
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <input id="sup-search-input" type="search" placeholder="Search name, category…" value="${_supplierSearchQ}"
-        oninput="supplierSearch()"
-        style="flex:1;padding:9px 13px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:13px;color:var(--ink);outline:none">
+    <!-- Category + Location dropdowns (tied) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <select id="sup-cat-filter" onchange="supplierSearch()"
+        style="width:100%;padding:9px 10px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:12px;color:var(--ink);outline:none">
+        <option value="">🏷 All Categories</option>
+        ${catOptions}
+      </select>
       <select id="sup-loc-filter" onchange="supplierSearch()"
-        style="padding:9px 10px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:12px;color:var(--ink);outline:none;max-width:130px">
-        <option value="">📍 All areas</option>
+        style="width:100%;padding:9px 10px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:12px;color:var(--ink);outline:none">
+        <option value="">📍 All Areas</option>
       </select>
     </div>
+    <!-- Name search (optional, additional filter) -->
+    <input id="sup-search-input" type="search" placeholder="Search by name…" value="${_supplierSearchQ}"
+      oninput="supplierSearch()"
+      style="width:100%;padding:9px 13px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.28);background:rgba(253,250,244,0.9);font-family:var(--f);font-size:13px;color:var(--ink);outline:none;box-sizing:border-box;margin-bottom:14px">
 
-    <!-- Search results (hidden when empty) -->
-    <div id="sup-search-results"></div>
-
-    <!-- Category grid (shown when not actively searching) -->
-    <div id="sup-cat-grid">
-      <div style="font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Browse by Category</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${SUGGESTED_SUPPLIERS.map(s => `
-          <div onclick="openPartnerBrowse('${s.cat}','${s.label}')" class="glass"
-               style="padding:14px 12px;border-radius:var(--r-md);cursor:pointer;display:flex;align-items:center;gap:10px">
-            <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${s.emoji}</div>
-            <div>
-              <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${s.label}</div>
-              <div style="font-size:10px;color:var(--ink-4);margin-top:1px">Browse →</div>
-            </div>
-          </div>`).join('')}
-      </div>
+    <!-- Results -->
+    <div id="sup-search-results">
+      <div style="text-align:center;padding:32px;color:var(--ink-4);font-size:12.5px">Select a category or type a name to browse suppliers.</div>
     </div>`;
 
-  // Load real supplier locations into the filter (async — populates after render)
+  // Load real supplier locations into the filter async
   _loadSupplierLocations().then(() => {
     const sel = document.getElementById('sup-loc-filter');
     if (sel) sel.innerHTML = _buildLocFilter();
+    // Re-run if filters were already set before navigating here
+    if (_supplierSearchQ || _supplierLocFilter || _supplierCatFilter) supplierSearch();
   });
 
-  // Re-run search if there was a previous query
-  if (_supplierSearchQ || _supplierLocFilter) supplierSearch();
+  // Also re-run immediately if we have an active cat filter (locations load async but cat is already known)
+  if (_supplierCatFilter) supplierSearch();
 }
 
 function _renderSuppliersCategory(el, cat, catLabel) {
@@ -2560,9 +2543,12 @@ async function _importTemplateFromCode(code) {
     if (merge) {
       if (td.expenses)  WED.expenses  = [...WED.expenses,  ...td.expenses.map(e  => ({...e,  id:Date.now()+Math.random()}))];
       if (td.vendors)   WED.vendors   = [...WED.vendors,   ...td.vendors.map(v   => ({...v,  id:WED.nextVendorId++}))];
-      if (td.schedule && !WED.schedule?.length)            WED.schedule  = td.schedule;
-      if (td.checklist && !WED.checklist.some(p => p.items?.length)) WED.checklist = td.checklist;
+      if (td.schedule && !WED.schedule?.length)                       WED.schedule  = td.schedule;
+      if (td.checklist && !WED.checklist.some(p => p.items?.length))  WED.checklist = td.checklist;
       if (!WED.budget && td.budget)  WED.budget = td.budget;
+      // Restore planningMonths so the checklist tab shows tasks instead of setup screen
+      if (WED.planningMonths === null && td.checklist?.some(p => p.items?.length))
+        WED.planningMonths = td.planningMonths || 12;
     } else {
       if (td.budget    != null) WED.budget    = td.budget;
       if (td.expenses)          WED.expenses  = td.expenses;
@@ -2570,6 +2556,9 @@ async function _importTemplateFromCode(code) {
       if (td.vendors)           WED.vendors   = td.vendors;
       if (td.schedule)          WED.schedule  = td.schedule;
       if (td.nextVendorId)      WED.nextVendorId = td.nextVendorId;
+      // planningMonths must be set or the checklist tab shows the setup screen
+      if (td.checklist?.some(p => p.items?.length))
+        WED.planningMonths = td.planningMonths || 12;
     }
     saveState();
     if (window.CURRENT_USER && typeof cloudSave === 'function') cloudSave();
