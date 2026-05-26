@@ -564,6 +564,11 @@ function openUserMenu() {
         <button onclick="kasalkoSignOut();document.getElementById('user-menu-sheet').remove()"
           style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f);text-align:left">
           🚪 Sign Out</button>
+        <div id="flush-confirm-wrap">
+          <button onclick="_showFlushConfirm()"
+            style="width:100%;padding:10px 16px;border-radius:var(--r-md);border:1px solid rgba(180,60,60,0.2);background:rgba(255,235,235,0.5);font-size:12.5px;font-weight:700;color:#b43c3c;cursor:pointer;font-family:var(--f);text-align:left">
+            🗑️ Start Fresh — Delete All My Data</button>
+        </div>
       </div>
     </div>`;
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
@@ -582,6 +587,72 @@ function kasalkoSignOut() {
     showToast('👋 Signed out');
     setTimeout(() => window.location.reload(), 700);
   });
+}
+
+/* ── START FRESH / FLUSH ─────────────────────── */
+function _showFlushConfirm() {
+  const wrap = document.getElementById('flush-confirm-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div style="padding:12px 14px;border-radius:var(--r-md);border:1.5px solid rgba(180,60,60,0.35);background:rgba(255,235,235,0.7)">
+      <div style="font-size:12.5px;font-weight:800;color:#b43c3c;margin-bottom:4px">⚠️ This will delete everything</div>
+      <div style="font-size:11.5px;color:#8a3030;line-height:1.55;margin-bottom:10px">All guests, expenses, checklist, vendors, seating, and cloud data for this account will be permanently erased. This cannot be undone.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="_showFlushConfirm2()"
+          style="flex:1;padding:9px 12px;border-radius:10px;border:none;background:#b43c3c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">
+          Yes, delete everything</button>
+        <button onclick="document.getElementById('flush-confirm-wrap').innerHTML='<button onclick=\\'_showFlushConfirm()\\'style=\\'width:100%;padding:10px 16px;border-radius:var(--r-md);border:1px solid rgba(180,60,60,0.2);background:rgba(255,235,235,0.5);font-size:12.5px;font-weight:700;color:#b43c3c;cursor:pointer;font-family:var(--f);text-align:left\\'>🗑️ Start Fresh — Delete All My Data</button>'"
+          style="flex:1;padding:9px 12px;border-radius:10px;border:1px solid rgba(44,31,14,0.15);background:rgba(255,252,247,0.8);color:var(--ink-3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f)">
+          Cancel</button>
+      </div>
+    </div>`;
+}
+
+function _showFlushConfirm2() {
+  const wrap = document.getElementById('flush-confirm-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div style="padding:12px 14px;border-radius:var(--r-md);border:1.5px solid rgba(180,60,60,0.35);background:rgba(255,235,235,0.7)">
+      <div style="font-size:12px;font-weight:700;color:#8a3030;margin-bottom:8px">Type <b>DELETE</b> to confirm:</div>
+      <input id="flush-type-input" class="glass-input" placeholder="Type DELETE here" autocomplete="off"
+        style="text-transform:uppercase;font-weight:700;letter-spacing:1px;margin-bottom:8px"
+        oninput="document.getElementById('flush-go-btn').disabled=this.value.toUpperCase().trim()!=='DELETE'">
+      <button id="flush-go-btn" onclick="flushAllData()" disabled
+        style="width:100%;padding:9px 12px;border-radius:10px;border:none;background:#b43c3c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);opacity:0.5"
+        onmouseenter="if(!this.disabled)this.style.opacity='1'" onmouseleave="if(!this.disabled)this.style.opacity='0.85'">
+        🗑️ Delete Everything Now</button>
+    </div>`;
+  // Watch the input to toggle button opacity
+  const inp = document.getElementById('flush-type-input');
+  if (inp) {
+    inp.addEventListener('input', () => {
+      const btn = document.getElementById('flush-go-btn');
+      if (!btn) return;
+      const ok = inp.value.toUpperCase().trim() === 'DELETE';
+      btn.disabled = !ok;
+      btn.style.opacity = ok ? '1' : '0.5';
+      btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+    });
+    setTimeout(() => inp.focus(), 100);
+  }
+}
+
+async function flushAllData() {
+  const btn = document.getElementById('flush-go-btn');
+  if (btn) { btn.textContent = 'Deleting…'; btn.disabled = true; }
+  try {
+    // 1. Delete Firestore cloud data for this account
+    if (CURRENT_USER && DB) {
+      await DB.collection('users').doc(CURRENT_USER.uid)
+               .collection('data').doc('wedding').delete();
+    }
+  } catch(e) { /* ignore — local clear still happens */ }
+  // 2. Wipe localStorage
+  localStorage.removeItem('kasalko_data');
+  localStorage.removeItem('kasalko_uid');
+  // 3. Show toast then reload → landing page, blank WED
+  showToast('🗑️ All data deleted — starting fresh');
+  setTimeout(() => window.location.reload(), 900);
 }
 
 /* ── OVERVIEW CLOUD SECTION ──────────────────── */
@@ -665,3 +736,6 @@ window.updateAuthUI           = updateAuthUI;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;
+window._showFlushConfirm      = _showFlushConfirm;
+window._showFlushConfirm2     = _showFlushConfirm2;
+window.flushAllData           = flushAllData;
