@@ -3530,6 +3530,53 @@ function fitCanvas() {
   drawCanvas(); _updateZoomLabel();
 }
 
+/* ── REDISTRIBUTE CHAIRS EVENLY AROUND A TABLE ── */
+// Called after adding or removing a chair so all seats spread evenly with no overlap.
+function _redistributeChairs(tableId) {
+  const table  = WED.furniture.find(f => f.id === tableId);
+  if (!table) return;
+  const chairs = WED.furniture.filter(f => f.type === 'chair' && f.parentTableId === tableId);
+  const n = chairs.length;
+  if (n === 0) return;
+
+  const cW = cvs ? cvs.width  : 380;
+  const cH = cvs ? cvs.height : 400;
+
+  if (table.type === 'round') {
+    // Evenly space chairs around the circumference, starting from the top (−90°)
+    const tableR = table.w / 2;
+    const tCX    = table.x + table.w / 2;
+    const tCY    = table.y + table.h / 2;
+    const cW0    = chairs[0].w;
+    const cH0    = chairs[0].h;
+    const orbitR = tableR + cW0 / 2 + 6;
+    chairs.forEach((chair, i) => {
+      const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+      chair.x = Math.max(0, Math.min(cW - chair.w, Math.round(tCX + orbitR * Math.cos(angle) - chair.w / 2)));
+      chair.y = Math.max(0, Math.min(cH - chair.h, Math.round(tCY + orbitR * Math.sin(angle) - chair.h / 2)));
+    });
+
+  } else if (table.type === 'long') {
+    // Top row gets ceil(n/2), bottom row gets floor(n/2)
+    const seatsTop = Math.ceil(n / 2);
+    const seatsBot = Math.floor(n / 2);
+    const cH0 = chairs[0].h;
+
+    // Top row
+    chairs.slice(0, seatsTop).forEach((chair, i) => {
+      const slotW = table.w / seatsTop;
+      chair.x = Math.max(0, Math.min(cW - chair.w, Math.round(table.x + i * slotW + slotW / 2 - chair.w / 2)));
+      chair.y = Math.max(0, table.y - cH0 - 4);
+    });
+    // Bottom row
+    chairs.slice(seatsTop).forEach((chair, i) => {
+      const slotW = seatsBot > 0 ? table.w / seatsBot : table.w;
+      chair.x = Math.max(0, Math.min(cW - chair.w, Math.round(table.x + i * slotW + slotW / 2 - chair.w / 2)));
+      chair.y = Math.min(cH - chair.h, table.y + table.h + 4);
+    });
+  }
+}
+
 function addFurniture(type, label) {
   const defaults = {
     round:{w:68,h:68}, long:{w:115,h:46}, stage:{w:140,h:56},
@@ -3547,31 +3594,13 @@ function addFurniture(type, label) {
     const existingOnTable = WED.furniture.filter(f => f.type === 'chair' && f.parentTableId === selTable.id).length;
     const chairLabel = `${prefix}${tableNum}/Chair ${existingOnTable + 1}`;
 
-    let spawnX, spawnY;
-    if (selTable.type === 'round') {
-      // Orbital placement — distribute evenly around the round table's perimeter
-      const tableCX = selTable.x + selTable.w / 2;
-      const tableCY = selTable.y + selTable.h / 2;
-      const tableR  = selTable.w / 2;
-      const angle   = (existingOnTable * Math.PI * 2 / 8) - Math.PI / 2; // start from top
-      const orbitR  = tableR + d.w / 2 + 6; // must match the drag constraint radius exactly
-      spawnX = Math.max(0, Math.min(Math.round(tableCX + orbitR * Math.cos(angle) - d.w / 2), (cvs.width  || 380) - d.w));
-      spawnY = Math.max(0, Math.min(Math.round(tableCY + orbitR * Math.sin(angle) - d.h / 2), (cvs.height || 400) - d.h));
-    } else {
-      // Long table — fill chairs along the top edge first, then bottom
-      const spacing  = d.w + 4;
-      const perRow   = Math.max(1, Math.floor(selTable.w / spacing));
-      const rowIdx   = Math.floor(existingOnTable / perRow);
-      const colIdx   = existingOnTable % perRow;
-      const offsetY  = rowIdx === 0 ? -(d.h + 4) : selTable.h + 4;
-      spawnX = Math.max(0, Math.min(selTable.x + colIdx * spacing, (cvs.width  || 380) - d.w));
-      spawnY = Math.max(0, Math.min(selTable.y + offsetY,          (cvs.height || 400) - d.h));
-    }
-
+    // Push chair with a placeholder position — _redistributeChairs will fix it
     WED.furniture.push({
-      id:'f'+WED.nextFurnitureId++, type:'chair', x:spawnX, y:spawnY,
+      id:'f'+WED.nextFurnitureId++, type:'chair', x:0, y:0,
       w:d.w, h:d.h, label:chairLabel, rot:false, parentTableId:selTable.id,
     });
+    // Redistribute ALL chairs on this table so none overlap
+    _redistributeChairs(selTable.id);
     saveState(); drawCanvas(); renderFurniturePalette(); renderCanvasActions();
     showToast('🪑 '+chairLabel+' added!');
     return;
@@ -4007,8 +4036,21 @@ function deleteSelectedFurniture() {
   const toRemove = new Set([id, ...childChairs.map(c => c.id)]);
   // Unseat guests in removed chairs
   WED.guests.forEach(g => { if (toRemove.has(g._chairId)) delete g._chairId; });
+  const deletedChairParentId = (f.type === 'chair' && f.parentTableId) ? f.parentTableId : null;
   WED.furniture = WED.furniture.filter(f => !toRemove.has(f.id));
   WED.selectedFurniture = null;
+  // If a single chair was deleted, redistribute the remaining chairs on that table
+  if (deletedChairParentId) {
+    _redistributeChairs(deletedChairParentId);
+    // Renumber remaining chairs so labels stay sequential
+    const remaining = WED.furniture.filter(c => c.type === 'chair' && c.parentTableId === deletedChairParentId);
+    const parent = WED.furniture.find(t => t.id === deletedChairParentId);
+    if (parent) {
+      const prefix = parent.type === 'round' ? 'RT' : 'LT';
+      const tableNum = parent.label.replace(/\D/g, '');
+      remaining.forEach((c, i) => { c.label = `${prefix}${tableNum}/Chair ${i + 1}`; });
+    }
+  }
   saveState();
   drawCanvas();
   renderFurniturePalette();
