@@ -1332,6 +1332,7 @@ textarea.glass-input {
   .app-left-panel .wedding-hero { padding-top: 52px; }
   .app-left-panel .header-actions {
     width: 100%;
+    flex-direction: column;
     align-items: stretch;
   }
   .app-left-panel .header-btn-row {
@@ -1777,9 +1778,9 @@ textarea.glass-input {
 /* ── HEADER ACTIONS — stable layout, no shift ─── */
 .header-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 .cloud-indicator {
