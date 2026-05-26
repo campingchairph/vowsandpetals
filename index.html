@@ -215,14 +215,15 @@
       <div class="header-btn-row">
         <button id="auth-header-btn" onclick="openAuthModal()"
           style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.55);cursor:pointer;font-family:var(--f)">
-          <span class="auth-btn-icon">&#9685;</span> <span style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>
+          <span class="auth-btn-icon">&#9685;</span><span class="auth-btn-text" style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>
         </button>
-        <button class="btn-edit-details" onclick="openSetupModal()">Edit Details</button>
+        <button class="btn-edit-details" onclick="openSetupModal()">
+          <span class="hdr-btn-icon" aria-hidden="true">✏️</span><span class="hdr-btn-text">Edit Details</span>
+        </button>
       </div>
       <!-- Mobile hamburger — hidden on desktop via CSS -->
       <button class="mob-nav-btn" id="mob-nav-btn" onclick="toggleMobileNav()" aria-label="Open navigation menu">
         <span class="mob-nav-icon">☰</span>
-        <span id="mob-nav-label">Menu</span>
       </button>
     </div>
   </header>

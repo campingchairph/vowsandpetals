@@ -69,10 +69,10 @@ function updateAuthUI(user) {
   if (user) {
     const name = user.displayName || user.email.split('@')[0];
     const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
-    btn.innerHTML = `<span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#c9a96e,#7a6045);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${initials}</span><span style="font-size:11.5px;font-weight:700;color:var(--tan-dark);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name.split(' ')[0]}</span>`;
+    btn.innerHTML = `<span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#c9a96e,#7a6045);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${initials}</span><span class="auth-btn-text" style="font-size:11.5px;font-weight:700;color:var(--tan-dark);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name.split(' ')[0]}</span>`;
     btn.title = user.email;
   } else {
-    btn.innerHTML = `☁️ <span style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>`;
+    btn.innerHTML = `☁️ <span class="auth-btn-text" style="font-size:11.5px;font-weight:700;color:var(--tan-dark)">Sign In</span>`;
     btn.title = 'Sync your plans to the cloud';
   }
   // Refresh overview cloud section
@@ -234,20 +234,91 @@ function _refreshSaveSellCard() {
       if (!actionEl || snap.empty) return;
       const t    = snap.docs[0].data();
       const code = snap.docs[0].id;
-      const statusColor = t.status==='active' ? '#3a7a54' : t.status==='rejected' ? '#c07068' : '#8C6640';
+
+      // Expiry info
+      const now = new Date();
+      const expiresAt = t.expiresAt ? t.expiresAt.toDate() : null;
+      const isExpired = expiresAt && expiresAt < now;
+      const daysLeft  = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : null;
+      const nearExpiry = daysLeft !== null && daysLeft <= 7 && !isExpired;
+      const expDateStr = expiresAt ? expiresAt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+
+      // Status
+      const effectiveStatus = (t.status === 'active' && isExpired) ? 'expired' : t.status;
+      const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
+      const statusColor  = statusColors[effectiveStatus] || '#8C6640';
+
       actionEl.innerHTML = `
         <div style="padding:10px 12px;border-radius:10px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.22)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
             <span style="font-family:monospace;font-size:17px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
-            <span style="font-size:10px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${(t.status||'?').toUpperCase()}</span>
+            <span style="font-size:10px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${effectiveStatus.toUpperCase()}</span>
           </div>
-          ${t.status==='active'
-            ? `<div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>`
-            : t.status==='pending'
-            ? `<div style="font-size:11px;color:var(--ink-3)">Awaiting admin review — usually 24–48 hrs.</div>`
-            : `<div style="font-size:11px;color:#c07068">${t.adminNote||'Rejected. Contact support.'}</div>`}
+          ${effectiveStatus === 'active' ? `
+            <div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>
+            ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''}`:`Active until ${expDateStr}`}</div>` : ''}
+            ${nearExpiry ? `<button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Listing (₱99/mo)</button>` : ''}
+          ` : effectiveStatus === 'expired' ? `
+            <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. Your template is no longer visible in the marketplace.</div>
+            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing — ₱99/month</button>
+          ` : effectiveStatus === 'pending' ?
+            `<div style="font-size:11px;color:var(--ink-3)">Awaiting admin review — usually 24–48 hrs.</div>`
+          : `<div style="font-size:11px;color:#c07068">${t.adminNote||'Rejected. Contact support.'}</div>`}
         </div>`;
     }).catch(() => {});
+}
+
+const LISTING_FEE = 99; // ₱/month
+const SUPPORT_EMAIL_TEMPLATES = 'hello@vowsandpetals.com';
+
+function openRenewListing(code) {
+  document.getElementById('renew-listing-sheet')?.remove();
+  const el = document.createElement('div');
+  el.id = 'renew-listing-sheet';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px">🔄 Renew Listing</div>
+      <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5;margin-bottom:14px">Keep your template <b>VP-${code}</b> active for another 30 days.</div>
+
+      <!-- Fee summary -->
+      <div style="padding:10px 14px;border-radius:10px;background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px">Monthly Listing Fee</div>
+        <div style="font-size:24px;font-weight:800;color:var(--tan-dark)">₱${LISTING_FEE}</div>
+        <div style="font-size:10.5px;color:var(--ink-4)">per month · renews your listing for 30 days</div>
+      </div>
+
+      <!-- GCash steps -->
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">How to pay:</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">1</span>
+          Go to <b>supplier.html → Plan tab</b> to scan the GCash QR and send ₱${LISTING_FEE}
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">2</span>
+          Screenshot your GCash receipt
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">3</span>
+          Email proof to us with your template code <b>VP-${code}</b>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">4</span>
+          We'll extend your listing within 24–48 hrs ✅
+        </div>
+      </div>
+
+      <a href="mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=Template%20Renewal%20VP-${code}&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20am%20renewing%20my%20template%20listing%20VP-${code}.%0A%0APlease%20find%20my%20GCash%20payment%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}"
+        style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box">
+        📧 Email Payment Proof →
+      </a>
+      <button onclick="document.getElementById('renew-listing-sheet')?.remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.2);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">Cancel</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
 }
 
 /* ── PUBLISH AGREEMENT (shown before the form) ── */
@@ -446,6 +517,9 @@ async function submitPublishTemplate() {
         planningMonths: (typeof WED!=='undefined' && WED.planningMonths) || null,
       },
       publishedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      // Listing expires 30 days from submission. Admin can extend on renewal payment.
+      expiresAt:    firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+      listingFee:   99, // ₱99/month renewal fee
       adminNote:    '',
     });
     document.getElementById('publish-tpl-sheet')?.remove();
@@ -833,6 +907,7 @@ window.renderCloudSection     = renderCloudSection;
 window.updateAuthUI           = updateAuthUI;
 window.openPublishAgreement       = openPublishAgreement;
 window._submitAgreementAndPublish = _submitAgreementAndPublish;
+window.openRenewListing           = openRenewListing;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;

@@ -2145,28 +2145,21 @@ function _renderSuppliersMain(el) {
     vendorList = Object.entries(groups).map(([cat, vendors]) => {
       const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
       const catEmoji = getSupplierEmoji(cat);
+      // One-line cards: name (clickable) + action icons
       const cards = vendors.map(v => `
-        <div class="glass" style="padding:12px;border-radius:var(--r-md);display:flex;flex-direction:column;gap:6px;position:relative">
-          <div style="display:flex;align-items:flex-start;gap:8px">
-            <div style="width:34px;height:34px;border-radius:8px;background:rgba(245,230,200,0.65);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(201,169,110,0.2)">${catEmoji}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3">${v.name}</div>
-              ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.16);border-radius:4px;padding:1px 5px">🏪 Listed</span>` : ''}
-            </div>
+        <div class="glass" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--r-md)">
+          <div onclick="openVendorDetail(${v.id})" style="flex:1;min-width:0;cursor:pointer">
+            <span style="font-size:13px;font-weight:700;color:var(--ink)">${v.name}</span>
+            ${v._marketplaceId ? `<span style="font-size:9px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.16);border-radius:4px;padding:1px 5px;margin-left:5px">🏪</span>` : ''}
           </div>
-          ${v.price?`<div style="font-size:11px;color:var(--tan-dark);font-weight:700">₱${Number(v.price).toLocaleString()}</div>`:''}
-          ${v.notes?`<div style="font-size:10.5px;color:var(--ink-4);font-style:italic;line-height:1.4">${v.notes}</div>`:''}
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:auto">
-            ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);text-decoration:none">📞</a>`:''}
-            ${v.link?`<a href="${v.link}" target="_blank" rel="noopener" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗</a>`:''}
-            <button onclick="deleteVendor(${v.id})" style="padding:4px 8px;border-radius:7px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:11px;cursor:pointer;color:var(--pink-deep);margin-left:auto">🗑</button>
-          </div>
+          ${v.phone?`<a href="tel:${v.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.12);font-size:13px;color:var(--green-deep);text-decoration:none;flex-shrink:0">📞</a>`:''}
+          ${v.link?`<a href="${v.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.55);font-size:13px;color:var(--tan-dark);text-decoration:none;flex-shrink:0">🔗</a>`:''}
+          <button onclick="event.stopPropagation();deleteVendor(${v.id})" style="padding:5px 8px;border-radius:8px;border:1px solid rgba(224,120,152,0.2);background:rgba(252,232,238,0.5);font-size:13px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
         </div>`).join('');
-      const gridClass = vendors.length >= 4 ? 'vendor-grid-4' : vendors.length === 3 ? 'vendor-grid-3' : vendors.length === 2 ? 'vendor-grid-2' : '';
       return `
         <div style="margin-bottom:14px">
-          <div style="font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;font-size:11px">(${vendors.length})</span></div>
-          <div class="vendor-grid ${gridClass}">
+          <div style="font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;font-size:11px">(${vendors.length})</span></div>
+          <div style="display:flex;flex-direction:column;gap:5px">
             ${cards}
           </div>
         </div>`;
@@ -2206,6 +2199,40 @@ function _renderSuppliersMain(el) {
         Get Listed →</a>
     </div>
   `;
+}
+
+/* Show vendor detail popup with all info + marketplace link */
+function openVendorDetail(vId) {
+  const v = WED.vendors.find(x => x.id === vId);
+  if (!v) return;
+  document.getElementById('vendor-detail-sheet')?.remove();
+  const catEmoji = getSupplierEmoji(v.category || '');
+  const el = document.createElement('div');
+  el.id = 'vendor-detail-sheet';
+  el.className = 'modal-overlay';
+  el.onclick = e => { if (e.target === el) el.remove(); };
+  el.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:28px">${catEmoji}</span>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--ink);line-height:1.2">${v.name}</div>
+          ${v.category ? `<div style="font-size:11px;color:var(--ink-4);text-transform:capitalize;margin-top:1px">${v.category}</div>` : ''}
+        </div>
+        ${v._marketplaceId ? `<span style="margin-left:auto;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.18);border-radius:6px;padding:3px 8px">🏪 Listed</span>` : ''}
+      </div>
+      ${v.price ? `<div style="padding:8px 12px;border-radius:var(--r-sm);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.18);margin-bottom:10px;font-size:13px;font-weight:700;color:var(--tan-dark)">💰 ₱${Number(v.price).toLocaleString()}</div>` : ''}
+      ${v.notes ? `<div style="padding:10px 12px;border-radius:var(--r-sm);background:rgba(255,252,247,0.7);border:1px solid rgba(184,145,106,0.14);margin-bottom:10px;font-size:12.5px;color:var(--ink-3);line-height:1.6;font-style:italic">"${v.notes}"</div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+        ${v.phone ? `<a href="tel:${v.phone.replace(/\s/g,'')}" style="display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:var(--r-md);border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.1);font-size:13px;font-weight:700;color:var(--green-deep);text-decoration:none">📞 <span>${v.phone}</span></a>` : ''}
+        ${v.link ? `<a href="${v.link}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.5);font-size:12.5px;font-weight:700;color:var(--tan-dark);text-decoration:none;word-break:break-all">🔗 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.link}</span></a>` : ''}
+        ${v._marketplaceId ? `<button onclick="document.getElementById('vendor-detail-sheet')?.remove();openSupplierProfile('${v._marketplaceId}')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;border-radius:var(--r-md);border:1.5px solid rgba(26,115,232,0.25);background:rgba(26,115,232,0.07);font-size:12.5px;font-weight:700;color:#1a73e8;cursor:pointer;font-family:var(--f)">🏪 View Full Profile in Marketplace</button>` : ''}
+      </div>
+      <button onclick="if(confirm('Remove ${v.name.replace(/'/g,"\\'")}?')){deleteVendor(${v.id});document.getElementById('vendor-detail-sheet')?.remove();}" style="width:100%;padding:9px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.5);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">🗑 Remove Vendor</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
 }
 
 let _supplierSearchQ    = '';
@@ -5505,3 +5532,4 @@ window._submitTemplatePayment       = _submitTemplatePayment;
 window._importTemplateFromCode      = _importTemplateFromCode;
 window.toggleMobileNav              = toggleMobileNav;
 window.closeMobileNav               = closeMobileNav;
+window.openVendorDetail             = openVendorDetail;
