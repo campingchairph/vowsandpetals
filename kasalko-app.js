@@ -106,6 +106,12 @@ function _rsvpCoupleKey() {
     .toLowerCase().replace(/[^a-z0-9]/g, '_');
 }
 
+/* ── ADMIN ───────────────────────────────────── */
+// Admin UIDs can access paid templates for free to verify submitted content.
+// Update this list if you add more admin accounts.
+const APP_ADMIN_UIDS = ['FJphv5mq3GSowFJy2iCqIEtCDZA3'];
+function _isAppAdmin() { return APP_ADMIN_UIDS.includes(window.CURRENT_USER?.uid); }
+
 /* ── PERSISTENCE ─────────────────────────────── */
 const STORE_KEY = 'kasalko_data';
 
@@ -2486,7 +2492,9 @@ function _showTemplatePreview(code, data) {
           </div>
           <div style="font-size:10.5px;color:var(--ink-3);text-align:right">Platform: ₱${Math.ceil(price*.15)}<br>Seller: ₱${Math.floor(price*.85)}</div>
         </div>
-        <button onclick="_showTemplatePayment('${code}',${price})" class="cta-btn">💳 Get This Template — ₱${Number(price).toLocaleString()}</button>
+        ${_isAppAdmin()
+          ? `<button onclick="_importTemplateFromCode('${code}')" class="cta-btn" style="background:linear-gradient(135deg,#2d6a4f,#1b4332)">🔍 Admin Preview — Import Free</button>`
+          : `<button onclick="_showTemplatePayment('${code}',${price})" class="cta-btn">💳 Get This Template — ₱${Number(price).toLocaleString()}</button>`}
       ` : `
         <button onclick="_importTemplateFromCode('${code}')" class="cta-btn">📦 Use This Template — Free</button>
       `}
@@ -2544,7 +2552,7 @@ async function _importTemplateFromCode(code) {
   if (typeof DB === 'undefined' || !DB) { showToast('⚠️ Sign in to import'); return; }
   try {
     const doc = await DB.collection('kasalko_templates').doc(cleanCode).get();
-    if (!doc.exists || doc.data().status !== 'active') { showToast('⚠️ Template not available'); return; }
+    if (!doc.exists || (!_isAppAdmin() && doc.data().status !== 'active')) { showToast('⚠️ Template not available'); return; }
     const td = doc.data().templateData || {};
     const hasData = WED.expenses.length > 0 || WED.vendors.length > 0 || WED.checklist.some(p => p.items?.length > 0);
     let merge = false;

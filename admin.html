@@ -313,7 +313,12 @@ async function loadSuppliers() {
 }
 
 function renderSuppliers() {
-  let list = _suppCache;
+  // Pro subscribers always sort first, then by most recently updated
+  let list = [..._suppCache].sort((a, b) => {
+    const aPro = a.plan === 'pro' ? 1 : 0, bPro = b.plan === 'pro' ? 1 : 0;
+    if (bPro !== aPro) return bPro - aPro;
+    return (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0);
+  });
   if (_suppFilter === 'verified') list = list.filter(s => s.verified);
   if (_suppFilter === 'pro')      list = list.filter(s => s.plan === 'pro');
   if (_suppFilter === 'hidden')   list = list.filter(s => s.hidden || s.status === 'suspended');
@@ -376,7 +381,13 @@ function renderSupplierCard(s) {
           ${isHidden ? '✅ Restore' : '🚫 Ban'}
         </button>
       </div>
-      ${s.ownerEmail ? `<div class="admin-card-meta">📧 ${esc(s.ownerEmail)}</div>` : ''}
+      <div class="admin-card-meta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        ${s.ownerEmail ? `<a href="mailto:${esc(s.ownerEmail)}" style="color:var(--ink-3);text-decoration:none;font-size:11px">📧 ${esc(s.ownerEmail)}</a>` : ''}
+        ${s.phone      ? `<a href="tel:${esc(s.phone)}" style="color:var(--ink-3);text-decoration:none;font-size:11px">📞 ${esc(s.phone)}</a>` : ''}
+        ${s.fb         ? `<a href="${esc(s.fb)}" target="_blank" style="color:#1877f2;text-decoration:none;font-size:11px;font-weight:700">FB ↗</a>` : ''}
+        ${s.ig         ? `<a href="${esc(s.ig)}" target="_blank" style="color:#c13584;text-decoration:none;font-size:11px;font-weight:700">IG ↗</a>` : ''}
+        ${s.website    ? `<a href="${esc(s.website)}" target="_blank" style="color:#1a73e8;text-decoration:none;font-size:11px;font-weight:700">🌐 Site ↗</a>` : ''}
+      </div>
     </div>`;
 }
 
@@ -462,8 +473,8 @@ async function loadLeads() {
                 <td><b>${esc(l.name || '—')}</b></td>
                 <td>${esc(l.category || '—')}</td>
                 <td>
-                  ${l.phone ? esc(l.phone) : ''}
-                  ${l.link  ? `${l.phone?' · ':''}<a href="${esc(l.link)}" target="_blank">Link ↗</a>` : ''}
+                  ${l.phone ? `<a href="tel:${esc(l.phone)}" style="color:var(--ink);font-weight:600;text-decoration:none" title="Call">${esc(l.phone)}</a>` : ''}
+                  ${l.link  ? `${l.phone?'<br>':''}<a href="${esc(l.link)}" target="_blank" style="color:#1a73e8;font-size:11px;word-break:break-all">${esc(l.link.replace(/^https?:\/\//,''))}</a>` : ''}
                   ${!l.phone && !l.link ? '—' : ''}
                 </td>
                 <td>${l.price ? '₱' + Number(l.price).toLocaleString() : '—'}</td>

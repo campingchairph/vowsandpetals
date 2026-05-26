@@ -1125,8 +1125,22 @@ function _renderPlanTab() {
         <div class="plan-perk"><span class="ck ${isActiveProNow ? 'yes' : 'no'}">${isActiveProNow ? '✓' : '○'}</span>
           <span style="color:${isActiveProNow ? 'inherit' : 'var(--ink-4)'}">⭐ Featured badge — sorted above free listings in directory</span></div>
       </div>
-      <div style="font-size:11.5px;color:var(--ink-4);line-height:1.55;padding-top:10px;border-top:1px solid rgba(184,145,106,0.12)">
-        <b style="color:var(--ink-3)">✔ Verified badge</b> is separate from Pro — earned by submitting proof of business registration (DTI/SEC/gov't ID) plus having 10+ Legit tags and a 4.0+ rating. Both Free and Pro suppliers can earn it.
+      <div style="font-size:11.5px;color:var(--ink-4);line-height:1.6;padding-top:12px;border-top:1px solid rgba(184,145,106,0.12)">
+        <b style="color:var(--ink-3);font-size:12.5px">✔ Verified Badge — how to earn it</b><br>
+        <span style="font-size:11px">The Verified badge is <b>not</b> tied to Pro. It's based on trust and proof of legitimacy. Two ways to get it:</span>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+          <div style="padding:8px 10px;border-radius:8px;background:rgba(90,171,122,0.07);border:1px solid rgba(90,171,122,0.18)">
+            <span style="font-size:11px;font-weight:700;color:var(--green-deep)">🌱 Organic (Free)</span><br>
+            <span style="font-size:10.5px;color:var(--ink-3)">Build up reviews and "Legit" tags from real couples who used our app. Once your reputation is strong enough, we review and grant it — no payment needed.</span>
+          </div>
+          <div style="padding:8px 10px;border-radius:8px;background:rgba(201,169,110,0.07);border:1px solid rgba(201,169,110,0.18)">
+            <span style="font-size:11px;font-weight:700;color:var(--tan-dark)">⚡ Fast-Track (One-time fee)</span><br>
+            <span style="font-size:10.5px;color:var(--ink-3)">Skip the wait. Pay the fast-track fee, then email us: (1) payment receipt screenshot and (2) proof of business legitimacy — DTI/SEC certificate, government ID, or strong social proof (reviews, client photos). We verify and badge you within 48 hrs.</span><br>
+            <a href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Verified Badge Request — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi!\n\nI\'d like to apply for the Verified badge.\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||'') + '\n\n[Attach: payment receipt + business proof photos/docs]')}"
+              style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:6px 12px;border-radius:16px;background:rgba(201,169,110,0.18);border:1px solid rgba(201,169,110,0.3);font-size:11px;font-weight:700;color:var(--tan-dark);text-decoration:none">
+              📧 Apply for Verified Badge →</a>
+          </div>
+        </div>
       </div>
     </div>`;
 
@@ -1156,11 +1170,32 @@ function _renderPlanTab() {
           </div>
         </div>
 
-        <div class="plan-how-title">How to activate</div>
-        <div class="plan-step"><div class="plan-step-num">1</div><div class="plan-step-text">Click a plan above → complete payment via GCash or card.</div></div>
-        <div class="plan-step"><div class="plan-step-num">2</div><div class="plan-step-text"><b>Include your registered email</b> (${_esc(_user?.email||'')}) in the payment reference / notes so we can match it to your account.</div></div>
-        <div class="plan-step"><div class="plan-step-num">3</div><div class="plan-step-text">We activate your Pro plan within <b>24 hours</b>. You'll see the ⭐ badge appear here once it's live.</div></div>
-        <div style="font-size:11.5px;color:var(--ink-4);margin-top:10px;line-height:1.55">Questions? Email us at <a href="mailto:${SUPPORT_EMAIL}" style="color:var(--gold);font-weight:700">${SUPPORT_EMAIL}</a></div>
+        <div class="plan-how-title">How to subscribe</div>
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap">
+          <div style="flex-shrink:0;text-align:center">
+            <!-- ══════════════════════════════════════════════
+                 GCASH QR CODE — EMBED AS BASE64 FOR SECURITY
+                 1. Open GCash app → Receive Money → your QR
+                 2. Screenshot it
+                 3. Convert to base64: base64encode.org
+                 4. Replace the src below with: data:image/png;base64,XXXXXX
+                 ══════════════════════════════════════════════ -->
+            <img id="gcash-qr-img"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmNWYwZWIiIHJ4PSI4Ii8+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJkMWYwZSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHJlY3QgeD0iMTYiIHk9IjE2IiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIGZpbGw9IiMyZDFmMGUiLz48cmVjdCB4PSI4MCIgeT0iMTAiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmQxZjBlIiBzdHJva2Utd2lkdGg9IjMiLz48cmVjdCB4PSI4NiIgeT0iMTYiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgZmlsbD0iIzJkMWYwZSIvPjxyZWN0IHg9IjEwIiB5PSI4MCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiBmaWxsPSJub25lIiBzdHJva2U9IiMyZDFmMGUiIHN0cm9rZS13aWR0aD0iMyIvPjxyZWN0IHg9IjE2IiB5PSI4NiIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMmQxZjBlIi8+PHRleHQgeD0iNjAiIHk9IjYyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjkiIGZpbGw9IiM4YzY2NDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIj5BZGQgR0Nhc2g8L3RleHQ+PHRleHQgeD0iNjAiIHk9Ijc0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjkiIGZpbGw9IiM4YzY2NDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIj5RUiBpbiBjb2RlPC90ZXh0Pjwvc3ZnPg=="
+              alt="GCash QR Code"
+              style="width:110px;height:110px;border-radius:10px;border:2px solid rgba(0,136,0,0.25);display:block">
+            <div style="font-size:9px;color:var(--ink-4);margin-top:4px;text-align:center">Scan to pay</div>
+          </div>
+          <div style="flex:1;min-width:160px">
+            <div class="plan-step"><div class="plan-step-num">1</div><div class="plan-step-text"><b>Scan the QR</b> using your GCash app and send the plan amount.</div></div>
+            <div class="plan-step"><div class="plan-step-num">2</div><div class="plan-step-text"><b>Screenshot your payment receipt</b> and email it to us.<br>
+              Reference: <b style="font-family:monospace;color:var(--ink)">${_esc(_user?.email||'your-email')}</b></div></div>
+            <div class="plan-step"><div class="plan-step-num">3</div><div class="plan-step-text">We activate your Pro plan within <b>24 hours</b>. The ⭐ badge appears here once it's live.</div></div>
+            <a href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Plan Payment — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi!\n\nI just sent payment for the Pro plan.\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||'') + '\n\n[Attach your GCash receipt screenshot here]')}"
+              style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:8px 14px;border-radius:20px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">
+              📧 Email Payment Proof →</a>
+          </div>
+        </div>
       </div>`;
   }
 
