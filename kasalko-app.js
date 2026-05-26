@@ -694,16 +694,16 @@ function renderBudget() {
           </div>
           ${collapsed ? '' : `<div>
             ${items.map(e => `
-            <div style="display:flex;align-items:center;gap:8px;padding:4px 10px;border-bottom:1px solid rgba(184,145,106,0.1);background:rgba(255,252,247,0.6)">
-              <div style="flex:1;min-width:0">
-                <span style="font-size:12px;font-weight:600;color:var(--ink)">${e.label}</span>
+            <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid rgba(184,145,106,0.1);background:rgba(255,252,247,0.6)">
+              <div style="flex:1;min-width:0;overflow:hidden">
+                <span style="font-size:11.5px;font-weight:600;color:var(--ink);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.label}</span>
               </div>
-              <span style="font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0">₱${e.amount.toLocaleString()}</span>
-              <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.1)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'}">${e.paid?'Paid':'Due'}</span>
-              <div class="expense-actions" style="flex-shrink:0">
-                <button onclick="toggleExpensePaid(${e._idx})" style="padding:3px 6px;border-radius:5px;border:none;background:rgba(90,171,122,0.1);font-size:9.5px;font-weight:700;color:var(--green-deep);cursor:pointer;white-space:nowrap">${e.paid?'↩':'✓'}</button>
-                <button onclick="openEditExpense(${e._idx})" style="padding:3px 6px;border-radius:5px;border:none;background:transparent;font-size:11px;cursor:pointer;color:var(--tan-dark)">✏️</button>
-                <button onclick="deleteExpense(${e._idx})" style="padding:3px 6px;border-radius:5px;border:none;background:transparent;font-size:11px;cursor:pointer;color:var(--pink-deep)">🗑</button>
+              <span style="font-size:11.5px;font-weight:700;color:var(--ink);flex-shrink:0;white-space:nowrap">₱${e.amount.toLocaleString()}</span>
+              <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;flex-shrink:0;white-space:nowrap;background:${e.paid?'rgba(90,171,122,0.12)':'rgba(224,120,152,0.1)'};color:${e.paid?'var(--green-deep)':'var(--pink-deep)'}">${e.paid?'Paid':'Due'}</span>
+              <div class="expense-actions">
+                <button onclick="toggleExpensePaid(${e._idx})" style="padding:2px 5px;border-radius:4px;border:none;background:rgba(90,171,122,0.1);font-size:10px;font-weight:700;color:var(--green-deep);cursor:pointer;line-height:1">${e.paid?'↩':'✓'}</button>
+                <button onclick="openEditExpense(${e._idx})" style="padding:2px 4px;border-radius:4px;border:none;background:transparent;font-size:12px;cursor:pointer;color:var(--tan-dark);line-height:1">✏️</button>
+                <button onclick="deleteExpense(${e._idx})" style="padding:2px 4px;border-radius:4px;border:none;background:transparent;font-size:12px;cursor:pointer;color:var(--pink-deep);line-height:1">🗑</button>
               </div>
             </div>`).join('')}
           </div>`}

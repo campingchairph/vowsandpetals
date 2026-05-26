@@ -1098,7 +1098,7 @@ textarea.glass-input {
 @media (max-width: 899px) {
   /* ── Hero: clear fixed header + compact height ── */
   .wedding-hero {
-    padding: 130px 20px 16px;
+    padding: 85px 20px 16px;
   }
   /* Names on one line — row layout */
   .wedding-couple-names {
@@ -1821,18 +1821,13 @@ textarea.glass-input {
   .mob-nav-btn { padding: 7px 10px; }
 }
 
-/* ── EXPENSE ACTIONS — row on wider screens ───── */
+/* ── EXPENSE ACTIONS — always a row ───────────── */
 .expense-actions {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-@media (min-width: 600px) {
-  .expense-actions {
-    flex-direction: row;
-    align-items: center;
-    gap: 5px;
-  }
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 /* ── BUDGET CATEGORY GRID ─────────────────────── */
