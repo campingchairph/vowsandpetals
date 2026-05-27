@@ -1182,7 +1182,7 @@ function _applyPurchasesSnap(snap) {
     return `
       <div style="padding:8px 10px;border-radius:8px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.18);margin-bottom:6px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px">
-          <div style="font-size:12px;font-weight:700;color:var(--ink)">${p.isTest ? '🧪 Test Sale' : 'Template Purchase'}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink)">${p.isTest ? '🧪 ' : ''}VP-${code}</div>
           <span style="font-size:9px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:6px;padding:1px 6px;flex-shrink:0">${isVerified ? 'VERIFIED' : 'PENDING'}</span>
         </div>
         <div style="font-size:11px;color:var(--ink-4)">${[date, earnings > 0 ? `₱${earnings.toLocaleString()} earned` : ''].filter(Boolean).join(' · ')}</div>
