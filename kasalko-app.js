@@ -583,6 +583,13 @@ function submitSetup() {
 
 /* ── BUDGET ──────────────────────────────────── */
 const _collapsedExpenseCats = new Set(); // UI-only collapse state for expense groups
+let _budgetCatCollapsed = true;          // By Category section — collapsed by default
+
+function toggleBudgetCatSection() {
+  _budgetCatCollapsed = !_budgetCatCollapsed;
+  renderBudget();
+}
+
 function toggleExpenseCat(cat) {
   if (_collapsedExpenseCats.has(cat)) _collapsedExpenseCats.delete(cat);
   else _collapsedExpenseCats.add(cat);
@@ -643,11 +650,16 @@ function renderBudget() {
     </div>
 
     ${Object.keys(byCat).length ? `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span class="sec-title" style="margin-bottom:0">By Category</span>
-      <button onclick="openManageCategories()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage</button>
+    <div onclick="toggleBudgetCatSection()" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${_budgetCatCollapsed?'8':'8'}px;cursor:pointer;user-select:none;padding:8px 10px;border-radius:var(--r-md);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18)">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:13px;color:var(--ink-4)">${_budgetCatCollapsed ? '▶' : '▼'}</span>
+        <span class="sec-title" style="margin-bottom:0;font-size:13px">By Category</span>
+        <span style="font-size:11px;color:var(--ink-4)">(${Object.keys(byCat).length})</span>
+      </div>
+      <button onclick="event.stopPropagation();openManageCategories()" style="padding:4px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(255,252,247,0.8);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage</button>
     </div>
-    <div class="budget-cat-grid" data-cols="${Object.keys(byCat).length >= 4 ? 4 : Object.keys(byCat).length === 3 ? 3 : 1}">
+    ${!_budgetCatCollapsed ? `
+    <div class="budget-cat-grid" data-cols="${Object.keys(byCat).length >= 4 ? 4 : Object.keys(byCat).length === 3 ? 3 : 1}" style="margin-top:8px">
       ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
         const catPct = totalSpent ? Math.round((amt/totalSpent)*100) : 0;
         const budPct = WED.budget  ? Math.min(Math.round((amt/WED.budget)*100),100) : 0;
@@ -665,7 +677,7 @@ function renderBudget() {
           </div>
           <button onclick="generateCategoryReceipt('${cat}')" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(201,169,110,0.22);background:rgba(255,252,247,0.7);font-size:10px;font-weight:700;color:var(--tan-dark);cursor:pointer">🧾 Receipt</button>
         </div>`;}).join('')}
-    </div>` : `
+    </div>` : ''}` : `
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
       <button onclick="openManageCategories()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage Categories</button>
     </div>`}
@@ -5635,6 +5647,7 @@ window.addExpenseCat              = addExpenseCat;
 window.removeExpenseCat           = removeExpenseCat;
 window.generateCategoryReceipt    = generateCategoryReceipt;
 window.generateFullReceipt        = generateFullReceipt;
+window.toggleBudgetCatSection     = toggleBudgetCatSection;
 window.toggleExpenseCat           = toggleExpenseCat;
 window.toggleGuestGroup           = toggleGuestGroup;
 window.setSupplierView            = setSupplierView;

@@ -1417,28 +1417,36 @@ function _renderSalePurchases(code) {
       ? new Date(p.createdAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'2-digit' })
       : '—';
 
-    const statusTxt = p.isTest ? '🧪 test'
-      : wStatus === 'released'  ? '<span style="color:#3a7a54;font-weight:700">✅ released</span>'
-      : wStatus === 'requested' ? '<span style="color:var(--gold-dk);font-weight:700">⏳ payout req.</span>'
-      : isVerified ? '✓ verified' : '⏳ pending';
+    // Withdrawal status badge
+    const wBadge = p.isTest
+      ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(101,85,196,0.1);color:#6555c4;border:1px solid rgba(101,85,196,0.2)">🧪 Test</span>`
+      : wStatus === 'released'
+      ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(90,171,122,0.12);color:#3a7a54;border:1px solid rgba(90,171,122,0.25)">✅ Released</span>`
+      : wStatus === 'requested'
+      ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(184,145,106,0.13);color:var(--gold-dk);border:1px solid rgba(184,145,106,0.3)">⏳ Withdraw Requested</span>`
+      : !isVerified
+      ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(184,145,106,0.08);color:var(--ink-4);border:1px solid rgba(184,145,106,0.15)">⏳ Pending Payment</span>`
+      : `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(184,145,106,0.08);color:var(--ink-3);border:1px solid rgba(184,145,106,0.15)">💸 Awaiting Withdraw</span>`;
 
     return `
-      <div style="display:grid;grid-template-columns:1fr repeat(3,auto);gap:8px;align-items:center;padding:7px 10px;border-radius:8px;background:${p.isTest?'rgba(101,85,196,0.04)':'rgba(255,252,247,0.8)'};border:1px solid rgba(184,145,106,0.12);margin-bottom:5px">
-        <div>
-          <div style="font-size:11.5px;font-weight:700;color:var(--ink)">${date}</div>
-          <div style="font-size:10px;color:var(--ink-4)">${statusTxt}</div>
+      <div style="padding:9px 10px;border-radius:8px;background:${p.isTest?'rgba(101,85,196,0.04)':'rgba(255,252,247,0.85)'};border:1px solid rgba(184,145,106,0.12);margin-bottom:5px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          <span style="font-size:11.5px;font-weight:700;color:var(--ink)">${date}</span>
+          ${wBadge}
         </div>
-        <div style="text-align:right">
-          <div style="font-size:11.5px;font-weight:700;color:var(--ink)">₱${price.toLocaleString()}</div>
-          <div style="font-size:9px;color:var(--ink-4)">gross</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:11.5px;font-weight:700;color:#3a7a54">₱${sellerEarnings.toLocaleString()}</div>
-          <div style="font-size:9px;color:var(--ink-4)">seller 70%</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:11.5px;font-weight:700;color:var(--rose)">₱${platformFee.toLocaleString()}</div>
-          <div style="font-size:9px;color:var(--ink-4)">platform 30%</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
+          <div style="padding:5px 4px;border-radius:6px;background:rgba(184,145,106,0.06);border:1px solid rgba(184,145,106,0.1)">
+            <div style="font-size:12px;font-weight:800;color:var(--ink)">₱${price.toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--ink-4)">gross</div>
+          </div>
+          <div style="padding:5px 4px;border-radius:6px;background:rgba(90,171,122,0.07);border:1px solid rgba(90,171,122,0.12)">
+            <div style="font-size:12px;font-weight:800;color:#3a7a54">₱${sellerEarnings.toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--ink-4)">seller 70%</div>
+          </div>
+          <div style="padding:5px 4px;border-radius:6px;background:rgba(192,112,104,0.07);border:1px solid rgba(192,112,104,0.12)">
+            <div style="font-size:12px;font-weight:800;color:var(--rose)">₱${platformFee.toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--ink-4)">platform 30%</div>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -1453,11 +1461,22 @@ function _renderSalePurchases(code) {
   wrap.innerHTML = `
     <div style="font-size:11px;font-weight:700;color:var(--ink-3);margin-bottom:6px">${purchases.length} purchase${purchases.length!==1?'s':''}</div>
     ${rows}
-    <div style="display:grid;grid-template-columns:1fr repeat(3,auto);gap:8px;align-items:center;padding:8px 10px;border-radius:8px;background:rgba(44,24,16,0.04);border:1px solid rgba(184,145,106,0.18)">
-      <div style="font-size:11.5px;font-weight:800;color:var(--ink)">Totals</div>
-      <div style="text-align:right;font-size:11.5px;font-weight:800;color:var(--ink)">₱${totals.price.toLocaleString()}</div>
-      <div style="text-align:right;font-size:11.5px;font-weight:800;color:#3a7a54">₱${totals.seller.toLocaleString()}</div>
-      <div style="text-align:right;font-size:11.5px;font-weight:800;color:var(--rose)">₱${totPlatform.toLocaleString()}</div>
+    <div style="padding:8px 10px;border-radius:8px;background:rgba(44,24,16,0.04);border:1px solid rgba(184,145,106,0.18)">
+      <div style="font-size:10.5px;font-weight:700;color:var(--ink-3);margin-bottom:5px">Totals</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
+        <div>
+          <div style="font-size:12.5px;font-weight:800;color:var(--ink)">₱${totals.price.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--ink-4)">gross</div>
+        </div>
+        <div>
+          <div style="font-size:12.5px;font-weight:800;color:#3a7a54">₱${totals.seller.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--ink-4)">seller 70%</div>
+        </div>
+        <div>
+          <div style="font-size:12.5px;font-weight:800;color:var(--rose)">₱${totPlatform.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--ink-4)">platform 30%</div>
+        </div>
+      </div>
     </div>`;
 }
 

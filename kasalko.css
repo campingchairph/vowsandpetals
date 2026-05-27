@@ -1837,17 +1837,17 @@ textarea.glass-input {
   gap: 7px;
   margin-bottom: 16px;
 }
-@media (min-width: 480px) {
-  .budget-cat-grid[data-cols="3"] {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  .budget-cat-grid[data-cols="4"] {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
+/* 3-col: exactly 3 categories */
+.budget-cat-grid[data-cols="3"] {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+/* 4-col: 4 or more categories */
+.budget-cat-grid[data-cols="4"] {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 /* Compact card layout for multi-col grids */
 .budget-cat-grid[data-cols="3"] .bcat-card,
