@@ -124,6 +124,14 @@
     /* ── TOAST ── */
     #adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; opacity: 0; }
 
+    /* ── PAYMENT TYPE SUB-TABS ── */
+    .sub-tabs { display:flex; gap:4px; flex-wrap:wrap; padding:6px 8px; background:rgba(44,24,16,0.03); border-radius:var(--r-md); border:1px solid rgba(184,145,106,0.12); margin-bottom:12px; }
+    .sub-tab  { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; border:1px solid transparent; background:transparent; font-size:12px; font-weight:600; color:var(--ink-3); cursor:pointer; font-family:var(--f); white-space:nowrap; }
+    .sub-tab.on { background:#fff; color:var(--ink); border-color:rgba(184,145,106,0.28); box-shadow:0 1px 4px rgba(44,24,16,0.08); }
+    .sub-tab:hover:not(.on) { background:rgba(255,255,255,0.5); color:var(--ink-2); }
+    .sub-tab-cnt { padding:1px 6px; border-radius:10px; font-size:10px; font-weight:800; background:rgba(184,145,106,0.13); color:var(--gold-dk); }
+    .sub-tab-cnt.urgent { background:rgba(192,112,104,0.13); color:var(--rose); }
+
     /* ── RESPONSIVE ── */
     @media (min-width: 640px) {
       .admin-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
@@ -531,61 +539,90 @@ async function loadTemplates() {
 }
 
 function renderTemplates() {
+  const now = new Date();
+  const isExpiredDoc = t => {
+    const exp = t.expiresAt?.toDate?.();
+    return (t.status === 'active' && exp && exp < now) || t.status === 'expired';
+  };
+
   let list = _tplCache;
-  if (_tplFilter !== 'all') list = list.filter(t => t.status === _tplFilter);
+  if (_tplFilter === 'expired') {
+    list = list.filter(isExpiredDoc);
+  } else if (_tplFilter === 'active') {
+    list = list.filter(t => t.status === 'active' && !isExpiredDoc(t));
+  } else if (_tplFilter !== 'all') {
+    list = list.filter(t => t.status === _tplFilter);
+  }
 
   const pending  = _tplCache.filter(t => t.status === 'pending').length;
-  const active   = _tplCache.filter(t => t.status === 'active').length;
+  const active   = _tplCache.filter(t => t.status === 'active' && !isExpiredDoc(t)).length;
+  const expired  = _tplCache.filter(isExpiredDoc).length;
   const rejected = _tplCache.filter(t => t.status === 'rejected').length;
 
   document.getElementById('p-templates').innerHTML = `
     <div class="tab-bar">
-      <div class="tab-stats">${_tplCache.length} total · ${pending} pending · ${active} live · ${rejected} rejected</div>
+      <div class="tab-stats">${_tplCache.length} total · ${pending} pending · ${active} live · ${expired} expired · ${rejected} rejected</div>
       <div class="filter-row">
-        ${['pending','active','rejected','all'].map(f =>
+        ${['pending','active','expired','rejected','all'].map(f =>
           `<button class="filt-btn ${_tplFilter===f?'on':''}" onclick="_tplFilter='${f}';renderTemplates()">${f}</button>`
         ).join('')}
         <button class="filt-btn" onclick="loadTemplates()" title="Refresh">↺</button>
       </div>
     </div>
+    ${_tplFilter === 'expired' && list.length > 0 ? `
+    <div style="font-size:11px;color:var(--ink-4);margin-bottom:10px;padding:8px 10px;border-radius:8px;background:rgba(184,145,106,0.08);border:1px solid rgba(184,145,106,0.15)">
+      ℹ️ These listings are inactive — send each seller a renewal email to bring them back.
+    </div>` : ''}
     ${list.length === 0
       ? `<div class="empty">No templates in this filter.<small>Sellers publish templates from the app — they appear here for review.</small></div>`
       : `<div class="admin-list">${list.map(renderTemplateCard).join('')}</div>`}`;
 }
 
 function renderTemplateCard(t) {
+  const now     = new Date();
+  const expDate = t.expiresAt?.toDate?.();
+  const isOverdue  = expDate && expDate < now;
   const isPending  = t.status === 'pending';
-  const isActive   = t.status === 'active';
+  const isActive   = t.status === 'active' && !isOverdue;
+  const isExpired  = t.status === 'expired' || (t.status === 'active' && isOverdue);
   const isRejected = t.status === 'rejected';
+  const displayStatus = isExpired ? 'EXPIRED' : (t.status || '?').toUpperCase();
+  const statusBadgeClass = isPending ? 'badge-pending' : isActive ? 'badge-active' : 'badge-hidden';
 
   const expenses  = (t.templateData?.expenses  || []).length;
   const checklist = (t.templateData?.checklist || []).length;
   const vendors   = (t.templateData?.vendors   || []).length;
   const schedule  = (t.templateData?.schedule  || []).length;
 
-  // Quality gate check
   const qualIssues = [];
-  if (expenses  < 5)  qualIssues.push(`${expenses}/5+ expenses`);
+  if (expenses  < 5)  qualIssues.push(`${expenses}/5+`);
   if (checklist < 10) qualIssues.push(`${checklist}/10+ tasks`);
   if (vendors   < 3)  qualIssues.push(`${vendors}/3+ vendors`);
 
   const date = t.publishedAt
     ? new Date(t.publishedAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'2-digit' })
     : '—';
+  const expStr = expDate
+    ? expDate.toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' })
+    : '';
 
-  const statusBadgeClass = isPending ? 'badge-pending' : isActive ? 'badge-active' : 'badge-hidden';
+  // Expired seller contact section
+  const renewSubject = `Your VP-${t._docId} listing has expired — renew now | Vows & Petals`;
+  const renewBody = `Hi ${t.sellerName || 'there'},\n\nYour template listing VP-${t._docId} "${t.title || 'your plan'}" expired on ${expStr} and is no longer visible in the marketplace.\n\nTo reactivate it:\n1. Open the Vows & Petals app\n2. Go to Overview tab\n3. Find your listing card\n4. Tap "Renew Listing"\n\nDon't let your hard work go to waste — other couples are looking for exactly what you planned! 🌸\n\nWarm regards,\nVows & Petals Team\n${ADMIN_EMAIL}`;
+  const renewEmailHref = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(t.sellerEmail||'')}&su=${encodeURIComponent(renewSubject)}&body=${encodeURIComponent(renewBody)}`;
 
   return `
-    <div class="admin-card${isRejected ? ' dimmed' : ''}">
+    <div class="admin-card${(isRejected || isExpired) ? ' dimmed' : ''}">
       <div class="admin-card-top" style="align-items:flex-start">
         <div class="admin-card-info" style="flex:1">
           <div class="admin-card-name">${esc(t.title || 'Untitled Template')}</div>
           <div class="admin-card-sub">
             ${esc(t.sellerName || 'Unknown seller')} · <b>₱${Number(t.price || 0).toLocaleString()}</b> · ${date}
+            ${isExpired && expStr ? ` · <span style="color:var(--rose)">Expired ${expStr}</span>` : ''}
           </div>
           ${t.description ? `<div style="margin-top:5px;font-size:11.5px;color:var(--ink-3);line-height:1.5">${esc(t.description)}</div>` : ''}
           <div class="badge-row" style="margin-top:8px">
-            <span class="badge ${statusBadgeClass}">${(t.status || '?').toUpperCase()}</span>
+            <span class="badge ${statusBadgeClass}">${displayStatus}</span>
             <span class="badge badge-code">VP-${t._docId.toUpperCase()}</span>
           </div>
           <div class="tpl-stats">
@@ -593,11 +630,17 @@ function renderTemplateCard(t) {
             <span>✅ ${checklist} tasks</span>
             <span>🤝 ${vendors} vendors</span>
             <span>📅 ${schedule} events</span>
-            ${t.salesCount ? `<span>🛒 ${t.salesCount} sales</span>` : ''}
+            ${t.salesCount  ? `<span>🛒 ${t.salesCount} sales</span>` : ''}
             ${t.totalEarned ? `<span>💰 ₱${Number(t.totalEarned).toLocaleString()} earned</span>` : ''}
           </div>
           ${qualIssues.length > 0 && isPending
             ? `<div class="tpl-quality-warn">⚠️ Thin content: ${qualIssues.join(' · ')}</div>`
+            : ''}
+          ${t.sellerPaymentRef && isPending
+            ? `<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:rgba(90,171,122,0.09);border:1px solid rgba(90,171,122,0.22);font-size:11.5px;color:#3a7a54;font-weight:700">
+                ✅ Seller payment ref: <span style="font-family:monospace;letter-spacing:1px">${esc(t.sellerPaymentRef)}</span>
+                <span style="font-size:10.5px;font-weight:500;color:var(--ink-4);margin-left:6px">— verify then Approve</span>
+              </div>`
             : ''}
           ${t.sellerTikTok || t.sellerIG ? `
           <div style="margin-top:8px;display:flex;gap:12px">
@@ -609,11 +652,23 @@ function renderTemplateCard(t) {
             : ''}
         </div>
       </div>
+
       ${isPending || isActive ? `
       <div class="action-row" style="margin-top:10px">
-        ${isPending ? `<button class="act-btn act-on" onclick="approveTemplate('${t._docId}')">✅ Approve & Publish</button>` : ''}
+        ${isPending ? `<button class="act-btn act-on" onclick="approveTemplate('${t._docId}')">✅ Approve &amp; Publish</button>` : ''}
         <button class="act-btn act-danger" onclick="rejectTemplate('${t._docId}',${isActive})">${isActive ? '❌ Suspend' : '❌ Reject'}</button>
         ${isActive ? `<button class="act-btn" onclick="simulatePurchase('${t._docId}',${t.price||0},'${esc(t.sellerUid||'')}','${esc(t.sellerEmail||'')}')" title="Test the purchase flow" style="background:rgba(101,85,196,0.08);border-color:rgba(101,85,196,0.25);color:#6555c4">🧪 Simulate Sale</button>` : ''}
+      </div>` : ''}
+
+      ${isExpired ? `
+      <div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(184,145,106,0.06);border:1px solid rgba(184,145,106,0.15)">
+        <div style="font-size:11px;font-weight:700;color:var(--ink-3);margin-bottom:7px">📧 Contact Seller to Renew</div>
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:6px">
+          ${t.sellerEmail ? `<a href="mailto:${esc(t.sellerEmail)}" style="color:#1a73e8;font-weight:700;text-decoration:none">${esc(t.sellerEmail)}</a>` : '—'}
+        </div>
+        <div class="action-row">
+          <a href="${renewEmailHref}" target="_blank" rel="noopener" class="act-btn" style="text-decoration:none">📧 Send Renewal Email</a>
+        </div>
       </div>` : ''}
     </div>`;
 }
@@ -702,8 +757,9 @@ async function simulatePurchase(docId, price, sellerUid, sellerEmail) {
 ══════════════════════════════════════════════════ */
 const GCASH_NUMBER   = '09XX-XXX-XXXX'; // ← replace with your GCash number
 const ADMIN_EMAIL    = 'hello@vowsandpetals.com';
-let _payFilter  = 'pending';
-let _payCache   = [];
+let _payTypeFilter = 'all';   // 'all' | 'new_listing' | 'renewal' | 'supplier_pro' | 'badge'
+let _payFilter     = 'pending';
+let _payCache      = [];
 
 async function loadPaymentRequests() {
   const el = document.getElementById('p-payments');
@@ -720,29 +776,71 @@ async function loadPaymentRequests() {
 }
 
 function renderPaymentRequests() {
-  let list = _payCache;
+  // ── type + status filter ──────────────────────────────────────────────────
+  let list = [..._payCache];
+  if      (_payTypeFilter === 'new_listing')  list = list.filter(r => r.type === 'new_listing');
+  else if (_payTypeFilter === 'renewal')      list = list.filter(r => r.type === 'renewal');
+  else if (_payTypeFilter === 'supplier_pro') list = list.filter(r => r.type === 'pro_monthly' || r.type === 'pro_annual');
+  else if (_payTypeFilter === 'badge')        list = list.filter(r => r.type === 'badge');
   if (_payFilter !== 'all') list = list.filter(r => r.status === _payFilter);
 
-  const pending    = _payCache.filter(r => r.status === 'pending').length;
-  const emailSent  = _payCache.filter(r => r.status === 'email_sent').length;
-  const completed  = _payCache.filter(r => r.status === 'completed').length;
-  const cancelled  = _payCache.filter(r => r.status === 'cancelled').length;
+  // ── counts for tab badges ─────────────────────────────────────────────────
+  const byType = (types) => _payCache.filter(r => types.includes(r.type));
+  const pByType = (types) => byType(types).filter(r => r.status === 'pending').length;
+
+  const pending   = _payCache.filter(r => r.status === 'pending').length;
+  const emailSent = _payCache.filter(r => r.status === 'email_sent').length;
+  const completed = _payCache.filter(r => r.status === 'completed').length;
+
+  const typeTabs = [
+    { key:'all',          emoji:'📋', label:'All',          types:null },
+    { key:'new_listing',  emoji:'🆕', label:'New Listing',  types:['new_listing'] },
+    { key:'renewal',      emoji:'🔄', label:'Renewal',      types:['renewal'] },
+    { key:'supplier_pro', emoji:'⭐', label:'Supplier Pro', types:['pro_monthly','pro_annual'] },
+    { key:'badge',        emoji:'🏷️', label:'Badge',        types:['badge'] },
+  ];
 
   document.getElementById('p-payments').innerHTML = `
+
+    <!-- ── TYPE SUB-TABS ── -->
+    <div class="sub-tabs">
+      ${typeTabs.map(t => {
+        const total   = t.types ? byType(t.types).length : _payCache.length;
+        const pCount  = t.types ? pByType(t.types) : pending;
+        const urgent  = pCount > 0;
+        return `<button class="sub-tab ${_payTypeFilter===t.key?'on':''}" onclick="_payTypeFilter='${t.key}';renderPaymentRequests()">
+          ${t.emoji} ${t.label}
+          ${total > 0 || urgent ? `<span class="sub-tab-cnt${urgent?' urgent':''}">${urgent ? pCount+'!' : total}</span>` : ''}
+        </button>`;
+      }).join('')}
+    </div>
+
+    <!-- ── STATUS FILTER ── -->
     <div class="tab-bar">
-      <div class="tab-stats">${_payCache.length} total · ${pending} pending · ${emailSent} email sent · ${completed} completed · ${cancelled} cancelled</div>
+      <div class="tab-stats">${list.length} shown · ${pending} pending · ${emailSent} email sent · ${completed} completed</div>
       <div class="filter-row">
         ${['pending','email_sent','completed','cancelled','all'].map(f =>
           `<button class="filt-btn ${_payFilter===f?'on':''}" onclick="_payFilter='${f}';renderPaymentRequests()">${f.replace('_',' ')}</button>`
         ).join('')}
-        <button class="filt-btn" onclick="loadPaymentRequests()" title="Refresh">↺</button>
+        <button class="filt-btn" onclick="loadPaymentRequests()">↺</button>
       </div>
     </div>
+
+    <!-- ── BADGE INFO PANEL (no Firestore records — all via email) ── -->
+    ${_payTypeFilter === 'badge' ? `
+    <div style="padding:14px 16px;border-radius:var(--r-md);background:rgba(101,85,196,0.05);border:1px solid rgba(101,85,196,0.15);margin-bottom:12px;font-size:12.5px;color:var(--ink-3);line-height:1.7">
+      <b style="color:var(--ink);font-size:13px">🏷️ Badge Request Workflow</b><br>
+      Badge requests are handled entirely by email — no in-app form.<br>
+      <b style="color:var(--ink-2)">Flow:</b> Seller emails their request → you reply with payment instructions → they pay &amp; reply with receipt + proof of qualification → you verify and grant badge in the Suppliers tab.
+      <div style="margin-top:8px;font-size:11px;color:var(--ink-4)">Nothing will appear in this list for badges. Check your inbox for badge-related emails.</div>
+    </div>` : `
     <div style="font-size:11px;color:var(--ink-4);margin-bottom:10px;padding:8px 10px;border-radius:8px;background:rgba(184,145,106,0.08);border:1px solid rgba(184,145,106,0.15)">
-      ℹ️ Workflow: Tap <b>Send Payment Email</b> → user receives GCash instructions → user pays → tap <b>Complete</b> and activate in Suppliers/Templates tab.
-    </div>
+      ℹ️ Workflow: <b>Send Payment Email</b> → seller pays GCash → seller enters ref on their listing card → verify ref → <b>Complete</b> → activate in Templates/Suppliers tab.
+    </div>`}
+
     ${list.length === 0
-      ? `<div class="empty">No payment requests in this filter.<small>New listing, renewal, and Pro upgrade requests appear here.</small></div>`
+      ? `<div class="empty">No ${_payTypeFilter!=='all'?typeTabs.find(t=>t.key===_payTypeFilter)?.label+' ':''}payment requests${_payFilter!=='all'?` with status "${_payFilter.replace('_',' ')}"`:''}.
+          <small>Requests appear here when sellers submit from the app.</small></div>`
       : `<div class="admin-list">${list.map(renderPaymentRequestCard).join('')}</div>`}`;
 }
 
@@ -788,6 +886,14 @@ function renderPaymentRequestCard(r) {
             <b style="font-size:14px;color:var(--ink)">${amount}</b>
             <span style="color:var(--ink-4);font-size:11px;margin-left:8px">${date}</span>
           </div>
+          ${r.sellerPaymentRef
+            ? `<div style="margin-top:8px;padding:7px 10px;border-radius:8px;background:rgba(90,171,122,0.09);border:1px solid rgba(90,171,122,0.22);font-size:11.5px;color:#3a7a54;font-weight:700">
+                ✅ Seller GCash ref: <span style="font-family:monospace;letter-spacing:1px">${esc(r.sellerPaymentRef)}</span>
+                <span style="font-size:10.5px;font-weight:500;color:var(--ink-4);margin-left:6px">— verify against GCash receipt then Complete</span>
+              </div>`
+            : r.status === 'email_sent'
+              ? `<div style="margin-top:6px;font-size:11px;color:var(--ink-4)">⏳ Waiting for seller to submit their GCash reference number…</div>`
+              : ''}
         </div>
       </div>
       ${!isDone ? `

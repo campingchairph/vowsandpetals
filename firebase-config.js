@@ -255,6 +255,30 @@ function _refreshSaveSellCard() {
     }, err => { console.warn('Seller templates listener:', err); });
 }
 
+// Builds the "awaiting payment / enter GCash ref" UI shown on a seller's pending listing card.
+// If the seller already submitted a ref, shows it with a "waiting for admin" state instead.
+function _buildPaymentPendingUI(code, existingRef) {
+  if (existingRef) {
+    return `
+      <div style="font-size:11px;font-weight:700;color:var(--green-deep);margin-bottom:4px">✅ Payment reference submitted</div>
+      <div style="font-size:12px;font-family:monospace;background:rgba(90,171,122,0.08);border:1px solid rgba(90,171,122,0.2);border-radius:6px;padding:5px 10px;color:var(--ink-2);letter-spacing:1.5px;margin-bottom:5px">${_esc(existingRef)}</div>
+      <div style="font-size:11px;color:var(--ink-4)">⏳ Awaiting admin verification — your listing will go live once confirmed.</div>`;
+  }
+  return `
+    <div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin-bottom:8px">
+      ⏳ Admin will email payment instructions to <b>${_esc(window.CURRENT_USER?.email||'your email')}</b> shortly.<br>
+      Once you pay via GCash, enter your GCash transaction reference number here:
+    </div>
+    <div style="display:flex;gap:6px">
+      <input id="fee-ref-inp-${code}" class="glass-input" placeholder="GCash ref (e.g. 091234567890)"
+        style="flex:1;font-size:11px;padding:6px 8px;height:auto;min-height:unset;font-family:monospace;text-transform:uppercase"
+        oninput="this.value=this.value.toUpperCase()">
+      <button onclick="_submitSellerPaymentRef('${code}')"
+        style="padding:6px 12px;border-radius:8px;border:1.5px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f);white-space:nowrap;flex-shrink:0">
+        Submit →</button>
+    </div>`;
+}
+
 function _applyTemplateSnap(snap) {
   const cardsEl = document.getElementById('save-sell-cards');
   if (!cardsEl) return; // user navigated away — next visit will re-render via _lastTemplateSnap
@@ -293,7 +317,8 @@ function _applyTemplateSnap(snap) {
     const pendingPayment = !!t.hasPendingPayment;
     const canDelete = (effectiveStatus === 'rejected' || effectiveStatus === 'expired') && !pendingPayment;
     const titleStr  = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
-    const pendingMsg = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
+    // Dynamic: shows GCash ref input if seller hasn't submitted yet, or "submitted" state if they have
+    const pendingMsg = _buildPaymentPendingUI(code, t.sellerPaymentRef);
 
     const displayStatus = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired') ? 'for review' : effectiveStatus;
     const displayColor  = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired') ? '#1a73e8' : statusColor;
@@ -1177,6 +1202,33 @@ async function _setRefNumber(code, purchaseId) {
   } catch(e) { showToast('⚠️ ' + e.message); }
 }
 
+// Saves the seller's GCash payment reference to the template doc (and the matching payment request).
+// Called from the ref input button on the seller's pending listing card.
+async function _submitSellerPaymentRef(code) {
+  const inp = document.getElementById(`fee-ref-inp-${code}`);
+  const ref = (inp?.value || '').trim().toUpperCase();
+  if (!ref) { showToast('⚠️ Enter your GCash reference number first'); return; }
+  if (!window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
+  try {
+    // Save to template doc — onSnapshot fires → seller sees "submitted" state immediately
+    await DB.collection('kasalko_templates').doc(code).update({
+      sellerPaymentRef:          ref,
+      paymentRefSubmittedAt:     firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    // Also update the matching open payment request so admin sees it on the payments tab
+    DB.collection('kasalko_payment_requests')
+      .where('code', '==', code)
+      .where('status', 'in', ['pending', 'email_sent'])
+      .limit(1).get()
+      .then(snap => {
+        if (!snap.empty) snap.docs[0].ref.update({ sellerPaymentRef: ref }).catch(() => {});
+      }).catch(() => {});
+    showToast('✅ Reference saved! Admin will verify and activate your listing.');
+  } catch(e) {
+    showToast('⚠️ ' + e.message);
+  }
+}
+
 /* ── WINDOW EXPORTS ──────────────────────────── */
 window.cloudSave              = cloudSave;
 window.saveInvitePublic       = saveInvitePublic;
@@ -1199,6 +1251,7 @@ window._submitAgreementAndPublish = _submitAgreementAndPublish;
 window.openRenewListing           = openRenewListing;
 window._loadSellerPurchases       = _loadSellerPurchases;
 window._setRefNumber              = _setRefNumber;
+window._submitSellerPaymentRef    = _submitSellerPaymentRef;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;
