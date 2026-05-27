@@ -124,6 +124,16 @@
     /* ── TOAST ── */
     #adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; opacity: 0; }
 
+    /* ── TAB NOTIFICATION BADGES ── */
+    .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px; padding:0 5px; border-radius:9px; font-size:9.5px; font-weight:800; background:var(--rose); color:#fff; margin-left:5px; vertical-align:middle; line-height:1; }
+    .tab-badge:empty { display:none; }
+
+    /* ── SEARCH INPUT ── */
+    .adm-search { width:100%; padding:9px 12px 9px 34px; border-radius:var(--r-md); border:1px solid rgba(184,145,106,0.25); background:#fff; font-size:12.5px; font-family:var(--f); color:var(--ink); outline:none; }
+    .adm-search:focus { border-color:rgba(184,145,106,0.5); box-shadow:0 0 0 3px rgba(184,145,106,0.08); }
+    .adm-search-wrap { position:relative; margin-bottom:12px; }
+    .adm-search-wrap::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
+
     /* ── PAYMENT TYPE SUB-TABS ── */
     .sub-tabs { display:flex; gap:4px; flex-wrap:wrap; padding:6px 8px; background:rgba(44,24,16,0.03); border-radius:var(--r-md); border:1px solid rgba(184,145,106,0.12); margin-bottom:12px; }
     .sub-tab  { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; border:1px solid transparent; background:transparent; font-size:12px; font-weight:600; color:var(--ink-3); cursor:pointer; font-family:var(--f); white-space:nowrap; }
@@ -187,10 +197,10 @@
   </header>
 
   <nav class="adm-tabs">
-    <button id="tab-btn-suppliers" class="adm-tab" onclick="aTab('suppliers')">🏪 Suppliers</button>
-    <button id="tab-btn-leads"     class="adm-tab" onclick="aTab('leads')">📋 Vendor Leads</button>
-    <button id="tab-btn-templates" class="adm-tab" onclick="aTab('templates')">💰 Templates</button>
-    <button id="tab-btn-payments"  class="adm-tab" onclick="aTab('payments')">💳 Payments</button>
+    <button id="tab-btn-suppliers" class="adm-tab" onclick="aTab('suppliers')">🏪 Suppliers<span class="tab-badge" id="badge-suppliers"></span></button>
+    <button id="tab-btn-leads"     class="adm-tab" onclick="aTab('leads')">📋 Leads<span class="tab-badge" id="badge-leads"></span></button>
+    <button id="tab-btn-templates" class="adm-tab" onclick="aTab('templates')">💰 Templates<span class="tab-badge" id="badge-templates"></span></button>
+    <button id="tab-btn-payments"  class="adm-tab" onclick="aTab('payments')">💳 Payments<span class="tab-badge" id="badge-payments"></span></button>
   </nav>
 
   <div class="adm-wrap">
@@ -274,11 +284,31 @@ AUTH.onAuthStateChanged(user => {
   document.getElementById('admin-email').textContent = user.email;
   show('s-admin');
   aTab('suppliers');
+  _loadTabBadges(); // load notification counts for all tabs
 });
 
 function googleSignIn() {
   AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
     .catch(e => { if (e.code !== 'auth/popup-closed-by-user') alert('Sign-in error: ' + e.message); });
+}
+
+/* ── TAB BADGES ─────────────────────────────────── */
+function _updateTabBadge(tab, count) {
+  const el = document.getElementById('badge-' + tab);
+  if (el) el.textContent = count > 0 ? count : '';
+}
+
+async function _loadTabBadges() {
+  try {
+    const [leadsSnap, tplSnap, paySnap] = await Promise.all([
+      DB.collection('kasalko_vendor_leads').get(),
+      DB.collection('kasalko_templates').where('status','==','pending').get(),
+      DB.collection('kasalko_payment_requests').where('status','==','pending').get(),
+    ]);
+    _updateTabBadge('leads',     leadsSnap.size);
+    _updateTabBadge('templates', tplSnap.size);
+    _updateTabBadge('payments',  paySnap.size);
+  } catch(e) { /* non-critical — badges are cosmetic */ }
 }
 
 /* ── TABS ───────────────────────────────────────── */
@@ -338,10 +368,12 @@ function renderSuppliers() {
   if (_suppFilter === 'pro')      list = list.filter(s => s.plan === 'pro');
   if (_suppFilter === 'hidden')   list = list.filter(s => s.hidden || s.status === 'suspended');
 
-  const total    = _suppCache.length;
-  const verified = _suppCache.filter(s => s.verified).length;
-  const pro      = _suppCache.filter(s => s.plan === 'pro').length;
-  const hidden   = _suppCache.filter(s => s.hidden || s.status === 'suspended').length;
+  const total      = _suppCache.length;
+  const verified   = _suppCache.filter(s => s.verified).length;
+  const pro        = _suppCache.filter(s => s.plan === 'pro').length;
+  const hidden     = _suppCache.filter(s => s.hidden || s.status === 'suspended').length;
+  const unverified = _suppCache.filter(s => !s.verified && !s.hidden && s.status !== 'suspended').length;
+  _updateTabBadge('suppliers', unverified);
 
   document.getElementById('p-suppliers').innerHTML = `
     <div class="tab-bar">
@@ -454,6 +486,7 @@ async function loadLeads() {
     catch { snap = await DB.collection('kasalko_vendor_leads').get(); }
     const leads = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
 
+    _updateTabBadge('leads', leads.length);
     if (leads.length === 0) {
       el.innerHTML = `
         <div class="tab-bar"><div class="tab-stats">0 leads</div></div>
@@ -558,6 +591,7 @@ function renderTemplates() {
   const active   = _tplCache.filter(t => t.status === 'active' && !isExpiredDoc(t)).length;
   const expired  = _tplCache.filter(isExpiredDoc).length;
   const rejected = _tplCache.filter(t => t.status === 'rejected').length;
+  _updateTabBadge('templates', pending);
 
   document.getElementById('p-templates').innerHTML = `
     <div class="tab-bar">
@@ -759,6 +793,7 @@ const GCASH_NUMBER   = '09XX-XXX-XXXX'; // ← replace with your GCash number
 const ADMIN_EMAIL    = 'hello@vowsandpetals.com';
 let _payTypeFilter = 'all';   // 'all' | 'new_listing' | 'renewal' | 'supplier_pro' | 'badge'
 let _payFilter     = 'pending';
+let _paySearch     = '';
 let _payCache      = [];
 
 async function loadPaymentRequests() {
@@ -776,21 +811,32 @@ async function loadPaymentRequests() {
 }
 
 function renderPaymentRequests() {
-  // ── type + status filter ──────────────────────────────────────────────────
+  // ── type + status + search filter ────────────────────────────────────────
   let list = [..._payCache];
   if      (_payTypeFilter === 'new_listing')  list = list.filter(r => r.type === 'new_listing');
   else if (_payTypeFilter === 'renewal')      list = list.filter(r => r.type === 'renewal');
   else if (_payTypeFilter === 'supplier_pro') list = list.filter(r => r.type === 'pro_monthly' || r.type === 'pro_annual');
   else if (_payTypeFilter === 'badge')        list = list.filter(r => r.type === 'badge');
   if (_payFilter !== 'all') list = list.filter(r => r.status === _payFilter);
+  if (_paySearch.trim()) {
+    const q = _paySearch.toLowerCase();
+    list = list.filter(r =>
+      (r.name              || '').toLowerCase().includes(q) ||
+      (r.email             || '').toLowerCase().includes(q) ||
+      (r.code              || '').toLowerCase().includes(q) ||
+      (r.sellerPaymentRef  || '').toLowerCase().includes(q) ||
+      (r.type              || '').toLowerCase().includes(q)
+    );
+  }
 
   // ── counts for tab badges ─────────────────────────────────────────────────
-  const byType = (types) => _payCache.filter(r => types.includes(r.type));
+  const byType  = (types) => _payCache.filter(r => types.includes(r.type));
   const pByType = (types) => byType(types).filter(r => r.status === 'pending').length;
 
   const pending   = _payCache.filter(r => r.status === 'pending').length;
   const emailSent = _payCache.filter(r => r.status === 'email_sent').length;
   const completed = _payCache.filter(r => r.status === 'completed').length;
+  _updateTabBadge('payments', pending);
 
   const typeTabs = [
     { key:'all',          emoji:'📋', label:'All',          types:null },
@@ -801,6 +847,12 @@ function renderPaymentRequests() {
   ];
 
   document.getElementById('p-payments').innerHTML = `
+
+    <!-- ── SEARCH ── -->
+    <div class="adm-search-wrap">
+      <input class="adm-search" type="search" value="${esc(_paySearch)}" placeholder="Search name, email, VP-code, GCash ref…"
+        oninput="_paySearch=this.value;renderPaymentRequests()" autocomplete="off">
+    </div>
 
     <!-- ── TYPE SUB-TABS ── -->
     <div class="sub-tabs">
@@ -1043,16 +1095,46 @@ async function markEmailSent(docId) {
 }
 
 async function completePaymentRequest(docId) {
-  if (!confirm('Mark this payment request as completed? Do this after verifying the GCash receipt.')) return;
+  const r = _payCache.find(r => r._docId === docId);
+  const isListing = r && r.code && (r.type === 'new_listing' || r.type === 'renewal');
+  const confirmMsg = isListing
+    ? `Mark payment as completed AND automatically publish VP-${r.code}?\n\nDo this only after verifying the GCash receipt.`
+    : 'Mark this payment request as completed? Do this after verifying the GCash receipt.';
+  if (!confirm(confirmMsg)) return;
   try {
+    // 1. Mark payment request as completed
     await DB.collection('kasalko_payment_requests').doc(docId).update({
       status: 'completed',
       completedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    const r = _payCache.find(r => r._docId === docId);
     if (r) r.status = 'completed';
+
+    // 2. Auto-activate template for new listing / renewal payments
+    if (isListing) {
+      const months    = r.months || 1;
+      const newExpiry = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
+      await DB.collection('kasalko_templates').doc(r.code).update({
+        status:            'active',
+        adminNote:         '',
+        hasPendingPayment: false,
+        sellerPaymentRef:  firebase.firestore.FieldValue.delete(), // clear ref (payment done)
+        expiresAt:         firebase.firestore.Timestamp.fromDate(newExpiry),
+      });
+      // Update local template cache
+      const t = _tplCache.find(t => t._docId === r.code);
+      if (t) {
+        t.status = 'active'; t.adminNote = '';
+        t.hasPendingPayment = false; t.sellerPaymentRef = null;
+        t.expiresAt = { toDate: () => newExpiry, toMillis: () => newExpiry.getTime() };
+      }
+      _updateTabBadge('templates', _tplCache.filter(t => t.status === 'pending').length);
+      renderPaymentRequests();
+      toast(`✅ Payment done — VP-${r.code} is now LIVE for ${months} month${months !== 1 ? 's' : ''}!`);
+      return;
+    }
+
     renderPaymentRequests();
-    toast('✅ Payment request completed — remember to activate in Suppliers/Templates tab!');
+    toast('✅ Payment completed — activate the supplier manually in the Suppliers tab.');
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 
