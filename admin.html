@@ -1326,6 +1326,7 @@ function renderWithdrawCard(w) {
           <div style="margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <span style="font-size:11px;font-weight:700;color:${statusColor};border:1px solid ${statusColor};border-radius:6px;padding:1px 7px">${(w.status||'').toUpperCase()}</span>
             <span style="font-size:10.5px;color:var(--ink-4)">${reqDate}</span>
+            ${w.proofRef ? `<span style="font-size:10.5px;font-weight:700;color:#3a7a54;font-family:monospace;border:1px solid rgba(90,171,122,0.3);border-radius:6px;padding:1px 7px">📎 Ref: ${esc(w.proofRef)}</span>` : ''}
           </div>
         </div>
       </div>
@@ -1484,14 +1485,21 @@ async function releasePayout(withdrawId) {
   const w = _salesWithdrawCache.find(w => w._docId === withdrawId);
   if (!w) return;
   const amount = Number(w.amount || 0);
-  if (!confirm(`Release ₱${amount.toLocaleString()} to ${w.sellerEmail}?\n\nOnly click after you've sent the actual GCash payment.`)) return;
+
+  // Collect proof before confirming release
+  const proofRef = prompt(
+    `Release ₱${amount.toLocaleString()} to ${w.sellerEmail}\n\nEnter your GCash transaction reference (your outgoing ref as sender) for record-keeping:\n\nLeave blank to skip, or Cancel to abort.`
+  );
+  if (proofRef === null) return; // cancelled
+
+  if (!confirm(`Confirm release of ₱${amount.toLocaleString()} to ${w.sellerEmail}?\n\nDo this ONLY after you've sent the actual GCash payment.`)) return;
   try {
     const now = firebase.firestore.FieldValue.serverTimestamp();
 
-    // 1. Mark the withdrawal request as released
-    await DB.collection('kasalko_withdrawal_requests').doc(withdrawId).update({
-      status: 'released', releasedAt: now,
-    });
+    // 1. Mark the withdrawal request as released (store proof ref if provided)
+    const releaseUpdate = { status: 'released', releasedAt: now };
+    if (proofRef && proofRef.trim()) releaseUpdate.proofRef = proofRef.trim().toUpperCase();
+    await DB.collection('kasalko_withdrawal_requests').doc(withdrawId).update(releaseUpdate);
 
     // 2. Mark individual purchase docs as released (batch)
     const purchaseIds = w.purchaseIds || (w.purchaseId ? [w.purchaseId] : []);

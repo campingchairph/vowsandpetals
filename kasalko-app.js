@@ -93,7 +93,7 @@ const WED = {
   allTags: [],
   _nextPhotoId: 1,
   guestGroups: ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"],
-  inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Bride's Attire", attireLabelB: "Groom's Attire" },
+  inviteSettings: { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Ladies' Attire", attireLabelB: "Gentlemen's Attire" },
   inviteTheme: 0,
   expenseCategories: [], // custom categories: [{key, icon, label}]
 };
@@ -1728,7 +1728,12 @@ function refreshCard2(cb) {
     img.onload = () => {
       ctx.save();
       ctx.beginPath(); ctx.roundRect(px, imgY, photoW, photoH, 8); ctx.clip();
-      ctx.drawImage(img, px, imgY, photoW, photoH);
+      // object-fit: cover — scale to fill, crop center
+      const scale = Math.max(photoW / img.naturalWidth, photoH / img.naturalHeight);
+      const sw = photoW / scale, sh = photoH / scale;
+      const sx = (img.naturalWidth  - sw) / 2;
+      const sy = (img.naturalHeight - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, px, imgY, photoW, photoH);
       ctx.restore();
       // label bar
       ctx.fillStyle = 'rgba(0,0,0,0.42)';
@@ -1754,10 +1759,10 @@ function refreshCard2(cb) {
 
   const pxA = (w - 2*photoW - 8) / 2;
   const pxB = pxA + photoW + 8;
-  if (is.attirePhotoA) _drawPhoto(is.attirePhotoA, pxA, is.attireLabelA || "Bride's Attire");
-  else _drawPhotoPlaceholder(pxA, is.attireLabelA || "Bride's Attire");
-  if (is.attirePhotoB) _drawPhoto(is.attirePhotoB, pxB, is.attireLabelB || "Groom's Attire");
-  else _drawPhotoPlaceholder(pxB, is.attireLabelB || "Groom's Attire");
+  if (is.attirePhotoA) _drawPhoto(is.attirePhotoA, pxA, is.attireLabelA || "Ladies' Attire");
+  else _drawPhotoPlaceholder(pxA, is.attireLabelA || "Ladies' Attire");
+  if (is.attirePhotoB) _drawPhoto(is.attirePhotoB, pxB, is.attireLabelB || "Gentlemen's Attire");
+  else _drawPhotoPlaceholder(pxB, is.attireLabelB || "Gentlemen's Attire");
 }
 
 /* Select an invitation design theme and refresh both cards */
@@ -4777,7 +4782,12 @@ function _initDraggableFab() {
     fab.style.cursor = 'grab';
     fab.style.transition = 'transform 0.15s';
     if (_fabMoved) {
-      try { localStorage.setItem('_fab_pos', JSON.stringify({ bottom: parseInt(fab.style.bottom), right: parseInt(fab.style.right) })); } catch(e) {}
+      _fabMoved = false;
+      try { localStorage.setItem('_fab_pos', JSON.stringify({ bottom: parseInt(fab.style.bottom), right: parseInt(fab.style.right) })); } catch(err) {}
+    } else if (e.type === 'touchend') {
+      // e.preventDefault() in touchstart kills the synthetic click on mobile —
+      // fire the action manually for touch taps
+      openQuickDials();
     }
   };
 
@@ -4788,7 +4798,7 @@ function _initDraggableFab() {
   document.addEventListener('touchend',  fabEnd);
   document.addEventListener('mouseup',   fabEnd);
 
-  // Suppress click after a drag
+  // Suppress click after a mouse-drag (touch taps are handled in fabEnd above)
   fab.addEventListener('click', e => { if (_fabMoved) { _fabMoved = false; e.stopImmediatePropagation(); } }, true);
 }
 

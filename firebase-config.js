@@ -384,6 +384,7 @@ let _sellerPurchasesUnsub = null; // unsubscribe fn for purchases onSnapshot
 let _sellerWatchedCode    = null; // template code currently subscribed for purchases
 let _lastTemplateSnap     = null; // last templates snapshot — re-render on tab return
 let _lastPurchasesSnap    = null; // last purchases snapshot — re-render on tab return
+let _sellerPurchasesFilter = 'all'; // 'all' | 'requested' | 'released'
 
 function _teardownSellerListeners() {
   if (_sellerTemplatesUnsub) { _sellerTemplatesUnsub(); _sellerTemplatesUnsub = null; }
@@ -1141,10 +1142,23 @@ function _applyPurchasesSnap(snap) {
   }
 
   const code = _sellerWatchedCode;
+
+  // Count each category for badge labels
+  const allDocs  = snap.docs;
+  const reqCount = allDocs.filter(d => d.data().withdrawStatus === 'requested').length;
+  const relCount = allDocs.filter(d => d.data().withdrawStatus === 'released').length;
+  const salesCount = allDocs.length;
   let totalWithdrawable = 0;
   let withdrawableCount = 0;
 
-  const rows = snap.docs.map(d => {
+  // Apply filter
+  const filteredDocs = _sellerPurchasesFilter === 'requested'
+    ? snap.docs.filter(d => d.data().withdrawStatus === 'requested')
+    : _sellerPurchasesFilter === 'released'
+    ? snap.docs.filter(d => d.data().withdrawStatus === 'released')
+    : snap.docs;
+
+  const rows = filteredDocs.map(d => {
     const p       = d.data();
     const pid     = d.id;
     const isVerified = p.status === 'verified' || !!p.refNumber;
@@ -1207,9 +1221,29 @@ function _applyPurchasesSnap(snap) {
       <div style="font-size:10.5px;color:var(--ink-4);text-align:center;margin-top:4px">30% platform fee already deducted from your earnings</div>
     </div>` : '';
 
+  // Sub-tab helper
+  const _st = (key, emoji, label, count) => {
+    const on = _sellerPurchasesFilter === key;
+    return `<button onclick="_sellerPurchasesFilter='${key}';_applyPurchasesSnap(_lastPurchasesSnap)"
+      style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:1px solid ${on?'rgba(201,169,110,0.45)':'transparent'};background:${on?'rgba(255,252,247,0.95)':'transparent'};font-size:11px;font-weight:600;color:${on?'var(--ink)':'var(--ink-4)'};cursor:pointer;font-family:var(--f);white-space:nowrap">
+      ${emoji} ${label}${count > 0 ? `<span style="min-width:15px;height:15px;padding:0 4px;border-radius:8px;font-size:9.5px;font-weight:800;background:${key==='released'?'rgba(90,171,122,0.15)':key==='requested'?'rgba(201,169,110,0.2)':'rgba(184,145,106,0.12)'};color:${key==='released'?'var(--green-deep)':'var(--tan-dark)'};display:inline-flex;align-items:center;justify-content:center">${count}</span>` : ''}
+    </button>`;
+  };
+
+  const emptyMsg = filteredDocs.length === 0
+    ? `<div style="font-size:11px;color:var(--ink-4);padding:8px 0;text-align:center">No ${_sellerPurchasesFilter === 'all' ? '' : _sellerPurchasesFilter} purchases.</div>`
+    : '';
+
   wrap.innerHTML = `
-    <div style="font-size:11.5px;font-weight:700;color:var(--ink);margin:6px 0 6px">🛒 Sales (${snap.docs.length})</div>
-    ${rows}${withdrawAllBtn}`;
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px">
+      <div style="font-size:11.5px;font-weight:700;color:var(--ink)">🛒 Sales (${salesCount})</div>
+    </div>
+    <div style="display:flex;gap:3px;flex-wrap:wrap;padding:4px 6px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.15);margin-bottom:10px">
+      ${_st('all',      '📋', 'All',       salesCount)}
+      ${_st('requested','⏳', 'Requested', reqCount)}
+      ${_st('released', '✅', 'Released',  relCount)}
+    </div>
+    ${emptyMsg}${rows}${withdrawAllBtn}`;
 }
 
 async function _setRefNumber(code, purchaseId) {
@@ -1351,6 +1385,7 @@ window.openPublishAgreement       = openPublishAgreement;
 window._submitAgreementAndPublish = _submitAgreementAndPublish;
 window.openRenewListing           = openRenewListing;
 window._loadSellerPurchases       = _loadSellerPurchases;
+window._applyPurchasesSnap        = _applyPurchasesSnap;
 window._setRefNumber              = _setRefNumber;
 window._requestWithdraw           = _requestWithdraw;
 window._requestWithdrawAll        = _requestWithdrawAll;
