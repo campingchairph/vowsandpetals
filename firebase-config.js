@@ -61,6 +61,7 @@ if (AUTH) {
         setTimeout(() => enterApp(), 400);
       }
     } else {
+      _teardownSellerListeners(); // clean up live listeners when user signs out
       // Signed out — refresh overview to show sign-in prompt
       if (typeof renderOverview === 'function' && WED && WED.activeTab === 'overview') renderOverview();
     }
@@ -222,121 +223,150 @@ function _buildSaveSellCard() {
       Publish your complete plan and earn from it.
     </div>
     <div id="save-sell-action">
-      <button onclick="openPublishAgreement()"
-        style="padding:8px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;color:var(--ivory);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f)">
-        💰 Publish My Plan →
-      </button>
+      <div id="save-sell-cards">
+        <button onclick="openPublishAgreement()"
+          style="padding:8px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;color:var(--ivory);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f)">
+          💰 Publish My Plan →
+        </button>
+      </div>
+      <div id="seller-purchases-wrap"></div>
     </div>
   </div>`;
 }
 
 function _refreshSaveSellCard() {
-  const el = document.getElementById('save-sell-action');
-  if (!el || !window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
-  // { source: 'server' } bypasses local Firestore cache so earnings reflect
-  // updates made by the admin's simulatePurchase on a different device/tab.
-  DB.collection('kasalko_templates')
-    .where('sellerUid','==', window.CURRENT_USER.uid).get({ source: 'server' })
-    .then(snap => {
-      const actionEl = document.getElementById('save-sell-action');
-      if (!actionEl) return;
+  if (!window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
 
-      // Sort by publishedAt descending in JS
-      const docs = snap.docs.slice().sort((a, b) => {
-        const ta = a.data().publishedAt?.toMillis?.() || 0;
-        const tb = b.data().publishedAt?.toMillis?.() || 0;
-        return tb - ta;
-      });
+  if (_sellerTemplatesUnsub) {
+    // Listener already active — re-render immediately from last known snapshot
+    // (handles user navigating away and back to Overview)
+    if (_lastTemplateSnap) _applyTemplateSnap(_lastTemplateSnap);
+    return;
+  }
 
-      if (docs.length === 0) return; // keep the default sell CTA shown
+  // First call — establish a real-time listener on this seller's templates.
+  // Firestore will push updates automatically whenever any template field changes
+  // (salesCount, totalEarned, status, etc.) — no polling or manual refresh needed.
+  _sellerTemplatesUnsub = DB.collection('kasalko_templates')
+    .where('sellerUid', '==', window.CURRENT_USER.uid)
+    .onSnapshot(snap => {
+      _lastTemplateSnap = snap;
+      _applyTemplateSnap(snap);
+    }, err => { console.warn('Seller templates listener:', err); });
+}
 
-      const MAX_LISTINGS = 2;
-      const now = new Date();
+function _applyTemplateSnap(snap) {
+  const cardsEl = document.getElementById('save-sell-cards');
+  if (!cardsEl) return; // user navigated away — next visit will re-render via _lastTemplateSnap
 
-      const cards = docs.map(doc => {
-        const t    = doc.data();
-        const code = doc.id;
+  const docs = snap.docs.slice().sort((a, b) => {
+    const ta = a.data().publishedAt?.toMillis?.() || 0;
+    const tb = b.data().publishedAt?.toMillis?.() || 0;
+    return tb - ta;
+  });
 
-        // Expiry info
-        const expiresAt  = t.expiresAt ? t.expiresAt.toDate() : null;
-        const isExpired  = expiresAt && expiresAt < now;
-        const daysLeft   = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : null;
-        const nearExpiry = daysLeft !== null && daysLeft <= 7 && !isExpired;
-        const expDateStr = expiresAt ? expiresAt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+  if (docs.length === 0) {
+    // All templates deleted — restore default sell CTA
+    cardsEl.innerHTML = `<button onclick="openPublishAgreement()"
+      style="padding:8px 16px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));border:none;color:var(--ivory);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f)">
+      💰 Publish My Plan →</button>`;
+    return;
+  }
 
-        // Status
-        const effectiveStatus = (t.status === 'active' && isExpired) ? 'expired' : t.status;
-        const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
-        const statusColor  = statusColors[effectiveStatus] || '#8C6640';
+  const MAX_LISTINGS = 2;
+  const now = new Date();
 
-        const pendingPayment = !!t.hasPendingPayment;
+  const cards = docs.map(doc => {
+    const t    = doc.data();
+    const code = doc.id;
 
-        // Delete only for rejected/expired AND no pending payment in progress
-        const canDelete = (effectiveStatus === 'rejected' || effectiveStatus === 'expired') && !pendingPayment;
+    const expiresAt  = t.expiresAt ? t.expiresAt.toDate() : null;
+    const isExpired  = expiresAt && expiresAt < now;
+    const daysLeft   = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : null;
+    const nearExpiry = daysLeft !== null && daysLeft <= 7 && !isExpired;
+    const expDateStr = expiresAt ? expiresAt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
 
-        const titleStr = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
+    const effectiveStatus = (t.status === 'active' && isExpired) ? 'expired' : t.status;
+    const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
+    const statusColor  = statusColors[effectiveStatus] || '#8C6640';
 
-        const pendingMsg = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
-        // Badge: show FOR REVIEW when seller has submitted a payment request
-        const displayStatus = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired')
-          ? 'for review' : effectiveStatus;
-        const displayColor  = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired')
-          ? '#1a73e8' : statusColor;
+    const pendingPayment = !!t.hasPendingPayment;
+    const canDelete = (effectiveStatus === 'rejected' || effectiveStatus === 'expired') && !pendingPayment;
+    const titleStr  = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
+    const pendingMsg = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
 
-        let actionArea = '';
-        if (effectiveStatus === 'active') {
-          actionArea = `
-            <div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>
-            ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''} — renew now`:`Active until ${expDateStr}`}</div>` : ''}
-            ${nearExpiry && !pendingPayment ? `<button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>` : ''}
-            ${nearExpiry && pendingPayment ? pendingMsg : ''}`;
-        } else if (effectiveStatus === 'expired') {
-          actionArea = `
-            <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. No longer visible in marketplace.</div>
-            ${pendingPayment ? pendingMsg : `<button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>`}`;
-        } else if (effectiveStatus === 'pending') {
-          actionArea = pendingMsg;
-        } else {
-          // rejected
-          actionArea = `
-            <div style="font-size:11px;color:#c07068;margin-bottom:8px">${_esc(t.adminNote||'Your listing was rejected. Please review your content and resubmit.')}</div>
-            ${pendingPayment ? pendingMsg : `<button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`}`;
-        }
+    const displayStatus = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired') ? 'for review' : effectiveStatus;
+    const displayColor  = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired') ? '#1a73e8' : statusColor;
 
-        return `
-          <div style="padding:10px 12px;border-radius:10px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.22);margin-bottom:8px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-              <span style="font-family:monospace;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:10px;font-weight:700;color:${displayColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${displayStatus.toUpperCase()}</span>
-                ${canDelete ? `<button onclick="deleteTemplate('${code}')" title="Delete listing" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-4);padding:2px 4px;line-height:1">🗑</button>` : ''}
-              </div>
-            </div>
-            ${titleStr}
-            ${actionArea}
-          </div>`;
-      }).join('');
+    let actionArea = '';
+    if (effectiveStatus === 'active') {
+      actionArea = `
+        <div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>
+        ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''} — renew now`:`Active until ${expDateStr}`}</div>` : ''}
+        ${nearExpiry && !pendingPayment ? `<button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>` : ''}
+        ${nearExpiry && pendingPayment ? pendingMsg : ''}`;
+    } else if (effectiveStatus === 'expired') {
+      actionArea = `
+        <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. No longer visible in marketplace.</div>
+        ${pendingPayment ? pendingMsg : `<button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>`}`;
+    } else if (effectiveStatus === 'pending') {
+      actionArea = pendingMsg;
+    } else {
+      actionArea = `
+        <div style="font-size:11px;color:#c07068;margin-bottom:8px">${_esc(t.adminNote||'Your listing was rejected. Please review your content and resubmit.')}</div>
+        ${pendingPayment ? pendingMsg : `<button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`}`;
+    }
 
-      // Show "+ Sell Another Template" only if under the 2-listing cap
-      const sellAnotherBtn = docs.length < MAX_LISTINGS ? `
-        <div style="margin-bottom:8px">
-          <button onclick="openPublishAgreement()" style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px dashed rgba(201,169,110,0.4);background:rgba(245,230,200,0.25);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">+ Sell Another Template</button>
-        </div>` : '';
+    return `
+      <div style="padding:10px 12px;border-radius:10px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.22);margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-family:monospace;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:700;color:${displayColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${displayStatus.toUpperCase()}</span>
+            ${canDelete ? `<button onclick="deleteTemplate('${code}')" title="Delete listing" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-4);padding:2px 4px;line-height:1">🗑</button>` : ''}
+          </div>
+        </div>
+        ${titleStr}
+        ${actionArea}
+      </div>`;
+  }).join('');
 
-      actionEl.innerHTML = sellAnotherBtn + cards;
+  const sellAnotherBtn = docs.length < MAX_LISTINGS ? `
+    <div style="margin-bottom:8px">
+      <button onclick="openPublishAgreement()" style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px dashed rgba(201,169,110,0.4);background:rgba(245,230,200,0.25);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">+ Sell Another Template</button>
+    </div>` : '';
 
-      // Purchase requests for first active/pending listing
-      const firstDoc = docs[0];
-      if (firstDoc) {
-        actionEl.insertAdjacentHTML('beforeend', `<div id="seller-purchases-wrap" style="margin-top:4px"><div style="font-size:11px;color:var(--ink-4);padding:4px 0">Loading purchase requests…</div></div>`);
-        _loadSellerPurchases(firstDoc.id);
-      }
-    }).catch(() => {});
+  cardsEl.innerHTML = sellAnotherBtn + cards;
+
+  // Set up real-time purchases listener for the first template
+  // Only re-subscribe if the watched template code has changed
+  const firstDoc = docs[0];
+  if (firstDoc && firstDoc.id !== _sellerWatchedCode) {
+    _loadSellerPurchases(firstDoc.id);
+  } else if (firstDoc && _lastPurchasesSnap) {
+    // Same code, returning to Overview — re-render purchases from cache
+    _applyPurchasesSnap(_lastPurchasesSnap);
+  }
 }
 
 const LISTING_FEE = 99; // ₱/month
 const SUPPORT_EMAIL_TEMPLATES = 'hello@vowsandpetals.com';
 let _renewSelectedMonths = 1; // tracks selection in renew sheet
+
+// ── Real-time seller listener state ───────────────────────────────────────
+let _sellerTemplatesUnsub = null; // unsubscribe fn for templates onSnapshot
+let _sellerPurchasesUnsub = null; // unsubscribe fn for purchases onSnapshot
+let _sellerWatchedCode    = null; // template code currently subscribed for purchases
+let _lastTemplateSnap     = null; // last templates snapshot — re-render on tab return
+let _lastPurchasesSnap    = null; // last purchases snapshot — re-render on tab return
+
+function _teardownSellerListeners() {
+  if (_sellerTemplatesUnsub) { _sellerTemplatesUnsub(); _sellerTemplatesUnsub = null; }
+  if (_sellerPurchasesUnsub) { _sellerPurchasesUnsub(); _sellerPurchasesUnsub = null; }
+  _sellerWatchedCode = null;
+  _lastTemplateSnap  = null;
+  _lastPurchasesSnap = null;
+}
 
 function openRenewListing(code) {
   _renewSelectedMonths = 1; // reset to default
@@ -708,7 +738,7 @@ async function deleteTemplate(code) {
   try {
     await DB.collection('kasalko_templates').doc(code).delete();
     if (typeof showToast === 'function') showToast('Listing deleted');
-    _refreshSaveSellCard();
+    // Templates onSnapshot listener fires automatically — no manual refresh needed
     if (typeof renderOverview === 'function') renderOverview();
   } catch(e) {
     alert('Error deleting listing: ' + e.message);
@@ -1052,42 +1082,63 @@ function saveInvitePublic() {
 }
 
 /* ── SELLER: PURCHASE REQUEST MANAGEMENT ────── */
-async function _loadSellerPurchases(code) {
-  const wrap = document.getElementById('seller-purchases-wrap');
-  if (!wrap || typeof DB === 'undefined' || !DB) return;
-  try {
-    const snap = await DB.collection('kasalko_templates').doc(code)
-      .collection('purchases').orderBy('createdAt', 'desc').limit(50).get();
-    if (snap.empty) {
-      wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4);padding:4px 0">No purchase requests yet.</div>`;
-      return;
-    }
-    const rows = snap.docs.map(d => {
-      const p   = d.data();
-      const pid = d.id;
-      const statusColors = { pending:'#8C6640', verified:'#3a7a54', rejected:'#c07068' };
-      const statusColor  = statusColors[p.status] || '#8C6640';
-      return `
-        <div style="padding:8px 10px;border-radius:8px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.18);margin-bottom:6px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
-            <div style="font-size:11.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.buyerEmail||'—'}</div>
-            <span style="font-size:9px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:6px;padding:1px 6px;flex-shrink:0">${(p.status||'pending').toUpperCase()}</span>
-          </div>
-          ${p.refNumber
-            ? `<div style="font-size:11px;color:var(--ink-4)">Ref: <b style="font-family:monospace;letter-spacing:1px">${p.refNumber}</b>${p.used?' · <span style="color:var(--green-deep)">✓ Activated</span>':''}</div>`
-            : `<div style="display:flex;gap:5px;margin-top:4px">
-                <input id="ref-inp-${pid}" placeholder="Enter ref number" class="glass-input" style="flex:1;font-size:11px;padding:5px 8px;height:auto;min-height:unset;font-family:monospace;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-                <button onclick="_setRefNumber('${code}','${pid}')" style="padding:5px 10px;border-radius:8px;border:1.5px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f);white-space:nowrap;flex-shrink:0">Set ✓</button>
-              </div>`}
-        </div>`;
-    }).join('');
-    wrap.innerHTML = `
-      <div style="font-size:11.5px;font-weight:700;color:var(--ink);margin:6px 0 6px">📬 Purchase Requests (${snap.docs.length})</div>
-      ${rows}`;
-  } catch(e) {
-    wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4)">Could not load purchases.</div>`;
-    console.warn('_loadSellerPurchases error:', e);
+function _loadSellerPurchases(code) {
+  // If already watching the same code, just re-render from cached snapshot (tab return)
+  if (_sellerWatchedCode === code && _lastPurchasesSnap) {
+    _applyPurchasesSnap(_lastPurchasesSnap);
+    return;
   }
+  // Tear down listener for previous code (if any) before subscribing to new one
+  if (_sellerPurchasesUnsub) {
+    _sellerPurchasesUnsub();
+    _sellerPurchasesUnsub = null;
+  }
+  _sellerWatchedCode = code;
+  if (typeof DB === 'undefined' || !DB) return;
+
+  // Real-time listener — Firestore pushes updates automatically whenever any
+  // purchase document changes (new purchase, ref number verified, status change).
+  _sellerPurchasesUnsub = DB.collection('kasalko_templates').doc(code)
+    .collection('purchases').orderBy('createdAt', 'desc').limit(50)
+    .onSnapshot(snap => {
+      _lastPurchasesSnap = snap;
+      _applyPurchasesSnap(snap);
+    }, err => { console.warn('Purchases listener:', err); });
+}
+
+function _applyPurchasesSnap(snap) {
+  const wrap = document.getElementById('seller-purchases-wrap');
+  if (!wrap) return; // user navigated away — re-render on next tab visit
+
+  if (snap.empty) {
+    wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4);padding:4px 0">No purchase requests yet.</div>`;
+    return;
+  }
+
+  const code = _sellerWatchedCode;
+  const rows = snap.docs.map(d => {
+    const p   = d.data();
+    const pid = d.id;
+    const statusColors = { pending:'#8C6640', verified:'#3a7a54', rejected:'#c07068' };
+    const statusColor  = statusColors[p.status] || '#8C6640';
+    return `
+      <div style="padding:8px 10px;border-radius:8px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.18);margin-bottom:6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
+          <div style="font-size:11.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.buyerEmail||'—'}</div>
+          <span style="font-size:9px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:6px;padding:1px 6px;flex-shrink:0">${(p.status||'pending').toUpperCase()}</span>
+        </div>
+        ${p.refNumber
+          ? `<div style="font-size:11px;color:var(--ink-4)">Ref: <b style="font-family:monospace;letter-spacing:1px">${p.refNumber}</b>${p.used?' · <span style="color:var(--green-deep)">✓ Activated</span>':''}</div>`
+          : `<div style="display:flex;gap:5px;margin-top:4px">
+              <input id="ref-inp-${pid}" placeholder="Enter ref number" class="glass-input" style="flex:1;font-size:11px;padding:5px 8px;height:auto;min-height:unset;font-family:monospace;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+              <button onclick="_setRefNumber('${code}','${pid}')" style="padding:5px 10px;border-radius:8px;border:1.5px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f);white-space:nowrap;flex-shrink:0">Set ✓</button>
+            </div>`}
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="font-size:11.5px;font-weight:700;color:var(--ink);margin:6px 0 6px">📬 Purchase Requests (${snap.docs.length})</div>
+    ${rows}`;
 }
 
 async function _setRefNumber(code, purchaseId) {
@@ -1122,8 +1173,7 @@ async function _setRefNumber(code, purchaseId) {
 
     await batch.commit();
     showToast(`✅ Verified! +₱${sellerEarnings.toLocaleString()} added to earnings.`);
-    _loadSellerPurchases(code);
-    _refreshSaveSellCard(); // refresh earnings display
+    // Listeners auto-update both the purchases list and the template earnings card
   } catch(e) { showToast('⚠️ ' + e.message); }
 }
 
