@@ -1279,6 +1279,12 @@ async function requestProPlan(plan) {
   const amount = plan === 'annual' ? PRO_PRICE_ANNUAL : PRO_PRICE_MONTHLY;
   const label  = plan === 'annual' ? 'Pro Annual' : 'Pro Monthly';
   try {
+    // Block duplicate: check marketplace doc for pending Pro payment flag
+    const mktDoc = await DB.collection('kasalko_marketplace').doc(user.uid).get();
+    if (mktDoc.exists && mktDoc.data().hasPendingProPayment) {
+      toast('⏳ You already have a pending Pro request — check your email for payment instructions.');
+      return;
+    }
     await DB.collection('kasalko_payment_requests').add({
       type:      'pro_' + plan,
       uid:       user.uid,
@@ -1289,6 +1295,10 @@ async function requestProPlan(plan) {
       status:    'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
+    // Flag the marketplace doc so repeat taps are blocked
+    DB.collection('kasalko_marketplace').doc(user.uid).set(
+      { hasPendingProPayment: true }, { merge: true }
+    ).catch(() => {});
     // Show success sheet
     document.getElementById('pro-req-success-sheet')?.remove();
     const s = document.createElement('div');

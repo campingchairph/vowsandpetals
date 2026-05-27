@@ -271,23 +271,27 @@ function _refreshSaveSellCard() {
 
         const titleStr = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
 
+        const pendingPayment = !!t.hasPendingPayment;
+        const pendingMsg = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
+
         let actionArea = '';
         if (effectiveStatus === 'active') {
           actionArea = `
             <div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>
             ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''} — renew now`:`Active until ${expDateStr}`}</div>` : ''}
-            <button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>`;
+            ${nearExpiry && !pendingPayment ? `<button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>` : ''}
+            ${nearExpiry && pendingPayment ? pendingMsg : ''}`;
         } else if (effectiveStatus === 'expired') {
           actionArea = `
             <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. No longer visible in marketplace.</div>
-            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>`;
+            ${pendingPayment ? pendingMsg : `<button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>`}`;
         } else if (effectiveStatus === 'pending') {
-          actionArea = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
+          actionArea = pendingMsg;
         } else {
           // rejected
           actionArea = `
             <div style="font-size:11px;color:#c07068;margin-bottom:8px">${_esc(t.adminNote||'Your listing was rejected. Please review your content and resubmit.')}</div>
-            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`;
+            ${pendingPayment ? pendingMsg : `<button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`}`;
         }
 
         return `
@@ -384,8 +388,16 @@ window._selectRenewMonths = _selectRenewMonths;
 
 async function _submitRenewRequest(code) {
   const btn = document.getElementById('renew-submit-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
   try {
+    // Block duplicate: check if already has a pending payment for this listing
+    const tplDoc = await DB.collection('kasalko_templates').doc(code).get();
+    if (tplDoc.exists && tplDoc.data().hasPendingPayment) {
+      document.getElementById('renew-listing-sheet')?.remove();
+      _showAlreadySubmitted(window.CURRENT_USER?.email || '');
+      return;
+    }
+    if (btn) btn.textContent = 'Submitting…';
     const months = _renewSelectedMonths || 1;
     await DB.collection('kasalko_payment_requests').add({
       type:      'renewal',
@@ -398,14 +410,39 @@ async function _submitRenewRequest(code) {
       status:    'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
+    // Flag the template so the button hides immediately
+    DB.collection('kasalko_templates').doc(code).update({ hasPendingPayment: true }).catch(() => {});
     document.getElementById('renew-listing-sheet')?.remove();
     _showPaymentRequestSuccess(window.CURRENT_USER?.email || '');
+    _refreshSaveSellCard(); // refresh card to hide button
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = 'Submit Renewal Request →'; }
     alert('Error submitting request: ' + e.message);
   }
 }
 window._submitRenewRequest = _submitRenewRequest;
+
+function _showAlreadySubmitted(email) {
+  document.getElementById('payment-req-success-sheet')?.remove();
+  const s = document.createElement('div');
+  s.id = 'payment-req-success-sheet'; s.className = 'modal-overlay open';
+  s.onclick = e => { if (e.target === s) s.remove(); };
+  s.innerHTML = `
+    <div class="modal-sheet" style="text-align:center">
+      <div class="modal-handle"></div>
+      <div style="font-size:52px;margin:8px 0 14px">⏳</div>
+      <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Already Submitted</div>
+      <div style="font-size:13px;color:var(--ink-3);line-height:1.7;margin-bottom:16px">
+        You already have a pending payment request.<br>
+        Check <b style="color:var(--ink)">${_esc(email)}</b> for our payment instructions email.
+      </div>
+      <button onclick="document.getElementById('payment-req-success-sheet')?.remove()"
+        style="width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f)">
+        Got it
+      </button>
+    </div>`;
+  document.body.appendChild(s);
+}
 
 /* ── PUBLISH AGREEMENT (shown before the form) ── */
 function openPublishAgreement() {
@@ -1091,8 +1128,9 @@ window._setRefNumber              = _setRefNumber;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;
-window.deleteTemplate         = deleteTemplate;
+window.deleteTemplate             = deleteTemplate;
 window._showPaymentRequestSuccess = _showPaymentRequestSuccess;
+window._showAlreadySubmitted      = _showAlreadySubmitted;
 window._showFlushConfirm      = _showFlushConfirm;
 window._showFlushConfirm2     = _showFlushConfirm2;
 window.flushAllData           = flushAllData;
