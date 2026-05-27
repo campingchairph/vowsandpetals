@@ -710,7 +710,7 @@ function renderPaymentRequestCard(r) {
 
   const statusColor = { pending:'#8C6640', email_sent:'#1a73e8', completed:'#3a7a54', cancelled:'#c07068' }[r.status] || '#8C6640';
 
-  const emailHref = `mailto:${esc(r.email)}?subject=${encodeURIComponent(_buildPaymentEmailSubject(r))}&body=${encodeURIComponent(_buildPaymentEmailBody(r))}`;
+  const emailHref = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(r.email)}&su=${encodeURIComponent(_buildPaymentEmailSubject(r))}&body=${encodeURIComponent(_buildPaymentEmailBody(r))}`;
 
   const isPending   = r.status === 'pending';
   const isEmailSent = r.status === 'email_sent';
@@ -739,7 +739,7 @@ function renderPaymentRequestCard(r) {
       </div>
       ${!isDone ? `
       <div class="action-row" style="margin-top:10px">
-        <a href="${emailHref}" class="act-btn" onclick="markEmailSent('${r._docId}')" style="text-decoration:none">
+        <a href="${emailHref}" target="_blank" rel="noopener" class="act-btn" onclick="markEmailSent('${r._docId}')" style="text-decoration:none">
           📧 Send Payment Email
         </a>
         ${!isPending ? `<button class="act-btn act-on" onclick="completePaymentRequest('${r._docId}')">✅ Complete</button>` : ''}
