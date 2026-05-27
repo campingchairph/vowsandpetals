@@ -498,6 +498,20 @@ let _isEditing   = false;
 // Photo state — URLs only (Cloudinary uploads immediately on pick)
 let _coverUrl     = null;   // string URL or null
 let _savedGallery = [];     // [url]
+let _uploading    = 0;      // tracks in-progress Cloudinary uploads
+
+function _setUploading(delta) {
+  _uploading = Math.max(0, _uploading + delta);
+  const btn = document.getElementById('setup-save-btn');
+  if (!btn) return;
+  if (_uploading > 0) {
+    btn.disabled = true;
+    btn.textContent = `⏳ Uploading photo${_uploading > 1 ? 's' : ''}… please wait`;
+  } else {
+    btn.disabled = false;
+    btn.textContent = _isEditing ? 'Save Changes' : 'Save & Publish My Profile 🌸';
+  }
+}
 
 try {
   firebase.initializeApp(FB_CFG);
@@ -663,6 +677,7 @@ async function pickCover(input) {
     return;
   }
 
+  _setUploading(1);
   try {
     _coverUrl = await _uploadToCloudinary(file);
     toast('✅ Cover photo uploaded!');
@@ -672,6 +687,8 @@ async function pickCover(input) {
     _coverUrl = null;
     if (img)  { img.src = ''; img.style.display = 'none'; }
     if (hint) hint.style.display = 'flex';
+  } finally {
+    _setUploading(-1);
   }
   if (overlay) { overlay.style.opacity = '0'; overlay.textContent = '📷 Change photo'; }
 }
@@ -701,6 +718,7 @@ async function pickGallery(input) {
     ph.className = 'gallery-item'; ph.id = pid;
     ph.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(245,230,200,0.4)"><div class="sp-spinner" style="width:20px;height:20px;border-width:2px"></div></div>`;
     if (addBtn) grid.insertBefore(ph, addBtn); else grid?.appendChild(ph);
+    _setUploading(1);
     try {
       const url = await _uploadToCloudinary(file);
       _savedGallery.push(url);
@@ -709,6 +727,8 @@ async function pickGallery(input) {
     } catch(e) {
       document.getElementById(pid)?.remove();
       toast('⚠️ Failed to upload ' + file.name);
+    } finally {
+      _setUploading(-1);
     }
   }
 }
@@ -1147,21 +1167,18 @@ function _renderPlanTab() {
   /* ── Pricing + pay buttons (shown if free, expiring, or expired) ── */
   let pricingHtml = '';
   if (status !== 'pro') {
-    const monthlyLink = PAY_LINK_MONTHLY || `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Monthly — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi! I\'d like to subscribe to Pro Monthly (₱299/mo).\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||''))}`;
-    const annualLink  = PAY_LINK_ANNUAL  || `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Annual — '  + (_profile?.name||''))}&body=${encodeURIComponent('Hi! I\'d like to subscribe to Pro Annual (₱2,499/yr).\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||''))}`;
-
     pricingHtml = `
       <div style="margin-bottom:14px">
         <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-4);margin-bottom:10px">
           ${status === 'expired' ? 'Renew your Pro plan' : 'Upgrade to Pro ⭐'}
         </div>
         <div class="plan-pricing-row">
-          <div class="plan-price-card" onclick="window.open('${monthlyLink}','_blank')">
+          <div class="plan-price-card" onclick="requestProPlan('monthly')" style="cursor:pointer">
             <div class="plan-price-amount">₱${PRO_PRICE_MONTHLY.toLocaleString()}</div>
             <div class="plan-price-period">per month</div>
             <div style="margin-top:10px;padding:8px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));color:#fff;font-size:12px;font-weight:700">${status === 'expired' ? 'Renew Monthly' : 'Go Monthly'}</div>
           </div>
-          <div class="plan-price-card featured" onclick="window.open('${annualLink}','_blank')">
+          <div class="plan-price-card featured" onclick="requestProPlan('annual')" style="cursor:pointer">
             <div style="font-size:9.5px;font-weight:800;color:var(--sage);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Best value</div>
             <div class="plan-price-amount">₱${PRO_PRICE_ANNUAL.toLocaleString()}</div>
             <div class="plan-price-period">per year</div>
@@ -1169,32 +1186,8 @@ function _renderPlanTab() {
             <div style="margin-top:10px;padding:8px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));color:#fff;font-size:12px;font-weight:700">${status === 'expired' ? 'Renew Annual' : 'Go Annual'}</div>
           </div>
         </div>
-
-        <div class="plan-how-title">How to subscribe</div>
-        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap">
-          <div style="flex-shrink:0;text-align:center">
-            <!-- ══════════════════════════════════════════════
-                 GCASH QR CODE — EMBED AS BASE64 FOR SECURITY
-                 1. Open GCash app → Receive Money → your QR
-                 2. Screenshot it
-                 3. Convert to base64: base64encode.org
-                 4. Replace the src below with: data:image/png;base64,XXXXXX
-                 ══════════════════════════════════════════════ -->
-            <img id="gcash-qr-img"
-              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmNWYwZWIiIHJ4PSI4Ii8+PHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJkMWYwZSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHJlY3QgeD0iMTYiIHk9IjE2IiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIGZpbGw9IiMyZDFmMGUiLz48cmVjdCB4PSI4MCIgeT0iMTAiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmQxZjBlIiBzdHJva2Utd2lkdGg9IjMiLz48cmVjdCB4PSI4NiIgeT0iMTYiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgZmlsbD0iIzJkMWYwZSIvPjxyZWN0IHg9IjEwIiB5PSI4MCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiBmaWxsPSJub25lIiBzdHJva2U9IiMyZDFmMGUiIHN0cm9rZS13aWR0aD0iMyIvPjxyZWN0IHg9IjE2IiB5PSI4NiIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMmQxZjBlIi8+PHRleHQgeD0iNjAiIHk9IjYyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjkiIGZpbGw9IiM4YzY2NDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIj5BZGQgR0Nhc2g8L3RleHQ+PHRleHQgeD0iNjAiIHk9Ijc0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjkiIGZpbGw9IiM4YzY2NDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIj5RUiBpbiBjb2RlPC90ZXh0Pjwvc3ZnPg=="
-              alt="GCash QR Code"
-              style="width:110px;height:110px;border-radius:10px;border:2px solid rgba(0,136,0,0.25);display:block">
-            <div style="font-size:9px;color:var(--ink-4);margin-top:4px;text-align:center">Scan to pay</div>
-          </div>
-          <div style="flex:1;min-width:160px">
-            <div class="plan-step"><div class="plan-step-num">1</div><div class="plan-step-text"><b>Scan the QR</b> using your GCash app and send the plan amount.</div></div>
-            <div class="plan-step"><div class="plan-step-num">2</div><div class="plan-step-text"><b>Screenshot your payment receipt</b> and email it to us.<br>
-              Reference: <b style="font-family:monospace;color:var(--ink)">${_esc(_user?.email||'your-email')}</b></div></div>
-            <div class="plan-step"><div class="plan-step-num">3</div><div class="plan-step-text">We activate your Pro plan within <b>24 hours</b>. The ⭐ badge appears here once it's live.</div></div>
-            <a href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Plan Payment — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi!\n\nI just sent payment for the Pro plan.\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||'') + '\n\n[Attach your GCash receipt screenshot here]')}"
-              style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:8px 14px;border-radius:20px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">
-              📧 Email Payment Proof →</a>
-          </div>
+        <div style="font-size:11.5px;color:var(--ink-4);line-height:1.6;margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">
+          📬 Tap a plan above — we'll email payment instructions to you within a few minutes. Your ⭐ badge activates once confirmed.
         </div>
       </div>`;
   }
@@ -1279,6 +1272,53 @@ function zoomPhoto(url) {
 
 // Initial gallery render (empty)
 _renderGallery();
+
+/* ── PRO PLAN REQUEST ── */
+async function requestProPlan(plan) {
+  if (!AUTH?.currentUser || typeof DB === 'undefined' || !DB) { toast('⚠️ Please sign in first'); return; }
+  const user   = AUTH.currentUser;
+  const amount = plan === 'annual' ? PRO_PRICE_ANNUAL : PRO_PRICE_MONTHLY;
+  const label  = plan === 'annual' ? 'Pro Annual' : 'Pro Monthly';
+  try {
+    await DB.collection('kasalko_payment_requests').add({
+      type:      'pro_' + plan,
+      uid:       user.uid,
+      email:     user.email,
+      name:      user.displayName || user.email.split('@')[0],
+      plan,
+      amount,
+      status:    'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    // Show success sheet
+    document.getElementById('pro-req-success-sheet')?.remove();
+    const s = document.createElement('div');
+    s.id = 'pro-req-success-sheet'; s.className = 'modal-overlay';
+    s.onclick = e => { if (e.target === s) s.remove(); };
+    s.innerHTML = `
+      <div class="modal-sheet" style="text-align:center">
+        <div class="modal-handle"></div>
+        <div style="font-size:52px;margin:8px 0 14px">📬</div>
+        <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Request Submitted!</div>
+        <div style="font-size:13px;color:var(--ink-3);line-height:1.7;margin-bottom:16px">
+          We'll send <b>${_esc(label)}</b> payment instructions to<br>
+          <b style="color:var(--ink)">${_esc(user.email)}</b><br>
+          within a few minutes.
+        </div>
+        <div style="font-size:11.5px;color:var(--ink-4);line-height:1.6;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.2);margin-bottom:16px">
+          Once payment is confirmed, your ⭐ Pro badge will appear within a few hours. 🌸
+        </div>
+        <button onclick="document.getElementById('pro-req-success-sheet')?.remove()"
+          style="width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f)">
+          Done
+        </button>
+      </div>`;
+    document.body.appendChild(s);
+    requestAnimationFrame(() => s.classList.add('open'));
+  } catch(e) {
+    toast('⚠️ Error submitting request: ' + e.message);
+  }
+}
 </script>
 </body>
 </html>

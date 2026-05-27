@@ -182,12 +182,14 @@
     <button id="tab-btn-suppliers" class="adm-tab" onclick="aTab('suppliers')">🏪 Suppliers</button>
     <button id="tab-btn-leads"     class="adm-tab" onclick="aTab('leads')">📋 Vendor Leads</button>
     <button id="tab-btn-templates" class="adm-tab" onclick="aTab('templates')">💰 Templates</button>
+    <button id="tab-btn-payments"  class="adm-tab" onclick="aTab('payments')">💳 Payments</button>
   </nav>
 
   <div class="adm-wrap">
     <div id="p-suppliers"></div>
     <div id="p-leads"     style="display:none"></div>
     <div id="p-templates" style="display:none"></div>
+    <div id="p-payments"  style="display:none"></div>
   </div>
 </div>
 
@@ -222,6 +224,10 @@
    match /kasalko_template_sales/{id} {
      allow create: if request.auth != null;
      allow read: if request.auth.uid in ['YOUR_ADMIN_UID'];
+   }
+   match /kasalko_payment_requests/{id} {
+     allow create: if request.auth != null;
+     allow read, update, delete: if request.auth.uid in ['YOUR_ADMIN_UID'];
    }
 */
 
@@ -269,13 +275,14 @@ function googleSignIn() {
 
 /* ── TABS ───────────────────────────────────────── */
 function aTab(tab) {
-  ['suppliers','leads','templates'].forEach(t => {
+  ['suppliers','leads','templates','payments'].forEach(t => {
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
     document.getElementById('p-' + t).style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'suppliers') loadSuppliers();
   if (tab === 'leads')     loadLeads();
   if (tab === 'templates') loadTemplates();
+  if (tab === 'payments')  loadPaymentRequests();
 }
 
 /* ── TOAST ──────────────────────────────────────── */
@@ -634,6 +641,270 @@ async function rejectTemplate(docId, isActive) {
     if (t) { t.status = 'rejected'; t.adminNote = reason || 'Does not meet quality requirements.'; }
     renderTemplates();
     toast(isActive ? '❌ Template suspended' : '❌ Template rejected');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+/* ══════════════════════════════════════════════════
+   💳  PAYMENT REQUESTS TAB
+══════════════════════════════════════════════════ */
+const GCASH_NUMBER   = '09XX-XXX-XXXX'; // ← replace with your GCash number
+const ADMIN_EMAIL    = 'hello@vowsandpetals.com';
+let _payFilter  = 'pending';
+let _payCache   = [];
+
+async function loadPaymentRequests() {
+  const el = document.getElementById('p-payments');
+  el.innerHTML = '<div class="loading"><div class="spinner spinner-sm"></div>Loading payment requests…</div>';
+  try {
+    let snap;
+    try   { snap = await DB.collection('kasalko_payment_requests').orderBy('createdAt','desc').get(); }
+    catch { snap = await DB.collection('kasalko_payment_requests').get(); }
+    _payCache = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    renderPaymentRequests();
+  } catch(e) {
+    el.innerHTML = `<div class="empty">⚠️ Error loading payment requests<small>${esc(e.message)}</small><small>Make sure Firestore rules allow admin to read <code>kasalko_payment_requests</code>.</small></div>`;
+  }
+}
+
+function renderPaymentRequests() {
+  let list = _payCache;
+  if (_payFilter !== 'all') list = list.filter(r => r.status === _payFilter);
+
+  const pending    = _payCache.filter(r => r.status === 'pending').length;
+  const emailSent  = _payCache.filter(r => r.status === 'email_sent').length;
+  const completed  = _payCache.filter(r => r.status === 'completed').length;
+  const cancelled  = _payCache.filter(r => r.status === 'cancelled').length;
+
+  document.getElementById('p-payments').innerHTML = `
+    <div class="tab-bar">
+      <div class="tab-stats">${_payCache.length} total · ${pending} pending · ${emailSent} email sent · ${completed} completed · ${cancelled} cancelled</div>
+      <div class="filter-row">
+        ${['pending','email_sent','completed','cancelled','all'].map(f =>
+          `<button class="filt-btn ${_payFilter===f?'on':''}" onclick="_payFilter='${f}';renderPaymentRequests()">${f.replace('_',' ')}</button>`
+        ).join('')}
+        <button class="filt-btn" onclick="loadPaymentRequests()" title="Refresh">↺</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--ink-4);margin-bottom:10px;padding:8px 10px;border-radius:8px;background:rgba(184,145,106,0.08);border:1px solid rgba(184,145,106,0.15)">
+      ℹ️ Workflow: Tap <b>Send Payment Email</b> → user receives GCash instructions → user pays → tap <b>Complete</b> and activate in Suppliers/Templates tab.
+    </div>
+    ${list.length === 0
+      ? `<div class="empty">No payment requests in this filter.<small>New listing, renewal, and Pro upgrade requests appear here.</small></div>`
+      : `<div class="admin-list">${list.map(renderPaymentRequestCard).join('')}</div>`}`;
+}
+
+function renderPaymentRequestCard(r) {
+  const typeLabels = {
+    new_listing: '🆕 New Listing',
+    renewal:     '🔄 Renewal',
+    pro_monthly: '⭐ Pro Monthly',
+    pro_annual:  '⭐ Pro Annual',
+  };
+  const typeLabel = typeLabels[r.type] || r.type;
+  const amount    = r.amount ? `₱${Number(r.amount).toLocaleString()}` : '—';
+  const months    = r.months ? `${r.months} month${r.months!==1?'s':''}` : '';
+  const code      = r.code   ? `VP-${r.code}` : '';
+  const date      = r.createdAt
+    ? new Date(r.createdAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+    : '—';
+
+  const statusColor = { pending:'#8C6640', email_sent:'#1a73e8', completed:'#3a7a54', cancelled:'#c07068' }[r.status] || '#8C6640';
+
+  const emailHref = `mailto:${esc(r.email)}?subject=${encodeURIComponent(_buildPaymentEmailSubject(r))}&body=${encodeURIComponent(_buildPaymentEmailBody(r))}`;
+
+  const isPending   = r.status === 'pending';
+  const isEmailSent = r.status === 'email_sent';
+  const isDone      = r.status === 'completed' || r.status === 'cancelled';
+
+  return `
+    <div class="admin-card${isDone ? ' dimmed' : ''}">
+      <div class="admin-card-top" style="align-items:flex-start">
+        <div class="admin-thumb-empty" style="font-size:24px">${r.type?.startsWith('pro') ? '⭐' : r.type==='renewal' ? '🔄' : '🆕'}</div>
+        <div class="admin-card-info">
+          <div class="admin-card-name">${esc(r.name || '—')}</div>
+          <div class="admin-card-sub">
+            ${esc(r.email || '—')}
+            ${code ? ` · <b style="font-family:monospace">${esc(code)}</b>` : ''}
+          </div>
+          <div class="badge-row" style="margin-top:6px">
+            <span class="badge badge-code">${esc(typeLabel)}</span>
+            ${months ? `<span class="badge badge-pending">${esc(months)}</span>` : ''}
+            <span class="badge" style="color:${statusColor};border:1px solid ${statusColor};background:transparent">${r.status.replace('_',' ').toUpperCase()}</span>
+          </div>
+          <div class="admin-card-meta" style="margin-top:6px">
+            <b style="font-size:14px;color:var(--ink)">${amount}</b>
+            <span style="color:var(--ink-4);font-size:11px;margin-left:8px">${date}</span>
+          </div>
+        </div>
+      </div>
+      ${!isDone ? `
+      <div class="action-row" style="margin-top:10px">
+        <a href="${emailHref}" class="act-btn" onclick="markEmailSent('${r._docId}')" style="text-decoration:none">
+          📧 Send Payment Email
+        </a>
+        ${!isPending ? `<button class="act-btn act-on" onclick="completePaymentRequest('${r._docId}')">✅ Complete</button>` : ''}
+        <button class="act-btn act-danger" onclick="cancelPaymentRequest('${r._docId}')">✗ Cancel</button>
+      </div>` : ''}
+    </div>`;
+}
+
+function _buildPaymentEmailSubject(r) {
+  const subjects = {
+    new_listing: `VP-${r.code} — Activate Your Template Listing | Vows & Petals`,
+    renewal:     `VP-${r.code} — Renew Your Template Listing | Vows & Petals`,
+    pro_monthly: `Pro Monthly Subscription — Payment Instructions | Vows & Petals`,
+    pro_annual:  `Pro Annual Subscription — Payment Instructions | Vows & Petals`,
+  };
+  return subjects[r.type] || `Payment Instructions — Vows & Petals`;
+}
+
+function _buildPaymentEmailBody(r) {
+  const name   = r.name  || 'there';
+  const amount = r.amount ? `₱${Number(r.amount).toLocaleString()}` : '—';
+  const code   = r.code  ? `VP-${r.code}` : '';
+  const months = r.months ? `${r.months} month${r.months!==1?'s':''}` : '1 month';
+
+  if (r.type === 'new_listing') {
+    return `Hi ${name}!
+
+Thanks for submitting your wedding planner template ${code} to Vows & Petals! 🌸
+
+To activate your listing in the marketplace, please complete the payment below:
+
+💰 Amount: ${amount} (monthly listing fee)
+📱 GCash Number: ${GCASH_NUMBER}
+📝 Reference: ${code} — ${r.email}
+
+Steps:
+1. Open GCash and send ${amount} to ${GCASH_NUMBER}
+2. Screenshot your payment receipt
+3. Reply to this email with the receipt attached
+
+Once we confirm your payment, your template will go live within a few hours. ✅
+
+Questions? Just reply to this email.
+
+Warm regards,
+Vows & Petals Team
+${ADMIN_EMAIL}`;
+  }
+
+  if (r.type === 'renewal') {
+    return `Hi ${name}!
+
+You've requested to renew your template listing ${code} for ${months}. 🔄
+
+To extend your listing, please complete the payment below:
+
+💰 Amount: ${amount} (${months} renewal)
+📱 GCash Number: ${GCASH_NUMBER}
+📝 Reference: ${code} — ${r.email}
+
+Steps:
+1. Open GCash and send ${amount} to ${GCASH_NUMBER}
+2. Screenshot your payment receipt
+3. Reply to this email with the receipt attached
+
+Once confirmed, we'll extend your listing immediately. ✅
+
+Warm regards,
+Vows & Petals Team
+${ADMIN_EMAIL}`;
+  }
+
+  if (r.type === 'pro_monthly') {
+    return `Hi ${name}!
+
+You've requested the Pro Monthly plan for your Vows & Petals supplier profile. ⭐
+
+Here are your payment instructions:
+
+💰 Amount: ${amount}/month
+📱 GCash Number: ${GCASH_NUMBER}
+📝 Reference: Pro Monthly — ${r.email}
+
+Steps:
+1. Open GCash and send ${amount} to ${GCASH_NUMBER}
+2. Screenshot your payment receipt
+3. Reply to this email with the receipt attached
+
+Once confirmed, your ⭐ Pro badge and perks will be activated within a few hours. ✅
+
+What you get with Pro:
+• Featured placement in your category
+• Up to 9 gallery photos (vs 2 on free)
+• Pro ⭐ badge on your profile
+
+Warm regards,
+Vows & Petals Team
+${ADMIN_EMAIL}`;
+  }
+
+  if (r.type === 'pro_annual') {
+    return `Hi ${name}!
+
+You've requested the Pro Annual plan for your Vows & Petals supplier profile. ⭐
+
+Here are your payment instructions:
+
+💰 Amount: ${amount}/year (best value — save ₱1,089 vs monthly!)
+📱 GCash Number: ${GCASH_NUMBER}
+📝 Reference: Pro Annual — ${r.email}
+
+Steps:
+1. Open GCash and send ${amount} to ${GCASH_NUMBER}
+2. Screenshot your payment receipt
+3. Reply to this email with the receipt attached
+
+Once confirmed, your ⭐ Pro badge and perks will be activated within a few hours. ✅
+
+What you get with Pro:
+• Featured placement in your category
+• Up to 9 gallery photos (vs 2 on free)
+• Pro ⭐ badge on your profile
+• 12 months of coverage for the price of ~9
+
+Warm regards,
+Vows & Petals Team
+${ADMIN_EMAIL}`;
+  }
+
+  return `Hi ${name},\n\nPayment instructions for your Vows & Petals request:\n\n💰 Amount: ${amount}\n📱 GCash Number: ${GCASH_NUMBER}\n📝 Reference: ${r.email}\n\nPlease reply with your GCash receipt screenshot.\n\nWarm regards,\nVows & Petals Team`;
+}
+
+async function markEmailSent(docId) {
+  // called when admin clicks the mailto link — optimistically mark as email_sent
+  try {
+    await DB.collection('kasalko_payment_requests').doc(docId).update({ status: 'email_sent' });
+    const r = _payCache.find(r => r._docId === docId);
+    if (r) r.status = 'email_sent';
+    renderPaymentRequests();
+    toast('📧 Marked as email sent');
+  } catch(e) { /* non-fatal — email still opens */ }
+}
+
+async function completePaymentRequest(docId) {
+  if (!confirm('Mark this payment request as completed? Do this after verifying the GCash receipt.')) return;
+  try {
+    await DB.collection('kasalko_payment_requests').doc(docId).update({
+      status: 'completed',
+      completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    const r = _payCache.find(r => r._docId === docId);
+    if (r) r.status = 'completed';
+    renderPaymentRequests();
+    toast('✅ Payment request completed — remember to activate in Suppliers/Templates tab!');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function cancelPaymentRequest(docId) {
+  if (!confirm('Cancel this payment request?')) return;
+  try {
+    await DB.collection('kasalko_payment_requests').doc(docId).update({ status: 'cancelled' });
+    const r = _payCache.find(r => r._docId === docId);
+    if (r) r.status = 'cancelled';
+    renderPaymentRequests();
+    toast('✗ Payment request cancelled');
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 </script>

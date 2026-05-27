@@ -21,6 +21,11 @@ const FIREBASE_CONFIG = {
   appId:             "1:732042029649:web:21bbe63214e8b36770e670",
 };
 
+/* ── HELPERS ──────────────────────────────────── */
+function _esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 /* ── INIT ─────────────────────────────────────── */
 const _fbReady = !FIREBASE_CONFIG.apiKey.includes('PASTE');
 if (_fbReady) {
@@ -228,54 +233,100 @@ function _refreshSaveSellCard() {
   const el = document.getElementById('save-sell-action');
   if (!el || !window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
   DB.collection('kasalko_templates')
-    .where('sellerUid','==', window.CURRENT_USER.uid).limit(1).get()
+    .where('sellerUid','==', window.CURRENT_USER.uid).get()
     .then(snap => {
       const actionEl = document.getElementById('save-sell-action');
-      if (!actionEl || snap.empty) return;
-      const t    = snap.docs[0].data();
-      const code = snap.docs[0].id;
+      if (!actionEl) return;
 
-      // Expiry info
+      // Sort by publishedAt descending in JS
+      const docs = snap.docs.slice().sort((a, b) => {
+        const ta = a.data().publishedAt?.toMillis?.() || 0;
+        const tb = b.data().publishedAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+
+      if (docs.length === 0) return; // keep the default sell CTA shown
+
+      const MAX_LISTINGS = 2;
       const now = new Date();
-      const expiresAt = t.expiresAt ? t.expiresAt.toDate() : null;
-      const isExpired = expiresAt && expiresAt < now;
-      const daysLeft  = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : null;
-      const nearExpiry = daysLeft !== null && daysLeft <= 7 && !isExpired;
-      const expDateStr = expiresAt ? expiresAt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
 
-      // Status
-      const effectiveStatus = (t.status === 'active' && isExpired) ? 'expired' : t.status;
-      const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
-      const statusColor  = statusColors[effectiveStatus] || '#8C6640';
+      const cards = docs.map(doc => {
+        const t    = doc.data();
+        const code = doc.id;
 
-      actionEl.innerHTML = `
-        <div style="padding:10px 12px;border-radius:10px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.22)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-            <span style="font-family:monospace;font-size:17px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
-            <span style="font-size:10px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${effectiveStatus.toUpperCase()}</span>
-          </div>
-          ${effectiveStatus === 'active' ? `
+        // Expiry info
+        const expiresAt  = t.expiresAt ? t.expiresAt.toDate() : null;
+        const isExpired  = expiresAt && expiresAt < now;
+        const daysLeft   = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : null;
+        const nearExpiry = daysLeft !== null && daysLeft <= 7 && !isExpired;
+        const expDateStr = expiresAt ? expiresAt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+
+        // Status
+        const effectiveStatus = (t.status === 'active' && isExpired) ? 'expired' : t.status;
+        const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
+        const statusColor  = statusColors[effectiveStatus] || '#8C6640';
+
+        // Delete allowed only for rejected or expired listings
+        const canDelete = effectiveStatus === 'rejected' || effectiveStatus === 'expired';
+
+        const titleStr = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
+
+        let actionArea = '';
+        if (effectiveStatus === 'active') {
+          actionArea = `
             <div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>
             ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''} — renew now`:`Active until ${expDateStr}`}</div>` : ''}
-            <button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>
-          ` : effectiveStatus === 'expired' ? `
-            <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. Your template is no longer visible in the marketplace.</div>
-            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>
-          ` : effectiveStatus === 'pending' ?
-            `<div style="font-size:11px;color:var(--ink-3)">⏳ Awaiting payment verification &amp; admin review. Email your GCash receipt to ${SUPPORT_EMAIL_TEMPLATES} with code VP-${code}.</div>`
-          : `<div style="font-size:11px;color:#c07068;margin-bottom:8px">${t.adminNote||'Your listing was rejected. Please review your content and contact us to resubmit.'}</div>
-            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`}
-        </div>`;
-      // Purchase requests section (loads asynchronously)
-      actionEl.insertAdjacentHTML('beforeend', `<div id="seller-purchases-wrap" style="margin-top:8px"><div style="font-size:11px;color:var(--ink-4);padding:4px 0">Loading purchase requests…</div></div>`);
-      _loadSellerPurchases(code);
+            <button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>`;
+        } else if (effectiveStatus === 'expired') {
+          actionArea = `
+            <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. No longer visible in marketplace.</div>
+            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>`;
+        } else if (effectiveStatus === 'pending') {
+          actionArea = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
+        } else {
+          // rejected
+          actionArea = `
+            <div style="font-size:11px;color:#c07068;margin-bottom:8px">${_esc(t.adminNote||'Your listing was rejected. Please review your content and resubmit.')}</div>
+            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`;
+        }
+
+        return `
+          <div style="padding:10px 12px;border-radius:10px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.22);margin-bottom:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <span style="font-family:monospace;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:10px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${effectiveStatus.toUpperCase()}</span>
+                ${canDelete ? `<button onclick="deleteTemplate('${code}')" title="Delete listing" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-4);padding:2px 4px;line-height:1">🗑</button>` : ''}
+              </div>
+            </div>
+            ${titleStr}
+            ${actionArea}
+          </div>`;
+      }).join('');
+
+      // Show "+ Sell Another Template" only if under the 2-listing cap
+      const sellAnotherBtn = docs.length < MAX_LISTINGS ? `
+        <div style="margin-bottom:8px">
+          <button onclick="openPublishAgreement()" style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px dashed rgba(201,169,110,0.4);background:rgba(245,230,200,0.25);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">+ Sell Another Template</button>
+        </div>` : '';
+
+      actionEl.innerHTML = sellAnotherBtn + cards;
+
+      // Purchase requests for first active/pending listing
+      const firstDoc = docs[0];
+      if (firstDoc) {
+        actionEl.insertAdjacentHTML('beforeend', `<div id="seller-purchases-wrap" style="margin-top:4px"><div style="font-size:11px;color:var(--ink-4);padding:4px 0">Loading purchase requests…</div></div>`);
+        _loadSellerPurchases(firstDoc.id);
+      }
     }).catch(() => {});
 }
 
 const LISTING_FEE = 99; // ₱/month
 const SUPPORT_EMAIL_TEMPLATES = 'hello@vowsandpetals.com';
+let _renewSelectedMonths = 1; // tracks selection in renew sheet
 
 function openRenewListing(code) {
+  _renewSelectedMonths = 1; // reset to default
   document.getElementById('renew-listing-sheet')?.remove();
   const el = document.createElement('div');
   el.id = 'renew-listing-sheet';
@@ -295,7 +346,7 @@ function openRenewListing(code) {
 
       <!-- Month selector -->
       <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">Choose renewal period:</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
         ${opts.map(o => `
           <button id="renew-opt-${o.months}" onclick="_selectRenewMonths('${code}',${o.months})"
             style="${btnStyle(o.months===1)}">
@@ -305,26 +356,14 @@ function openRenewListing(code) {
           </button>`).join('')}
       </div>
 
-      <!-- Steps -->
-      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">How to pay:</div>
-      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
-        ${[
-          `Open GCash and send the selected amount to our number`,
-          `Screenshot your GCash receipt`,
-          `Tap the button below to email us the receipt with code <b>VP-${code}</b>`,
-          `We'll extend your listing within 24–48 hrs ✅`
-        ].map((text, i) => `
-          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
-            <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">${i+1}</span>
-            ${text}
-          </div>`).join('')}
+      <div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin-bottom:14px;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.2)">
+        📬 We'll email payment instructions to <b>${window.CURRENT_USER?.email||'your email'}</b> within a few minutes.
       </div>
 
-      <a id="renew-email-btn"
-        href="mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=Template%20Renewal%20VP-${code}%20(1%20month)&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20am%20renewing%20my%20template%20listing%20VP-${code}%20for%201%20month%20(%E2%82%B1${LISTING_FEE}).%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}"
-        style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box">
-        📧 Email Payment Proof →
-      </a>
+      <button id="renew-submit-btn" onclick="_submitRenewRequest('${code}')"
+        style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
+        Submit Renewal Request →
+      </button>
       <button onclick="document.getElementById('renew-listing-sheet')?.remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.2);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">Cancel</button>
     </div>`;
   document.body.appendChild(el);
@@ -332,6 +371,7 @@ function openRenewListing(code) {
 }
 
 function _selectRenewMonths(code, months) {
+  _renewSelectedMonths = months;
   [1, 3, 6].forEach(m => {
     const btn = document.getElementById(`renew-opt-${m}`);
     if (!btn) return;
@@ -339,14 +379,33 @@ function _selectRenewMonths(code, months) {
     btn.style.border = sel ? '2px solid var(--gold)' : '1.5px solid rgba(201,169,110,0.28)';
     btn.style.background = sel ? 'rgba(245,230,200,0.75)' : 'rgba(255,252,247,0.6)';
   });
-  const total = LISTING_FEE * months;
-  const emailBtn = document.getElementById('renew-email-btn');
-  if (emailBtn) {
-    const mo = months === 1 ? '1 month' : `${months} months`;
-    emailBtn.href = `mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=Template%20Renewal%20VP-${code}%20(${months}%20month${months>1?'s':''})&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20am%20renewing%20my%20template%20listing%20VP-${code}%20for%20${months}%20month${months>1?'s':''}%20(%E2%82%B1${total}).%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}`;
-  }
 }
 window._selectRenewMonths = _selectRenewMonths;
+
+async function _submitRenewRequest(code) {
+  const btn = document.getElementById('renew-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  try {
+    const months = _renewSelectedMonths || 1;
+    await DB.collection('kasalko_payment_requests').add({
+      type:      'renewal',
+      uid:       window.CURRENT_USER?.uid || '',
+      email:     window.CURRENT_USER?.email || '',
+      name:      window.CURRENT_USER?.displayName || window.CURRENT_USER?.email?.split('@')[0] || '',
+      code,
+      months,
+      amount:    LISTING_FEE * months,
+      status:    'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    document.getElementById('renew-listing-sheet')?.remove();
+    _showPaymentRequestSuccess(window.CURRENT_USER?.email || '');
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Renewal Request →'; }
+    alert('Error submitting request: ' + e.message);
+  }
+}
+window._submitRenewRequest = _submitRenewRequest;
 
 /* ── PUBLISH AGREEMENT (shown before the form) ── */
 function openPublishAgreement() {
@@ -516,13 +575,15 @@ async function submitPublishTemplate() {
   if (btn) { btn.textContent = 'Submitting…'; btn.disabled = true; }
 
   try {
+    // Enforce 2-listing cap
     const existing = await DB.collection('kasalko_templates')
-      .where('sellerUid','==', window.CURRENT_USER.uid).limit(1).get();
-    if (!existing.empty) {
-      showErr('You already have a template submitted. Check your VP code in the Save & Sell card.');
+      .where('sellerUid','==', window.CURRENT_USER.uid).get();
+    if (existing.size >= 2) {
+      showErr('You already have 2 listings — the maximum allowed. Delete a rejected or expired listing to submit a new one.');
       if (btn) { btn.textContent = 'Submit for Review →'; btn.disabled = false; }
       return;
     }
+
     const code = await _generateUniqueTemplateCode();
     await DB.collection('kasalko_templates').doc(code).set({
       sellerUid:    window.CURRENT_USER.uid,
@@ -544,67 +605,67 @@ async function submitPublishTemplate() {
         planningMonths: (typeof WED!=='undefined' && WED.planningMonths) || null,
       },
       publishedAt:  firebase.firestore.FieldValue.serverTimestamp(),
-      // Listing expires 30 days from submission. Admin can extend on renewal payment.
       expiresAt:    firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-      listingFee:   99, // ₱99/month renewal fee
+      listingFee:   LISTING_FEE,
       adminNote:    '',
     });
+    // Fire-and-forget payment request
+    DB.collection('kasalko_payment_requests').add({
+      type:      'new_listing',
+      uid:       window.CURRENT_USER.uid,
+      email:     window.CURRENT_USER.email,
+      name:      window.CURRENT_USER.displayName || window.CURRENT_USER.email.split('@')[0],
+      code,
+      months:    1,
+      amount:    LISTING_FEE,
+      status:    'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
     document.getElementById('publish-tpl-sheet')?.remove();
-    // Payment-required sheet — seller must pay listing fee to activate
-    const s = document.createElement('div');
-    s.id = 'tpl-success-sheet'; s.className = 'modal-overlay open';
-    s.onclick = e => { if (e.target === s) { s.remove(); if (typeof renderOverview==='function') renderOverview(); } };
-    s.innerHTML = `
-      <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
-        <div class="modal-handle"></div>
-
-        <!-- Code block -->
-        <div style="text-align:center;padding:18px;border-radius:12px;background:rgba(245,230,200,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:14px">
-          <div style="font-size:36px;margin-bottom:6px">🎉</div>
-          <div style="font-size:10px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Your Template Code</div>
-          <div style="font-size:26px;font-weight:800;color:var(--ink);letter-spacing:3px;font-family:monospace">VP-${code}</div>
-          <div style="font-size:11px;color:var(--ink-3);margin-top:4px">Note this down!</div>
-        </div>
-
-        <!-- Pay to activate -->
-        <div style="padding:12px 14px;border-radius:10px;background:rgba(224,120,152,0.1);border:1.5px solid rgba(224,120,152,0.25);margin-bottom:14px">
-          <div style="font-size:13px;font-weight:800;color:#b04060;margin-bottom:4px">⏳ One more step — pay to activate</div>
-          <div style="font-size:12px;color:#8b3050;line-height:1.6">Your listing is ready but needs payment to go live in the marketplace. <b>Pay now</b> and we'll activate your template within a few hours after verifying.</div>
-        </div>
-
-        <!-- Fee -->
-        <div style="padding:10px 14px;border-radius:10px;background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;color:var(--ink-4);margin-bottom:3px">Monthly Listing Fee</div>
-          <div style="font-size:24px;font-weight:800;color:var(--tan-dark)">₱${LISTING_FEE}</div>
-          <div style="font-size:10.5px;color:var(--ink-4)">per month · keeps your listing active for 30 days</div>
-        </div>
-
-        <!-- Steps -->
-        <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">How to pay:</div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-          ${[
-            `Open GCash and send <b>₱${LISTING_FEE}</b> to our number`,
-            `Screenshot your GCash receipt`,
-            `Email the receipt to us with your code <b>VP-${code}</b>`,
-            `We'll activate your listing within 24–48 hrs ✅`
-          ].map((text, i) => `
-            <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
-              <span style="min-width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">${i+1}</span>
-              ${text}
-            </div>`).join('')}
-        </div>
-
-        <a href="mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=New%20Listing%20Payment%20VP-${code}&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI've%20submitted%20a%20new%20template%20listing%20VP-${code}%20and%20have%20sent%20the%20GCash%20payment%20of%20%E2%82%B1${LISTING_FEE}.%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}"
-          style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box">
-          📧 Email Payment Proof →
-        </a>
-        <button onclick="this.closest('.modal-overlay').remove();if(typeof renderOverview==='function')renderOverview();" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.2);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">I'll pay later</button>
-      </div>`;
-    document.body.appendChild(s);
+    _showPaymentRequestSuccess(window.CURRENT_USER.email);
     if (typeof renderOverview === 'function') renderOverview();
   } catch(e) {
     showErr('Error: ' + e.message);
     if (btn) { btn.textContent = 'Submit for Review →'; btn.disabled = false; }
+  }
+}
+
+function _showPaymentRequestSuccess(email) {
+  document.getElementById('payment-req-success-sheet')?.remove();
+  const s = document.createElement('div');
+  s.id = 'payment-req-success-sheet'; s.className = 'modal-overlay open';
+  s.onclick = e => { if (e.target === s) s.remove(); };
+  s.innerHTML = `
+    <div class="modal-sheet" style="text-align:center">
+      <div class="modal-handle"></div>
+      <div style="font-size:52px;margin:8px 0 14px">📬</div>
+      <div style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Request Submitted!</div>
+      <div style="font-size:13px;color:var(--ink-3);line-height:1.7;margin-bottom:20px">
+        We'll send payment instructions to<br>
+        <b style="color:var(--ink)">${_esc(email)}</b><br>
+        within a few minutes.
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-4);line-height:1.6;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.4);border:1px solid rgba(201,169,110,0.2);margin-bottom:16px">
+        Once you receive the email, follow the payment instructions and we'll activate your listing within a few hours. 🌸
+      </div>
+      <button onclick="document.getElementById('payment-req-success-sheet')?.remove()"
+        style="width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f)">
+        Done
+      </button>
+    </div>`;
+  document.body.appendChild(s);
+}
+
+async function deleteTemplate(code) {
+  if (!window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
+  if (!confirm(`Delete listing VP-${code}? This cannot be undone.`)) return;
+  try {
+    await DB.collection('kasalko_templates').doc(code).delete();
+    if (typeof showToast === 'function') showToast('Listing deleted');
+    _refreshSaveSellCard();
+    if (typeof renderOverview === 'function') renderOverview();
+  } catch(e) {
+    alert('Error deleting listing: ' + e.message);
   }
 }
 
@@ -1030,6 +1091,8 @@ window._setRefNumber              = _setRefNumber;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
 window._refreshSaveSellCard   = _refreshSaveSellCard;
+window.deleteTemplate         = deleteTemplate;
+window._showPaymentRequestSuccess = _showPaymentRequestSuccess;
 window._showFlushConfirm      = _showFlushConfirm;
 window._showFlushConfirm2     = _showFlushConfirm2;
 window.flushAllData           = flushAllData;
