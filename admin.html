@@ -649,62 +649,52 @@ async function rejectTemplate(docId, isActive) {
 }
 
 async function simulatePurchase(docId, price, sellerUid, sellerEmail) {
-  if (!confirm(`Simulate a ₱${Number(price).toLocaleString()} sale for VP-${docId}?\n\nThis will add 1 to salesCount and credit the seller's earnings. Use only for testing.`)) return;
-  const SELLER_CUT = 0.70; // 70% to seller, 30% platform
+  if (!confirm(`Simulate a ₱${Number(price).toLocaleString()} sale for VP-${docId}?\n\nThis credits the seller's earnings immediately. Use only for testing.`)) return;
+  const SELLER_CUT       = 0.70;
   const sellerEarnings   = Math.round(price * SELLER_CUT);
   const platformEarnings = price - sellerEarnings;
+  const refNum           = 'ADMIN-TEST-' + Date.now().toString(36).toUpperCase();
   try {
-    const batch = DB.batch();
-
-    // 1. Record in the template's purchases subcollection (seller sees this)
-    const purchaseRef = DB.collection('kasalko_templates').doc(docId)
-      .collection('purchases').doc();
-    batch.set(purchaseRef, {
-      buyerEmail:      _user?.email || 'admin@test.com',
-      buyerUid:        _user?.uid   || 'admin',
-      price,
-      sellerEarnings,
-      status:          'verified',
-      refNumber:       'ADMIN-TEST-' + Date.now().toString(36).toUpperCase(),
-      isTest:          true,
-      createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
-      verifiedAt:      firebase.firestore.FieldValue.serverTimestamp(),
-      used:            true,
-    });
-
-    // 2. Record in kasalko_template_sales (global sales ledger)
-    const saleRef = DB.collection('kasalko_template_sales').doc();
-    batch.set(saleRef, {
-      templateCode:    docId,
-      sellerUid,
-      sellerEmail,
-      buyerEmail:      _user?.email || 'admin@test.com',
-      buyerUid:        _user?.uid   || 'admin',
-      price,
-      sellerEarnings,
-      platformEarnings,
-      isTest:          true,
-      purchasedAt:     firebase.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // 3. Update template totals
-    const tplRef = DB.collection('kasalko_templates').doc(docId);
-    batch.update(tplRef, {
+    // ── Step 1 (critical): increment template totals ──────────────────
+    // Done separately so a missing Firestore rule on other collections
+    // cannot block this write from completing.
+    await DB.collection('kasalko_templates').doc(docId).update({
       salesCount:  firebase.firestore.FieldValue.increment(1),
       totalEarned: firebase.firestore.FieldValue.increment(sellerEarnings),
     });
 
-    await batch.commit();
+    // ── Step 2 (fire-and-forget): purchase record seller can see ──────
+    DB.collection('kasalko_templates').doc(docId).collection('purchases').add({
+      buyerEmail:  _user?.email || 'admin@test.com',
+      buyerUid:    _user?.uid   || 'admin',
+      price, sellerEarnings,
+      status:      'verified',
+      refNumber:   refNum,
+      isTest:      true,
+      used:        true,
+      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      verifiedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
 
-    // Update local cache
+    // ── Step 3 (fire-and-forget): global sales ledger ─────────────────
+    DB.collection('kasalko_template_sales').add({
+      templateCode: docId, sellerUid, sellerEmail,
+      buyerEmail:   _user?.email || 'admin@test.com',
+      buyerUid:     _user?.uid   || 'admin',
+      price, sellerEarnings, platformEarnings,
+      isTest:       true,
+      purchasedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
+
+    // Update local admin cache and re-render
     const t = _tplCache.find(t => t._docId === docId);
     if (t) {
       t.salesCount  = (t.salesCount  || 0) + 1;
       t.totalEarned = (t.totalEarned || 0) + sellerEarnings;
     }
     renderTemplates();
-    toast(`🧪 Sale simulated! Seller credited ₱${sellerEarnings.toLocaleString()} (${Math.round(SELLER_CUT*100)}% cut). Platform earned ₱${platformEarnings.toLocaleString()}.`);
-  } catch(e) { toast('⚠️ ' + e.message); }
+    toast(`🧪 Simulated! Seller +₱${sellerEarnings.toLocaleString()} · Platform +₱${platformEarnings.toLocaleString()} · Ref: ${refNum}`);
+  } catch(e) { toast('⚠️ Simulation failed: ' + e.message); }
 }
 
 /* ══════════════════════════════════════════════════

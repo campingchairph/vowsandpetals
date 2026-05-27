@@ -530,6 +530,16 @@ function renderOverview() {
           Look Up →
         </button>
       </div>
+    </div>
+
+    <!-- ── DANGER ZONE ── -->
+    <div style="margin-top:24px;padding:14px 16px;border-radius:14px;border:1px solid rgba(180,60,60,0.15);background:rgba(255,235,235,0.3)">
+      <div style="font-size:10px;font-weight:700;color:#b43c3c;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">⚠️ Danger Zone</div>
+      <div id="flush-confirm-wrap">
+        <button onclick="_showFlushConfirm()"
+          style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(180,60,60,0.2);background:rgba(255,235,235,0.5);font-size:12.5px;font-weight:700;color:#b43c3c;cursor:pointer;font-family:var(--f);text-align:left">
+          🗑️ Start Fresh — Delete All My Data</button>
+      </div>
     </div>`;
 
   // Auto-generate cards if not yet saved

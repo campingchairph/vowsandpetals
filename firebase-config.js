@@ -904,11 +904,6 @@ function openUserMenu() {
         <button onclick="kasalkoSignOut();document.getElementById('user-menu-sheet').remove()"
           style="width:100%;padding:12px 16px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.55);font-size:13px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f);text-align:left">
           🚪 Sign Out</button>
-        <div id="flush-confirm-wrap">
-          <button onclick="_showFlushConfirm()"
-            style="width:100%;padding:10px 16px;border-radius:var(--r-md);border:1px solid rgba(180,60,60,0.2);background:rgba(255,235,235,0.5);font-size:12.5px;font-weight:700;color:#b43c3c;cursor:pointer;font-family:var(--f);text-align:left">
-            🗑️ Start Fresh — Delete All My Data</button>
-        </div>
       </div>
     </div>`;
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
