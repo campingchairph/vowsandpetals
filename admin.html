@@ -1167,34 +1167,40 @@ async function cancelPaymentRequest(docId) {
 /* ══════════════════════════════════════════════════
    🛒  SALES TAB
 ══════════════════════════════════════════════════ */
-let _salesTemplateCache  = [];
-let _salesWithdrawCache  = [];
-let _salesExpandedCode   = null;
-let _salesPurchasesCache = {};
-let _salesWithdrawFilter = 'pending';
+let _salesTemplateCache   = [];
+let _salesWithdrawCache   = [];
+let _salesExpandedCode    = null;
+let _salesPurchasesCache  = {};
+let _salesWithdrawFilter  = 'pending';
+let _salesWithdrawPermError = false;
 
 async function loadSales() {
   const el = document.getElementById('p-sales');
   el.innerHTML = '<div class="loading"><div class="spinner spinner-sm"></div>Loading sales data…</div>';
+
+  // ── Templates (salesCount > 0) ────────────────────────────────────────────
   try {
-    let tplSnap, withdrawSnap;
-    try {
-      [tplSnap, withdrawSnap] = await Promise.all([
-        DB.collection('kasalko_templates').where('salesCount','>',0).get(),
-        DB.collection('kasalko_withdrawal_requests').orderBy('requestedAt','desc').get(),
-      ]);
-    } catch {
-      [tplSnap, withdrawSnap] = await Promise.all([
-        DB.collection('kasalko_templates').get(),
-        DB.collection('kasalko_withdrawal_requests').get(),
-      ]);
-    }
+    let tplSnap;
+    try   { tplSnap = await DB.collection('kasalko_templates').where('salesCount','>',0).get(); }
+    catch { tplSnap = await DB.collection('kasalko_templates').get(); }
     _salesTemplateCache = tplSnap.docs.map(d => ({ _docId: d.id, ...d.data() })).filter(t => (t.salesCount || 0) > 0);
-    _salesWithdrawCache = withdrawSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
-    renderSalesTab();
   } catch(e) {
-    document.getElementById('p-sales').innerHTML = `<div class="empty">⚠️ Error loading sales<small>${esc(e.message)}</small></div>`;
+    _salesTemplateCache = [];
   }
+
+  // ── Withdrawal requests (separate try — missing rule shouldn't block the tab) ──
+  try {
+    let wSnap;
+    try   { wSnap = await DB.collection('kasalko_withdrawal_requests').orderBy('requestedAt','desc').get(); }
+    catch { wSnap = await DB.collection('kasalko_withdrawal_requests').get(); }
+    _salesWithdrawCache = wSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    _salesWithdrawPermError = false;
+  } catch(e) {
+    _salesWithdrawCache = [];
+    _salesWithdrawPermError = true;
+  }
+
+  renderSalesTab();
 }
 
 function renderSalesTab() {
@@ -1241,6 +1247,15 @@ function renderSalesTab() {
 
     <!-- ── PAYOUT REQUESTS ── -->
     <div style="margin-bottom:22px">
+      ${_salesWithdrawPermError ? `
+      <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(192,112,104,0.07);border:1px solid rgba(192,112,104,0.22);margin-bottom:12px;font-size:12px;color:var(--rose);line-height:1.6">
+        <b>⚠️ Missing Firestore rule</b> — can't read <code style="font-size:11px;background:rgba(192,112,104,0.1);padding:1px 5px;border-radius:4px">kasalko_withdrawal_requests</code>.<br>
+        Add this in <b>Firebase Console → Firestore → Rules</b> and publish:
+        <pre style="margin-top:8px;padding:9px 12px;border-radius:8px;background:rgba(44,24,16,0.06);font-size:11px;color:var(--ink-2);white-space:pre-wrap;word-break:break-all">match /kasalko_withdrawal_requests/{id} {
+  allow create: if request.auth != null;
+  allow read, update: if request.auth.uid in ['FJphv5mq3GSowFJy2iCqIEtCDZA3'];
+}</pre>
+      </div>` : ''}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div style="font-size:14px;font-weight:800;color:var(--ink)">💸 Payout Requests</div>
         <div class="filter-row">
