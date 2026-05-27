@@ -850,8 +850,7 @@ function renderPaymentRequests() {
 
     <!-- ── SEARCH ── -->
     <div class="adm-search-wrap">
-      <input class="adm-search" type="search" value="${esc(_paySearch)}" placeholder="Search name, email, VP-code, GCash ref…"
-        oninput="_paySearch=this.value;renderPaymentRequests()" autocomplete="off">
+      <input id="pay-search-inp" class="adm-search" type="text" value="${esc(_paySearch)}" placeholder="Search name, email, VP-code, GCash ref…" autocomplete="off">
     </div>
 
     <!-- ── TYPE SUB-TABS ── -->
@@ -862,7 +861,7 @@ function renderPaymentRequests() {
         const urgent  = pCount > 0;
         return `<button class="sub-tab ${_payTypeFilter===t.key?'on':''}" onclick="_payTypeFilter='${t.key}';renderPaymentRequests()">
           ${t.emoji} ${t.label}
-          ${total > 0 || urgent ? `<span class="sub-tab-cnt${urgent?' urgent':''}">${urgent ? pCount+'!' : total}</span>` : ''}
+          ${total > 0 || urgent ? `<span class="sub-tab-cnt${urgent?' urgent':''}">${urgent ? pCount : total}</span>` : ''}
         </button>`;
       }).join('')}
     </div>
@@ -894,6 +893,17 @@ function renderPaymentRequests() {
       ? `<div class="empty">No ${_payTypeFilter!=='all'?typeTabs.find(t=>t.key===_payTypeFilter)?.label+' ':''}payment requests${_payFilter!=='all'?` with status "${_payFilter.replace('_',' ')}"`:''}.
           <small>Requests appear here when sellers submit from the app.</small></div>`
       : `<div class="admin-list">${list.map(renderPaymentRequestCard).join('')}</div>`}`;
+
+  // Wire up search — .oninput (not addEventListener) so no duplicate handlers on re-render
+  const si = document.getElementById('pay-search-inp');
+  if (si) {
+    si.oninput = () => { _paySearch = si.value; renderPaymentRequests(); };
+    // If there's an active search, return focus to the input after re-render
+    if (_paySearch) {
+      si.focus();
+      si.setSelectionRange(_paySearch.length, _paySearch.length);
+    }
+  }
 }
 
 function renderPaymentRequestCard(r) {

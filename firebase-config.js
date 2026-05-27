@@ -1133,37 +1133,85 @@ function _loadSellerPurchases(code) {
 
 function _applyPurchasesSnap(snap) {
   const wrap = document.getElementById('seller-purchases-wrap');
-  if (!wrap) return; // user navigated away — re-render on next tab visit
+  if (!wrap) return;
 
   if (snap.empty) {
-    wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4);padding:4px 0">No purchase requests yet.</div>`;
+    wrap.innerHTML = `<div style="font-size:11px;color:var(--ink-4);padding:4px 0">No sales yet.</div>`;
     return;
   }
 
   const code = _sellerWatchedCode;
+  let totalWithdrawable = 0;
+  let withdrawableCount = 0;
+
   const rows = snap.docs.map(d => {
-    const p   = d.data();
-    const pid = d.id;
-    const statusColors = { pending:'#8C6640', verified:'#3a7a54', rejected:'#c07068' };
-    const statusColor  = statusColors[p.status] || '#8C6640';
+    const p       = d.data();
+    const pid     = d.id;
+    const isVerified = p.status === 'verified' || !!p.refNumber;
+    const earnings   = Number(p.sellerEarnings || 0);
+    const wStatus    = p.withdrawStatus || '';
+    const statusColor = isVerified ? '#3a7a54' : '#8C6640';
+
+    const date = p.createdAt
+      ? new Date(p.createdAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' })
+      : '';
+
+    // Track withdrawable total (verified, not test, not already requested/released)
+    if (isVerified && !p.isTest && wStatus !== 'requested' && wStatus !== 'released' && earnings > 0) {
+      totalWithdrawable += earnings;
+      withdrawableCount++;
+    }
+
+    // Withdraw action area
+    let withdrawArea = '';
+    if (p.isTest) {
+      withdrawArea = `<div style="font-size:10.5px;color:var(--ink-4);margin-top:4px;font-style:italic">🧪 Test sale — no payout</div>`;
+    } else if (!isVerified) {
+      withdrawArea = ''; // pending payment — show ref input instead
+    } else if (wStatus === 'released') {
+      withdrawArea = `<div style="font-size:11px;font-weight:700;color:var(--green-deep);margin-top:5px">✅ Payment released</div>`;
+    } else if (wStatus === 'requested') {
+      withdrawArea = `<div style="font-size:11px;color:var(--ink-4);margin-top:5px">⏳ Withdraw requested — pending admin release</div>`;
+    } else {
+      withdrawArea = `
+        <button onclick="_requestWithdraw('${code}','${pid}',${earnings})"
+          style="margin-top:6px;padding:5px 12px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.35);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">
+          💸 Request Withdraw ₱${earnings.toLocaleString()}</button>`;
+    }
+
     return `
       <div style="padding:8px 10px;border-radius:8px;background:rgba(255,252,247,0.75);border:1px solid rgba(201,169,110,0.18);margin-bottom:6px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
-          <div style="font-size:11.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.buyerEmail||'—'}</div>
-          <span style="font-size:9px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:6px;padding:1px 6px;flex-shrink:0">${(p.status||'pending').toUpperCase()}</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px">
+          <div style="font-size:12px;font-weight:700;color:var(--ink)">${p.isTest ? '🧪 Test Sale' : 'Template Purchase'}</div>
+          <span style="font-size:9px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:6px;padding:1px 6px;flex-shrink:0">${isVerified ? 'VERIFIED' : 'PENDING'}</span>
         </div>
-        ${p.refNumber
-          ? `<div style="font-size:11px;color:var(--ink-4)">Ref: <b style="font-family:monospace;letter-spacing:1px">${p.refNumber}</b>${p.used?' · <span style="color:var(--green-deep)">✓ Activated</span>':''}</div>`
-          : `<div style="display:flex;gap:5px;margin-top:4px">
-              <input id="ref-inp-${pid}" placeholder="Enter ref number" class="glass-input" style="flex:1;font-size:11px;padding:5px 8px;height:auto;min-height:unset;font-family:monospace;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-              <button onclick="_setRefNumber('${code}','${pid}')" style="padding:5px 10px;border-radius:8px;border:1.5px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f);white-space:nowrap;flex-shrink:0">Set ✓</button>
-            </div>`}
+        <div style="font-size:11px;color:var(--ink-4)">${[date, earnings > 0 ? `₱${earnings.toLocaleString()} earned` : ''].filter(Boolean).join(' · ')}</div>
+        ${!isVerified ? `
+          <div style="display:flex;gap:5px;margin-top:5px">
+            <input id="ref-inp-${pid}" placeholder="Enter buyer's ref number" class="glass-input"
+              style="flex:1;font-size:11px;padding:5px 8px;height:auto;min-height:unset;font-family:monospace;text-transform:uppercase"
+              oninput="this.value=this.value.toUpperCase()">
+            <button onclick="_setRefNumber('${code}','${pid}')"
+              style="padding:5px 10px;border-radius:8px;border:1.5px solid rgba(90,171,122,0.3);background:rgba(90,171,122,0.12);font-size:11px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f);white-space:nowrap;flex-shrink:0">
+              Set ✓</button>
+          </div>` : ''}
+        ${withdrawArea}
       </div>`;
   }).join('');
 
+  // "Withdraw All" button if there are pending withdrawals
+  const withdrawAllBtn = withdrawableCount > 0 ? `
+    <div style="margin-top:10px">
+      <button onclick="_requestWithdrawAll('${code}')"
+        style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid rgba(201,169,110,0.35);background:linear-gradient(135deg,rgba(245,230,200,0.65),rgba(252,232,238,0.45));font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">
+        💸 Request Withdraw All — ₱${totalWithdrawable.toLocaleString()} (${withdrawableCount} sale${withdrawableCount!==1?'s':''})
+      </button>
+      <div style="font-size:10.5px;color:var(--ink-4);text-align:center;margin-top:4px">30% platform fee already deducted from your earnings</div>
+    </div>` : '';
+
   wrap.innerHTML = `
-    <div style="font-size:11.5px;font-weight:700;color:var(--ink);margin:6px 0 6px">📬 Purchase Requests (${snap.docs.length})</div>
-    ${rows}`;
+    <div style="font-size:11.5px;font-weight:700;color:var(--ink);margin:6px 0 6px">🛒 Sales (${snap.docs.length})</div>
+    ${rows}${withdrawAllBtn}`;
 }
 
 async function _setRefNumber(code, purchaseId) {
@@ -1199,6 +1247,62 @@ async function _setRefNumber(code, purchaseId) {
     await batch.commit();
     showToast(`✅ Verified! +₱${sellerEarnings.toLocaleString()} added to earnings.`);
     // Listeners auto-update both the purchases list and the template earnings card
+  } catch(e) { showToast('⚠️ ' + e.message); }
+}
+
+// Request withdrawal for a single sale
+async function _requestWithdraw(code, purchaseId, amount) {
+  if (!window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
+  if (!confirm(`Request withdrawal of ₱${Number(amount).toLocaleString()}?\n\nAdmin will process your payout within a few business days.`)) return;
+  try {
+    await DB.collection('kasalko_templates').doc(code)
+      .collection('purchases').doc(purchaseId)
+      .update({ withdrawStatus: 'requested', withdrawRequestedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    // Log for admin
+    DB.collection('kasalko_withdrawal_requests').add({
+      sellerUid:    window.CURRENT_USER.uid,
+      sellerEmail:  window.CURRENT_USER.email,
+      templateCode: code,
+      purchaseId,
+      amount,
+      isBulk:       false,
+      status:       'pending',
+      requestedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
+    showToast('💸 Withdrawal requested! Admin will process within a few days.');
+  } catch(e) { showToast('⚠️ ' + e.message); }
+}
+
+// Request withdrawal for all eligible sales at once
+async function _requestWithdrawAll(code) {
+  if (!window.CURRENT_USER || typeof DB === 'undefined' || !DB || !_lastPurchasesSnap) return;
+  const eligible = _lastPurchasesSnap.docs.filter(d => {
+    const p = d.data();
+    return (p.status === 'verified' || !!p.refNumber) &&
+           !p.isTest &&
+           p.withdrawStatus !== 'requested' &&
+           p.withdrawStatus !== 'released';
+  });
+  if (eligible.length === 0) { showToast('No eligible sales to withdraw'); return; }
+  const total = eligible.reduce((sum, d) => sum + Number(d.data().sellerEarnings || 0), 0);
+  if (!confirm(`Request withdrawal of ₱${total.toLocaleString()} from ${eligible.length} sale${eligible.length!==1?'s':''}?\n\nAdmin will process your payout within a few business days.`)) return;
+  try {
+    const batch = DB.batch();
+    const now = firebase.firestore.FieldValue.serverTimestamp();
+    eligible.forEach(d => batch.update(d.ref, { withdrawStatus: 'requested', withdrawRequestedAt: now }));
+    await batch.commit();
+    // Log bulk withdrawal for admin
+    DB.collection('kasalko_withdrawal_requests').add({
+      sellerUid:    window.CURRENT_USER.uid,
+      sellerEmail:  window.CURRENT_USER.email,
+      templateCode: code,
+      purchaseIds:  eligible.map(d => d.id),
+      amount:       total,
+      isBulk:       true,
+      status:       'pending',
+      requestedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
+    showToast(`💸 Withdrawal of ₱${total.toLocaleString()} requested!`);
   } catch(e) { showToast('⚠️ ' + e.message); }
 }
 
@@ -1251,6 +1355,8 @@ window._submitAgreementAndPublish = _submitAgreementAndPublish;
 window.openRenewListing           = openRenewListing;
 window._loadSellerPurchases       = _loadSellerPurchases;
 window._setRefNumber              = _setRefNumber;
+window._requestWithdraw           = _requestWithdraw;
+window._requestWithdrawAll        = _requestWithdrawAll;
 window._submitSellerPaymentRef    = _submitSellerPaymentRef;
 window.openPublishTemplate    = openPublishTemplate;
 window.submitPublishTemplate  = submitPublishTemplate;
