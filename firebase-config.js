@@ -1156,17 +1156,15 @@ function _applyPurchasesSnap(snap) {
       ? new Date(p.createdAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' })
       : '';
 
-    // Track withdrawable total (verified, not test, not already requested/released)
-    if (isVerified && !p.isTest && wStatus !== 'requested' && wStatus !== 'released' && earnings > 0) {
+    // Track withdrawable total (verified, not already requested/released)
+    if (isVerified && wStatus !== 'requested' && wStatus !== 'released' && earnings > 0) {
       totalWithdrawable += earnings;
       withdrawableCount++;
     }
 
     // Withdraw action area
     let withdrawArea = '';
-    if (p.isTest) {
-      withdrawArea = `<div style="font-size:10.5px;color:var(--ink-4);margin-top:4px;font-style:italic">🧪 Test sale — no payout</div>`;
-    } else if (!isVerified) {
+    if (!isVerified) {
       withdrawArea = ''; // pending payment — show ref input instead
     } else if (wStatus === 'released') {
       withdrawArea = `<div style="font-size:11px;font-weight:700;color:var(--green-deep);margin-top:5px">✅ Payment released</div>`;
@@ -1279,7 +1277,6 @@ async function _requestWithdrawAll(code) {
   const eligible = _lastPurchasesSnap.docs.filter(d => {
     const p = d.data();
     return (p.status === 'verified' || !!p.refNumber) &&
-           !p.isTest &&
            p.withdrawStatus !== 'requested' &&
            p.withdrawStatus !== 'released';
   });

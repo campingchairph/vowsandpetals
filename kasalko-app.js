@@ -659,23 +659,22 @@ function renderBudget() {
       <button onclick="event.stopPropagation();openManageCategories()" style="padding:4px 9px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(255,252,247,0.8);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage</button>
     </div>
     ${!_budgetCatCollapsed ? `
-    <div class="budget-cat-grid" data-cols="${Object.keys(byCat).length >= 4 ? 4 : Object.keys(byCat).length === 3 ? 3 : 1}" style="margin-top:8px">
+    <div class="budget-cat-grid" data-cols="${Object.keys(byCat).length >= 4 ? 4 : Object.keys(byCat).length === 3 ? 3 : Object.keys(byCat).length === 2 ? 2 : 1}" style="margin-top:8px">
       ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
         const catPct = totalSpent ? Math.round((amt/totalSpent)*100) : 0;
         const budPct = WED.budget  ? Math.min(Math.round((amt/WED.budget)*100),100) : 0;
         const catLbl = allExpenseCats().find(c=>c.key===cat)?.label || cat;
         return `
-        <div class="${catColor(cat)} bcat-card" style="padding:10px 12px;border-radius:var(--r-md)">
-          <div class="bcat-row" style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-            <span style="font-size:15px">${catIcon(cat)}</span>
-            <span style="font-size:11.5px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${catLbl}</span>
-            <span style="font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0">₱${amt.toLocaleString()}</span>
-            <span style="font-size:10px;color:var(--ink-4);font-weight:600;flex-shrink:0">${catPct}%</span>
+        <div class="${catColor(cat)} bcat-card" onclick="generateCategoryReceipt('${cat}')" style="padding:8px 10px;border-radius:var(--r-md)" title="Tap for receipt">
+          <div class="bcat-row" style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
+            <span style="font-size:14px">${catIcon(cat)}</span>
+            <span style="font-size:11px;font-weight:700;color:var(--ink);text-transform:capitalize;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${catLbl}</span>
+            <span style="font-size:10.5px;color:var(--ink-4);font-weight:600;flex-shrink:0">${catPct}%</span>
           </div>
-          <div style="height:4px;border-radius:2px;background:rgba(44,31,14,0.08);overflow:hidden;margin-bottom:6px">
+          <div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px">₱${amt.toLocaleString()}</div>
+          <div style="height:3px;border-radius:2px;background:rgba(44,31,14,0.08);overflow:hidden">
             <div style="height:100%;width:${budPct}%;background:linear-gradient(90deg,var(--green-accent),var(--tan));border-radius:2px"></div>
           </div>
-          <button onclick="generateCategoryReceipt('${cat}')" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(201,169,110,0.22);background:rgba(255,252,247,0.7);font-size:10px;font-weight:700;color:var(--tan-dark);cursor:pointer">🧾 Receipt</button>
         </div>`;}).join('')}
     </div>` : ''}` : `
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
