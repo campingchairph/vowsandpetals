@@ -66,20 +66,6 @@ if (AUTH) {
     }
   });
 
-  // Handle Google redirect sign-in result (avoids COOP popup issues on GitHub Pages)
-  AUTH.getRedirectResult()
-    .then(result => {
-      if (result && result.user) {
-        if (typeof closeModal === 'function') closeModal('auth-modal');
-        if (typeof showToast === 'function') showToast('👋 Signed in with Google!');
-      }
-    })
-    .catch(err => {
-      // auth/no-auth-event = normal page load with no pending redirect — safe to ignore
-      if (err.code && err.code !== 'auth/no-auth-event') {
-        if (typeof showToast === 'function') showToast('⚠️ ' + _authErrMsg(err.code));
-      }
-    });
 }
 
 /* ── HEADER AUTH BUTTON ──────────────────────── */
@@ -869,10 +855,9 @@ function submitAuthRegister() {
 
 function signInWithGoogle() {
   if (!AUTH) return;
-  // Use redirect instead of popup to avoid COOP header issues on GitHub Pages.
-  // After Google auth, the page reloads and getRedirectResult() resolves the sign-in.
-  AUTH.signInWithRedirect(new firebase.auth.GoogleAuthProvider())
-    .catch(err => showToast('⚠️ ' + _authErrMsg(err.code)));
+  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(() => { closeModal('auth-modal'); showToast('👋 Signed in with Google!'); })
+    .catch(err => { if (err.code !== 'auth/popup-closed-by-user') showToast('⚠️ ' + _authErrMsg(err.code)); });
 }
 
 function _authErrMsg(code) {

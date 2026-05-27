@@ -567,10 +567,6 @@ AUTH?.onAuthStateChanged(async user => {
   }
 });
 
-// Handle Google redirect sign-in result (avoids COOP popup issues on GitHub Pages)
-AUTH?.getRedirectResult().catch(err => {
-  if (err.code && err.code !== 'auth/no-auth-event') _showAuthErr(_authMsg(err.code));
-});
 
 /* ── SCREENS ── */
 function showScreen(name) {
@@ -598,9 +594,8 @@ function toggleAuth() {
 }
 
 function signInGoogle() {
-  // Use redirect instead of popup to avoid COOP header issues on GitHub Pages.
-  AUTH.signInWithRedirect(new firebase.auth.GoogleAuthProvider())
-    .catch(err => _showAuthErr(_authMsg(err.code)));
+  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(err => { if (err.code !== 'auth/popup-closed-by-user') _showAuthErr(_authMsg(err.code)); });
 }
 
 function signInEmail() {

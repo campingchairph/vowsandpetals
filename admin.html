@@ -268,15 +268,9 @@ AUTH.onAuthStateChanged(user => {
   aTab('suppliers');
 });
 
-// Handle redirect sign-in result (avoids COOP popup issues on GitHub Pages)
-AUTH.getRedirectResult().catch(e => {
-  if (e.code && e.code !== 'auth/no-auth-event') alert('Sign-in error: ' + e.message);
-});
-
 function googleSignIn() {
-  // Use redirect instead of popup to avoid COOP header issues on GitHub Pages.
-  AUTH.signInWithRedirect(new firebase.auth.GoogleAuthProvider())
-    .catch(e => alert('Sign-in error: ' + e.message));
+  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(e => { if (e.code !== 'auth/popup-closed-by-user') alert('Sign-in error: ' + e.message); });
 }
 
 /* ── TABS ───────────────────────────────────────── */
