@@ -266,13 +266,18 @@ function _refreshSaveSellCard() {
         const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
         const statusColor  = statusColors[effectiveStatus] || '#8C6640';
 
-        // Delete allowed only for rejected or expired listings
-        const canDelete = effectiveStatus === 'rejected' || effectiveStatus === 'expired';
+        // Delete only for rejected/expired AND no pending payment in progress
+        const canDelete = (effectiveStatus === 'rejected' || effectiveStatus === 'expired') && !pendingPayment;
 
         const titleStr = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
 
         const pendingPayment = !!t.hasPendingPayment;
         const pendingMsg = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
+        // Badge: show FOR REVIEW when seller has submitted a payment request
+        const displayStatus = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired')
+          ? 'for review' : effectiveStatus;
+        const displayColor  = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired')
+          ? '#1a73e8' : statusColor;
 
         let actionArea = '';
         if (effectiveStatus === 'active') {
@@ -299,7 +304,7 @@ function _refreshSaveSellCard() {
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
               <span style="font-family:monospace;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:2px">VP-${code}</span>
               <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:10px;font-weight:700;color:${statusColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${effectiveStatus.toUpperCase()}</span>
+                <span style="font-size:10px;font-weight:700;color:${displayColor};border:1px solid currentColor;border-radius:10px;padding:2px 8px">${displayStatus.toUpperCase()}</span>
                 ${canDelete ? `<button onclick="deleteTemplate('${code}')" title="Delete listing" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-4);padding:2px 4px;line-height:1">🗑</button>` : ''}
               </div>
             </div>

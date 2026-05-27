@@ -613,6 +613,7 @@ function renderTemplateCard(t) {
       <div class="action-row" style="margin-top:10px">
         ${isPending ? `<button class="act-btn act-on" onclick="approveTemplate('${t._docId}')">✅ Approve & Publish</button>` : ''}
         <button class="act-btn act-danger" onclick="rejectTemplate('${t._docId}',${isActive})">${isActive ? '❌ Suspend' : '❌ Reject'}</button>
+        ${isActive ? `<button class="act-btn" onclick="simulatePurchase('${t._docId}',${t.price||0},'${esc(t.sellerUid||'')}','${esc(t.sellerEmail||'')}')" title="Test the purchase flow" style="background:rgba(101,85,196,0.08);border-color:rgba(101,85,196,0.25);color:#6555c4">🧪 Simulate Sale</button>` : ''}
       </div>` : ''}
     </div>`;
 }
@@ -620,9 +621,11 @@ function renderTemplateCard(t) {
 async function approveTemplate(docId) {
   if (!confirm('Approve this template and make it live?')) return;
   try {
-    await DB.collection('kasalko_templates').doc(docId).update({ status: 'active', adminNote: '' });
+    await DB.collection('kasalko_templates').doc(docId).update({
+      status: 'active', adminNote: '', hasPendingPayment: false,
+    });
     const t = _tplCache.find(t => t._docId === docId);
-    if (t) { t.status = 'active'; t.adminNote = ''; }
+    if (t) { t.status = 'active'; t.adminNote = ''; t.hasPendingPayment = false; }
     renderTemplates();
     toast('✅ Template approved and live!');
   } catch(e) { toast('⚠️ ' + e.message); }
@@ -634,13 +637,73 @@ async function rejectTemplate(docId, isActive) {
   if (reason === null) return; // cancelled
   try {
     await DB.collection('kasalko_templates').doc(docId).update({
-      status: 'rejected',
+      status:    'rejected',
       adminNote: reason || 'Does not meet quality requirements.',
+      hasPendingPayment: false, // clear so seller can resubmit
     });
     const t = _tplCache.find(t => t._docId === docId);
-    if (t) { t.status = 'rejected'; t.adminNote = reason || 'Does not meet quality requirements.'; }
+    if (t) { t.status = 'rejected'; t.adminNote = reason || 'Does not meet quality requirements.'; t.hasPendingPayment = false; }
     renderTemplates();
     toast(isActive ? '❌ Template suspended' : '❌ Template rejected');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function simulatePurchase(docId, price, sellerUid, sellerEmail) {
+  if (!confirm(`Simulate a ₱${Number(price).toLocaleString()} sale for VP-${docId}?\n\nThis will add 1 to salesCount and credit the seller's earnings. Use only for testing.`)) return;
+  const SELLER_CUT = 0.70; // 70% to seller, 30% platform
+  const sellerEarnings   = Math.round(price * SELLER_CUT);
+  const platformEarnings = price - sellerEarnings;
+  try {
+    const batch = DB.batch();
+
+    // 1. Record in the template's purchases subcollection (seller sees this)
+    const purchaseRef = DB.collection('kasalko_templates').doc(docId)
+      .collection('purchases').doc();
+    batch.set(purchaseRef, {
+      buyerEmail:      _user?.email || 'admin@test.com',
+      buyerUid:        _user?.uid   || 'admin',
+      price,
+      sellerEarnings,
+      status:          'verified',
+      refNumber:       'ADMIN-TEST-' + Date.now().toString(36).toUpperCase(),
+      isTest:          true,
+      createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+      verifiedAt:      firebase.firestore.FieldValue.serverTimestamp(),
+      used:            true,
+    });
+
+    // 2. Record in kasalko_template_sales (global sales ledger)
+    const saleRef = DB.collection('kasalko_template_sales').doc();
+    batch.set(saleRef, {
+      templateCode:    docId,
+      sellerUid,
+      sellerEmail,
+      buyerEmail:      _user?.email || 'admin@test.com',
+      buyerUid:        _user?.uid   || 'admin',
+      price,
+      sellerEarnings,
+      platformEarnings,
+      isTest:          true,
+      purchasedAt:     firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 3. Update template totals
+    const tplRef = DB.collection('kasalko_templates').doc(docId);
+    batch.update(tplRef, {
+      salesCount:  firebase.firestore.FieldValue.increment(1),
+      totalEarned: firebase.firestore.FieldValue.increment(sellerEarnings),
+    });
+
+    await batch.commit();
+
+    // Update local cache
+    const t = _tplCache.find(t => t._docId === docId);
+    if (t) {
+      t.salesCount  = (t.salesCount  || 0) + 1;
+      t.totalEarned = (t.totalEarned || 0) + sellerEarnings;
+    }
+    renderTemplates();
+    toast(`🧪 Sale simulated! Seller credited ₱${sellerEarnings.toLocaleString()} (${Math.round(SELLER_CUT*100)}% cut). Platform earned ₱${platformEarnings.toLocaleString()}.`);
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 
