@@ -1119,13 +1119,15 @@ function renderGuests() {
         <div style="font-size:10.5px;color:var(--pink-deep);font-weight:700">Declined</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <span style="font-size:11.5px;font-weight:600;color:var(--ink-4)">${WED.guests.length} guest${WED.guests.length!==1?'s':''}</span>
       <div style="display:flex;align-items:center;gap:6px">
+        <button onclick="syncRSVPsFromCloud()" style="padding:5px 10px;border-radius:16px;background:rgba(252,232,238,0.6);border:1px solid rgba(224,120,152,0.28);font-size:11.5px;font-weight:600;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">💌 Sync RSVPs</button>
         <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:5px 10px;border-radius:16px;background:transparent;border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:600;color:var(--ink-3);cursor:pointer;font-family:var(--f)">👥 Groups</button>
         <button onclick="openModal('wed-add-guest-modal')" style="padding:7px 16px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;font-size:12.5px;font-weight:700;color:white;cursor:pointer;font-family:var(--f)">+ Add</button>
       </div>
     </div>
+    <div style="font-size:10.5px;color:var(--ink-4);margin-bottom:10px">RSVP statuses don't update live — tap 💌 Sync RSVPs to pull the latest responses.</div>
     <div style="position:relative;margin-bottom:8px">
       <input id="guest-search-input" type="search" placeholder="🔍 Search guests or groups…" value="${_guestSearch}"
         oninput="updateGuestSearch(this.value)"

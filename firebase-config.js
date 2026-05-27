@@ -256,14 +256,15 @@ function _refreshSaveSellCard() {
           </div>
           ${effectiveStatus === 'active' ? `
             <div style="font-size:11px;color:var(--ink-3)">🛒 ${t.salesCount||0} sale${(t.salesCount||0)!==1?'s':''} · ₱${Number(t.totalEarned||0).toLocaleString()} earned</div>
-            ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''}`:`Active until ${expDateStr}`}</div>` : ''}
-            ${nearExpiry ? `<button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Listing (₱99/mo)</button>` : ''}
+            ${expiresAt ? `<div style="font-size:11px;color:${nearExpiry?'#c07040':'var(--ink-4)'};margin-top:3px">${nearExpiry?'⚠️ ':'📅 '}${nearExpiry?`Expires in ${daysLeft} day${daysLeft!==1?'s':''} — renew now`:`Active until ${expDateStr}`}</div>` : ''}
+            <button onclick="openRenewListing('${code}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.6);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f)">🔄 Renew Now</button>
           ` : effectiveStatus === 'expired' ? `
             <div style="font-size:11.5px;color:#b03060;font-weight:600;margin-bottom:8px">⚠️ Listing expired ${expDateStr}. Your template is no longer visible in the marketplace.</div>
-            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing — ₱99/month</button>
+            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(176,48,96,0.3);background:rgba(252,232,238,0.6);font-size:12px;font-weight:700;color:#b03060;cursor:pointer;font-family:var(--f)">🔄 Renew Listing</button>
           ` : effectiveStatus === 'pending' ?
             `<div style="font-size:11px;color:var(--ink-3)">⏳ Awaiting payment verification &amp; admin review. Email your GCash receipt to ${SUPPORT_EMAIL_TEMPLATES} with code VP-${code}.</div>`
-          : `<div style="font-size:11px;color:#c07068">${t.adminNote||'Rejected. Contact support.'}</div>`}
+          : `<div style="font-size:11px;color:#c07068;margin-bottom:8px">${t.adminNote||'Your listing was rejected. Please review your content and contact us to resubmit.'}</div>
+            <button onclick="openRenewListing('${code}')" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(192,112,104,0.3);background:rgba(252,232,238,0.5);font-size:12px;font-weight:700;color:#c07068;cursor:pointer;font-family:var(--f)">🔄 Resubmit &amp; Renew</button>`}
         </div>`;
       // Purchase requests section (loads asynchronously)
       actionEl.insertAdjacentHTML('beforeend', `<div id="seller-purchases-wrap" style="margin-top:8px"><div style="font-size:11px;color:var(--ink-4);padding:4px 0">Loading purchase requests…</div></div>`);
@@ -280,41 +281,47 @@ function openRenewListing(code) {
   el.id = 'renew-listing-sheet';
   el.className = 'modal-overlay';
   el.onclick = e => { if (e.target === el) el.remove(); };
+  const opts = [
+    { months: 1, label: '1 month',  price: LISTING_FEE * 1 },
+    { months: 3, label: '3 months', price: LISTING_FEE * 3, note: 'Save time' },
+    { months: 6, label: '6 months', price: LISTING_FEE * 6, note: 'Best value' },
+  ];
+  const btnStyle = (sel) => `padding:10px 6px;border-radius:10px;border:${sel?'2px solid var(--gold)':'1.5px solid rgba(201,169,110,0.28)'};background:${sel?'rgba(245,230,200,0.75)':'rgba(255,252,247,0.6)'};cursor:pointer;font-family:var(--f);text-align:center;width:100%;transition:all 0.15s`;
   el.innerHTML = `
     <div class="modal-sheet">
       <div class="modal-handle"></div>
       <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px">🔄 Renew Listing</div>
-      <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5;margin-bottom:14px">Keep your template <b>VP-${code}</b> active for another 30 days.</div>
+      <div style="font-size:11.5px;color:var(--ink-3);line-height:1.5;margin-bottom:14px">Keep your template <b>VP-${code}</b> active in the marketplace.</div>
 
-      <!-- Fee summary -->
-      <div style="padding:10px 14px;border-radius:10px;background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px">Monthly Listing Fee</div>
-        <div style="font-size:24px;font-weight:800;color:var(--tan-dark)">₱${LISTING_FEE}</div>
-        <div style="font-size:10.5px;color:var(--ink-4)">per month · renews your listing for 30 days</div>
+      <!-- Month selector -->
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">Choose renewal period:</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+        ${opts.map(o => `
+          <button id="renew-opt-${o.months}" onclick="_selectRenewMonths('${code}',${o.months})"
+            style="${btnStyle(o.months===1)}">
+            <div style="font-size:14px;font-weight:800;color:var(--tan-dark)">₱${o.price.toLocaleString()}</div>
+            <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);margin-top:2px">${o.label}</div>
+            ${o.note ? `<div style="font-size:9px;font-weight:700;color:var(--gold-dark);margin-top:3px">${o.note}</div>` : '<div style="height:12px"></div>'}
+          </button>`).join('')}
       </div>
 
-      <!-- GCash steps -->
+      <!-- Steps -->
       <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">How to pay:</div>
       <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
-        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
-          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">1</span>
-          Go to <b>supplier.html → Plan tab</b> to scan the GCash QR and send ₱${LISTING_FEE}
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
-          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">2</span>
-          Screenshot your GCash receipt
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
-          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">3</span>
-          Email proof to us with your template code <b>VP-${code}</b>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
-          <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">4</span>
-          We'll extend your listing within 24–48 hrs ✅
-        </div>
+        ${[
+          `Open GCash and send the selected amount to our number`,
+          `Screenshot your GCash receipt`,
+          `Tap the button below to email us the receipt with code <b>VP-${code}</b>`,
+          `We'll extend your listing within 24–48 hrs ✅`
+        ].map((text, i) => `
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--ink-3)">
+            <span style="width:22px;height:22px;border-radius:50%;background:rgba(201,169,110,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--tan-dark)">${i+1}</span>
+            ${text}
+          </div>`).join('')}
       </div>
 
-      <a href="mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=Template%20Renewal%20VP-${code}&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20am%20renewing%20my%20template%20listing%20VP-${code}.%0A%0APlease%20find%20my%20GCash%20payment%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}"
+      <a id="renew-email-btn"
+        href="mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=Template%20Renewal%20VP-${code}%20(1%20month)&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20am%20renewing%20my%20template%20listing%20VP-${code}%20for%201%20month%20(%E2%82%B1${LISTING_FEE}).%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}"
         style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box">
         📧 Email Payment Proof →
       </a>
@@ -323,6 +330,23 @@ function openRenewListing(code) {
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add('open'));
 }
+
+function _selectRenewMonths(code, months) {
+  [1, 3, 6].forEach(m => {
+    const btn = document.getElementById(`renew-opt-${m}`);
+    if (!btn) return;
+    const sel = m === months;
+    btn.style.border = sel ? '2px solid var(--gold)' : '1.5px solid rgba(201,169,110,0.28)';
+    btn.style.background = sel ? 'rgba(245,230,200,0.75)' : 'rgba(255,252,247,0.6)';
+  });
+  const total = LISTING_FEE * months;
+  const emailBtn = document.getElementById('renew-email-btn');
+  if (emailBtn) {
+    const mo = months === 1 ? '1 month' : `${months} months`;
+    emailBtn.href = `mailto:${SUPPORT_EMAIL_TEMPLATES}?subject=Template%20Renewal%20VP-${code}%20(${months}%20month${months>1?'s':''})&body=Hi%20Vows%20%26%20Petals%2C%0A%0AI%20am%20renewing%20my%20template%20listing%20VP-${code}%20for%20${months}%20month${months>1?'s':''}%20(%E2%82%B1${total}).%0A%0APlease%20find%20my%20GCash%20receipt%20attached.%0A%0ARegistered%20email%3A%20${encodeURIComponent(window.CURRENT_USER?.email||'')}`;
+  }
+}
+window._selectRenewMonths = _selectRenewMonths;
 
 /* ── PUBLISH AGREEMENT (shown before the form) ── */
 function openPublishAgreement() {
