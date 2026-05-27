@@ -65,6 +65,21 @@ if (AUTH) {
       if (typeof renderOverview === 'function' && WED && WED.activeTab === 'overview') renderOverview();
     }
   });
+
+  // Handle Google redirect sign-in result (avoids COOP popup issues on GitHub Pages)
+  AUTH.getRedirectResult()
+    .then(result => {
+      if (result && result.user) {
+        if (typeof closeModal === 'function') closeModal('auth-modal');
+        if (typeof showToast === 'function') showToast('👋 Signed in with Google!');
+      }
+    })
+    .catch(err => {
+      // auth/no-auth-event = normal page load with no pending redirect — safe to ignore
+      if (err.code && err.code !== 'auth/no-auth-event') {
+        if (typeof showToast === 'function') showToast('⚠️ ' + _authErrMsg(err.code));
+      }
+    });
 }
 
 /* ── HEADER AUTH BUTTON ──────────────────────── */
@@ -232,8 +247,10 @@ function _buildSaveSellCard() {
 function _refreshSaveSellCard() {
   const el = document.getElementById('save-sell-action');
   if (!el || !window.CURRENT_USER || typeof DB === 'undefined' || !DB) return;
+  // { source: 'server' } bypasses local Firestore cache so earnings reflect
+  // updates made by the admin's simulatePurchase on a different device/tab.
   DB.collection('kasalko_templates')
-    .where('sellerUid','==', window.CURRENT_USER.uid).get()
+    .where('sellerUid','==', window.CURRENT_USER.uid).get({ source: 'server' })
     .then(snap => {
       const actionEl = document.getElementById('save-sell-action');
       if (!actionEl) return;
@@ -852,8 +869,9 @@ function submitAuthRegister() {
 
 function signInWithGoogle() {
   if (!AUTH) return;
-  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-    .then(() => { closeModal('auth-modal'); showToast('👋 Signed in with Google!'); })
+  // Use redirect instead of popup to avoid COOP header issues on GitHub Pages.
+  // After Google auth, the page reloads and getRedirectResult() resolves the sign-in.
+  AUTH.signInWithRedirect(new firebase.auth.GoogleAuthProvider())
     .catch(err => showToast('⚠️ ' + _authErrMsg(err.code)));
 }
 
