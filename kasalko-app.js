@@ -412,19 +412,32 @@ function renderOverview() {
         <div style="font-size:11px;color:var(--tan-dark);font-weight:600;margin-top:4px">${INVITE_THEMES[WED.inviteTheme||0].name}</div>
       </div>
 
-      <!-- Two-column page grid -->
-      <div class="inv-builder-grid">
+      <!-- ── PAGE FOLDER TABS ── -->
+      ${(() => {
+        const tab = _activeInvTab || 'page1';
+        const tabs = [
+          { key:'page1', label:'Page 1',  emoji:'💌', color:'var(--pink-deep)',  bg:'rgba(252,232,238,0.9)',  border:'rgba(224,120,152,0.35)' },
+          { key:'page2', label:'Page 2',  emoji:'📋', color:'var(--green-deep)', bg:'rgba(232,245,237,0.9)',  border:'rgba(106,142,112,0.35)' },
+          { key:'page3', label:'Page 3',  emoji:'🗓',  color:'#7c4da8',           bg:'rgba(245,238,255,0.9)',  border:'rgba(124,77,168,0.35)'  },
+        ];
+        const activeTab = tabs.find(t => t.key === tab) || tabs[0];
+        const tabBar = `<div style="display:flex;gap:0;margin-bottom:0;border-radius:12px 12px 0 0;overflow:hidden;border:1px solid rgba(201,169,110,0.2);border-bottom:none">
+          ${tabs.map(t => {
+            const isOn = t.key === tab;
+            return `<button onclick="setInvTab('${t.key}')" style="flex:1;padding:9px 6px;border:none;background:${isOn ? t.bg : 'rgba(245,235,215,0.4)'};font-size:12px;font-weight:${isOn?'700':'600'};color:${isOn ? t.color : 'var(--ink-3)'};cursor:pointer;transition:all 0.15s;border-right:1px solid rgba(201,169,110,0.15);font-family:var(--f);position:relative${isOn ? `;box-shadow:0 -2px 0 0 ${t.color} inset` : ''}">${t.emoji} ${t.label}</button>`;
+          }).join('')}
+        </div>`;
 
-        <!-- ── PAGE 1 ── -->
-        <div style="padding:14px;border-radius:14px;background:rgba(252,232,238,0.25);border:1px solid rgba(224,120,152,0.2)">
-          <div style="font-size:10px;font-weight:700;color:var(--pink-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 1 — Invitation Card</div>
+        const panelStyle = `border-radius:0 0 12px 12px;border:1px solid ${activeTab.border};padding:14px;background:${activeTab.bg}`;
+
+        // ── PAGE 1 CONTENT ──
+        const page1 = `
           ${(WED.customCardImage || WED._invitationImg)
             ? `<img id="inv-page1-img" src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
             : `<img id="inv-page1-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
                <div id="inv-page1-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard1()">
                  <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">💌</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate invitation card</div></div>
                </div>`}
-          <!-- Hashtag -->
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
             <span style="font-size:17px;color:var(--gold);font-weight:800;line-height:1">#</span>
             <input type="text" id="inv-hashtag-input"
@@ -433,7 +446,6 @@ function renderOverview() {
                    oninput="saveWedHashtag(this.value)"
                    class="glass-input" style="flex:1;font-size:13px;padding:7px 10px">
           </div>
-          <!-- Custom upload -->
           <button onclick="toggleInvUploadSpec()" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center">
             📎 ${WED.customCardImage ? 'Replace Custom Design' : 'Upload Custom Design'}
           </button>
@@ -445,19 +457,16 @@ function renderOverview() {
               Choose File <input type="file" accept="image/*" style="display:none" onchange="uploadCustomCard(event)">
             </label>
             ${WED.customCardImage ? `<button onclick="clearCustomCard()" style="display:block;width:100%;margin-top:6px;padding:7px;border-radius:8px;background:transparent;border:1px solid rgba(224,120,152,0.4);color:var(--pink-deep);font-size:11.5px;cursor:pointer">✕ Remove Custom Design</button>` : ''}
-          </div>
-        </div>
+          </div>`;
 
-        <!-- ── PAGE 2 ── -->
-        <div style="padding:14px;border-radius:14px;background:rgba(232,245,237,0.25);border:1px solid rgba(106,142,112,0.2)">
-          <div style="font-size:10px;font-weight:700;color:var(--green-deep);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 2 — Details Card</div>
+        // ── PAGE 2 CONTENT ──
+        const page2 = `
           ${WED._invitationImg2
             ? `<img id="inv-page2-img" src="${WED._invitationImg2}" class="inv-card-img" style="border-radius:12px;margin-bottom:12px">`
             : `<img id="inv-page2-img" style="display:none;border-radius:12px;margin-bottom:12px" class="inv-card-img">
                <div id="inv-page2-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(106,142,112,0.4);background:rgba(232,245,237,0.3);margin-bottom:12px">
                  <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Fill in the details below to generate</div></div>
                </div>`}
-          <!-- Dress Code -->
           <div style="margin-bottom:10px">
             <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Dress Code</div>
             <input type="text" placeholder="e.g. Semi-Formal, Sage Green &amp; Gold"
@@ -465,7 +474,6 @@ function renderOverview() {
                    oninput="saveInviteField('dressCode',this.value)"
                    class="glass-input" style="width:100%;font-size:13px;padding:7px 10px;box-sizing:border-box">
           </div>
-          <!-- Attire Photos -->
           <div style="margin-bottom:10px">
             <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Attire Reference Photos</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -483,36 +491,35 @@ function renderOverview() {
               </div>
             </div>
           </div>
-          <!-- Gifts -->
           <div style="margin-bottom:10px">
             <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">🎁 Gifts &amp; Registry</div>
             <textarea placeholder="e.g. Cash gifts via GCash 09XX-XXX-XXXX or our Lazada wishlist…"
                       oninput="saveInviteField('giftsNote',this.value)"
                       class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.giftsNote||''}</textarea>
           </div>
-          <!-- Notes -->
-          <div style="margin-bottom:10px">
+          <div>
             <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">📝 Special Notes</div>
             <textarea placeholder="e.g. Strictly no children. Please RSVP by June 30…"
                       oninput="saveInviteField('specialNote',this.value)"
                       class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.specialNote||''}</textarea>
-          </div>
-        </div><!-- end Page 2 -->
+          </div>`;
 
-      </div><!-- /.inv-builder-grid -->
+        // ── PAGE 3 CONTENT ──
+        const page3 = `
+          ${WED._invitationImg3
+            ? `<img id="inv-page3-img" src="${WED._invitationImg3}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
+            : `<img id="inv-page3-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
+               <div id="inv-page3-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(124,77,168,0.35);background:rgba(245,238,255,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard3()">
+                 <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">🗓</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate program card</div><div style="font-size:10.5px;color:var(--ink-4);margin-top:3px">Add events in the Schedule tab first</div></div>
+               </div>`}
+          <div style="font-size:11px;color:var(--ink-4);line-height:1.6;margin-bottom:10px">Auto-generated from your <b style="color:var(--ink)">Schedule</b> tab. Add or edit events there — the program updates automatically when you save.</div>
+          <button onclick="refreshCard3()" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(245,238,255,0.7);border:1px solid rgba(124,77,168,0.28);font-size:12.5px;font-weight:700;color:#7c4da8;cursor:pointer">🔄 Refresh Program Page</button>`;
 
-      <!-- ── PAGE 3 (full-width below the grid) ── -->
-      <div style="margin-top:14px;padding:14px;border-radius:14px;background:rgba(245,238,255,0.25);border:1px solid rgba(124,77,168,0.2)">
-        <div style="font-size:10px;font-weight:700;color:#7c4da8;letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 3 — Program</div>
-        ${WED._invitationImg3
-          ? `<img id="inv-page3-img" src="${WED._invitationImg3}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
-          : `<img id="inv-page3-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
-             <div id="inv-page3-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(124,77,168,0.35);background:rgba(245,238,255,0.3);margin-bottom:10px">
-               <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Add schedule items to generate the program</div></div>
-             </div>`}
-        <div style="font-size:11px;color:var(--ink-4);line-height:1.6;margin-bottom:10px">Auto-generated from your <b style="color:var(--ink)">Schedule</b> tab. Add events there — the program updates automatically when you save.</div>
-        <button onclick="refreshCard3()" style="padding:7px 14px;border-radius:8px;background:rgba(245,238,255,0.8);border:1px solid rgba(124,77,168,0.3);font-size:12px;font-weight:700;color:#7c4da8;cursor:pointer">🔄 Refresh Program Page</button>
-      </div>
+        const contentMap = { page1, page2, page3 };
+        const content = contentMap[tab] || page1;
+
+        return tabBar + `<div style="${panelStyle}">${content}</div>`;
+      })()}
     </div>
 
     ${typeof renderCloudSection === 'function' ? renderCloudSection() : `
@@ -598,6 +605,12 @@ function submitSetup() {
 /* ── BUDGET ──────────────────────────────────── */
 const _collapsedExpenseCats = new Set(); // UI-only collapse state for expense groups
 let _budgetCatCollapsed = true;          // By Category section — collapsed by default
+let _activeInvTab = 'page1';             // Invitation builder active tab
+
+function setInvTab(page) {
+  _activeInvTab = page;
+  renderOverview();
+}
 
 function toggleBudgetCatSection() {
   _budgetCatCollapsed = !_budgetCatCollapsed;
@@ -5827,6 +5840,7 @@ window.removeExpenseCat           = removeExpenseCat;
 window.generateCategoryReceipt    = generateCategoryReceipt;
 window.generateFullReceipt        = generateFullReceipt;
 window.toggleBudgetCatSection     = toggleBudgetCatSection;
+window.setInvTab                  = setInvTab;
 window.toggleExpenseCat           = toggleExpenseCat;
 window.toggleGuestGroup           = toggleGuestGroup;
 window.setSupplierView            = setSupplierView;
