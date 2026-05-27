@@ -26,6 +26,7 @@ const WED = {
   customCardImage: null,
   _invitationImg: null,
   _invitationImg2: null,
+  _invitationImg3: null,
   hashtag: '',
   guests:   [],
   expenses: [],
@@ -125,6 +126,7 @@ function saveState() {
       customCardImage:  WED.customCardImage,
       _invitationImg:   WED._invitationImg,
       _invitationImg2:  WED._invitationImg2,
+      _invitationImg3:  WED._invitationImg3,
       hashtag:          WED.hashtag,
       inviteTheme:        WED.inviteTheme,
       expenseCategories:  WED.expenseCategories,
@@ -174,11 +176,12 @@ function loadState() {
     if (!WED.allTags)           WED.allTags           = [];
     if (!WED._nextPhotoId)      WED._nextPhotoId      = 1;
     if (!WED.guestGroups)       WED.guestGroups       = ["Bride's Side", "Groom's Side", "Friends", "Colleagues", "VIP", "Others"];
-    if (!WED.inviteSettings)    WED.inviteSettings    = { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', showProgram: false, attirePhotoA: null, attirePhotoB: null, attireLabelA: "Bride's Attire", attireLabelB: "Groom's Attire" };
-    if (!WED.inviteSettings.attireLabelA) WED.inviteSettings.attireLabelA = "Bride's Attire";
-    if (!WED.inviteSettings.attireLabelB) WED.inviteSettings.attireLabelB = "Groom's Attire";
+    if (!WED.inviteSettings)    WED.inviteSettings    = { heroPhoto: null, dressCode: '', giftsNote: '', specialNote: '', attirePhotoA: null, attirePhotoB: null, attireLabelA: "Ladies' Attire", attireLabelB: "Gentlemen's Attire" };
+    if (!WED.inviteSettings.attireLabelA) WED.inviteSettings.attireLabelA = "Ladies' Attire";
+    if (!WED.inviteSettings.attireLabelB) WED.inviteSettings.attireLabelB = "Gentlemen's Attire";
     if (WED.hashtag === undefined)  WED.hashtag  = '';
     if (WED._invitationImg2 === undefined) WED._invitationImg2 = null;
+    if (WED._invitationImg3 === undefined) WED._invitationImg3 = null;
     if (WED.inviteTheme === undefined) WED.inviteTheme = 0;
     if (!WED.expenseCategories) WED.expenseCategories = [];
     WED.guests.forEach(g => { if (g.group === undefined) g.group = ''; });
@@ -467,13 +470,13 @@ function renderOverview() {
             <div style="font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Attire Reference Photos</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <div>
-                <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelA||"Bride's Attire"}</div>
+                <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelA||"Ladies' Attire"}</div>
                 ${WED.inviteSettings.attirePhotoA
                   ? `<img src="${WED.inviteSettings.attirePhotoA}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('A')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
                   : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(224,120,152,0.4);border-radius:8px;cursor:pointer;background:rgba(252,232,238,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'A')"></label>`}
               </div>
               <div>
-                <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelB||"Groom's Attire"}</div>
+                <div style="font-size:10.5px;font-weight:600;color:var(--ink-3);text-align:center;margin-bottom:4px">${WED.inviteSettings.attireLabelB||"Gentlemen's Attire"}</div>
                 ${WED.inviteSettings.attirePhotoB
                   ? `<img src="${WED.inviteSettings.attirePhotoB}" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;margin-bottom:4px"><button onclick="clearAttirePhoto('B')" style="width:100%;font-size:10.5px;color:var(--pink-deep);background:none;border:1px solid rgba(224,120,152,0.3);border-radius:6px;padding:3px;cursor:pointer">✕ Remove</button>`
                   : `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:88px;border:1.5px dashed rgba(106,142,112,0.4);border-radius:8px;cursor:pointer;background:rgba(232,245,237,0.3)"><span style="font-size:22px">📷</span><span style="font-size:10px;color:var(--ink-4)">Upload</span><input type="file" accept="image/*" style="display:none" onchange="uploadAttirePhoto(event,'B')"></label>`}
@@ -494,14 +497,22 @@ function renderOverview() {
                       oninput="saveInviteField('specialNote',this.value)"
                       class="glass-input" rows="2" style="width:100%;font-size:12.5px;padding:7px 10px;box-sizing:border-box;resize:vertical">${WED.inviteSettings.specialNote||''}</textarea>
           </div>
-          <!-- Program toggle -->
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" ${WED.inviteSettings.showProgram?'checked':''} onchange="saveInviteField('showProgram',this.checked)" style="width:16px;height:16px;accent-color:var(--gold)">
-            <span style="font-size:12.5px;font-weight:600;color:var(--ink)">Show program note on Details card</span>
-          </label>
-        </div>
+        </div><!-- end Page 2 -->
 
       </div><!-- /.inv-builder-grid -->
+
+      <!-- ── PAGE 3 (full-width below the grid) ── -->
+      <div style="margin-top:14px;padding:14px;border-radius:14px;background:rgba(245,238,255,0.25);border:1px solid rgba(124,77,168,0.2)">
+        <div style="font-size:10px;font-weight:700;color:#7c4da8;letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px">Page 3 — Program</div>
+        ${WED._invitationImg3
+          ? `<img id="inv-page3-img" src="${WED._invitationImg3}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
+          : `<img id="inv-page3-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
+             <div id="inv-page3-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(124,77,168,0.35);background:rgba(245,238,255,0.3);margin-bottom:10px">
+               <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Add schedule items to generate the program</div></div>
+             </div>`}
+        <div style="font-size:11px;color:var(--ink-4);line-height:1.6;margin-bottom:10px">Auto-generated from your <b style="color:var(--ink)">Schedule</b> tab. Add events there — the program updates automatically when you save.</div>
+        <button onclick="refreshCard3()" style="padding:7px 14px;border-radius:8px;background:rgba(245,238,255,0.8);border:1px solid rgba(124,77,168,0.3);font-size:12px;font-weight:700;color:#7c4da8;cursor:pointer">🔄 Refresh Program Page</button>
+      </div>
     </div>
 
     ${typeof renderCloudSection === 'function' ? renderCloudSection() : `
@@ -548,6 +559,9 @@ function renderOverview() {
   }
   if (!WED._invitationImg2) {
     setTimeout(() => refreshCard2(), 120);
+  }
+  if (!WED._invitationImg3) {
+    setTimeout(() => refreshCard3(), 180);
   }
 }
 
@@ -1547,6 +1561,24 @@ async function shareGuestInvite(guestId) {
     files.push(new File([blob2], `${safe}_invite_p2.jpg`, { type:'image/jpeg' }));
   }
 
+  // Collect Page 3 file — program card (only if schedule has items)
+  if (WED.schedule.length > 0) {
+    const _getPage3Blob = () => new Promise(resolve => {
+      if (WED._invitationImg3) {
+        fetch(WED._invitationImg3).then(r => r.blob()).then(resolve).catch(() => resolve(null));
+      } else {
+        refreshCard3((dataUrl) => {
+          fetch(dataUrl).then(r => r.blob()).then(resolve).catch(() => resolve(null));
+        });
+      }
+    });
+    const blob3 = await _getPage3Blob();
+    if (blob3) {
+      const safe = guest.name.replace(/\s+/g,'_');
+      files.push(new File([blob3], `${safe}_invite_p3.jpg`, { type:'image/jpeg' }));
+    }
+  }
+
   let shared = false;
   if (navigator.share) {
     try {
@@ -1687,13 +1719,6 @@ function refreshCard2(cb) {
       ctx.strokeStyle = t.border2 || t.border; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(80, yPos-8); ctx.lineTo(w-80, yPos-8); ctx.stroke();
     }
-    // Program
-    if (is.showProgram) {
-      ctx.fillStyle = t.dark; ctx.font = '700 9.5px Figtree,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('📋  PROGRAM', w/2, yPos); yPos += 15;
-      ctx.fillStyle = t.sub; ctx.font = 'italic 400 11px Lora,serif';
-      ctx.fillText('Full program will be shared closer to the date', w/2, yPos);
-    }
     // Hashtag footer
     const tag = (WED.hashtag||'').replace(/^#/,'').trim() || `${cp1}And${cp2}`;
     ctx.fillStyle = t.accent; ctx.font = 'italic 400 12px Lora,serif'; ctx.textAlign = 'center';
@@ -1765,14 +1790,131 @@ function refreshCard2(cb) {
   else _drawPhotoPlaceholder(pxB, is.attireLabelB || "Gentlemen's Attire");
 }
 
+/* Draw Page 3 program card on #invite-canvas3; store in WED._invitationImg3 */
+function refreshCard3(cb) {
+  const canvas3 = document.getElementById('invite-canvas3');
+  if (!canvas3) { if (cb) cb(); return; }
+  const ctx = canvas3.getContext('2d');
+  const w = canvas3.width = 380;
+  const h = canvas3.height = 520;
+  const t = _getInviteTheme();
+  const cp1 = WED.couple.p1 || 'Partner 1';
+  const cp2 = WED.couple.p2 || 'Partner 2';
+
+  // Background gradient — use a tertiary palette variation
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, t.bg[2]); grad.addColorStop(0.5, t.bg[0]); grad.addColorStop(1, t.bg[1]);
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 24); ctx.fill();
+
+  // Deco circles
+  ctx.globalAlpha = 0.09;
+  ctx.fillStyle = t.circleB; ctx.beginPath(); ctx.arc(w-40, 60, 80, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = t.circleA; ctx.beginPath(); ctx.arc(40, 460, 70, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Border
+  ctx.strokeStyle = t.border; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(8, 8, w-16, h-16, 20); ctx.stroke();
+
+  // Floral corners
+  ctx.font = '22px serif'; ctx.textAlign = 'left';
+  ctx.fillText(t.florals[0], 14, 42); ctx.fillText(t.florals[1], w-46, 42);
+  ctx.fillText(t.florals[1], 14, h-18); ctx.fillText(t.florals[0], w-46, h-18);
+
+  // Header
+  ctx.fillStyle = t.accent; ctx.font = '500 10.5px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`${cp1} & ${cp2}`, w/2, 40);
+  ctx.fillStyle = t.ink; ctx.font = 'italic 600 20px Lora,serif';
+  ctx.fillText('Wedding Program', w/2, 66);
+
+  // Divider
+  ctx.strokeStyle = t.border; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(50, 78); ctx.lineTo(w-50, 78); ctx.stroke();
+
+  // Schedule items
+  const items = [...WED.schedule].sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const usable = h - 120; // space below header (78px) + footer (42px)
+  const maxItems = Math.min(items.length, 18);
+  const lineH = maxItems > 12 ? 22 : 26;
+  const fontSize = maxItems > 12 ? 10.5 : 12;
+  let yPos = 96;
+
+  if (!items.length) {
+    // Empty state
+    ctx.fillStyle = t.sub; ctx.font = 'italic 400 12px Lora,serif'; ctx.textAlign = 'center';
+    ctx.fillText('No program items yet.', w/2, h/2 - 10);
+    ctx.fillStyle = t.accent2 || t.accent; ctx.font = '400 10.5px Figtree,sans-serif';
+    ctx.fillText('Add events in the Schedule tab.', w/2, h/2 + 10);
+  } else {
+    items.slice(0, maxItems).forEach((s, idx) => {
+      const isEven = idx % 2 === 0;
+      // Alternating subtle row tint
+      if (isEven) {
+        ctx.globalAlpha = 0.07;
+        ctx.fillStyle = t.accent;
+        ctx.beginPath(); ctx.roundRect(28, yPos - fontSize - 1, w - 56, lineH - 2, 4); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      // Time pill
+      const timeStr = s.time || '';
+      ctx.fillStyle = t.accent; ctx.font = `700 ${fontSize - 0.5}px Figtree,sans-serif`; ctx.textAlign = 'left';
+      const timeW = 44;
+      ctx.fillText(timeStr, 34, yPos);
+
+      // Separator dot
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = t.ink;
+      ctx.font = `400 ${fontSize}px Figtree,sans-serif`;
+      ctx.fillText('·', 34 + timeW, yPos);
+      ctx.globalAlpha = 1;
+
+      // Event name — truncate if too long
+      ctx.fillStyle = t.ink; ctx.font = `500 ${fontSize}px Figtree,sans-serif`;
+      const eventX = 34 + timeW + 12;
+      const maxEventW = w - eventX - 34;
+      let eventText = s.event || '';
+      while (eventText.length > 3 && ctx.measureText(eventText).width > maxEventW) {
+        eventText = eventText.slice(0, -1);
+      }
+      if (eventText !== s.event) eventText = eventText.trimEnd() + '…';
+      ctx.fillText(eventText, eventX, yPos);
+
+      yPos += lineH;
+    });
+
+    if (items.length > maxItems) {
+      ctx.fillStyle = t.sub; ctx.font = 'italic 400 10px Lora,serif'; ctx.textAlign = 'center';
+      ctx.fillText(`+ ${items.length - maxItems} more events`, w/2, yPos + 4);
+    }
+  }
+
+  // Hashtag footer
+  const tag = (WED.hashtag||'').replace(/^#/,'').trim() || `${cp1}And${cp2}`;
+  ctx.fillStyle = t.accent; ctx.font = 'italic 400 12px Lora,serif'; ctx.textAlign = 'center';
+  ctx.fillText(`#${tag}`, w/2, h-28);
+
+  // Save & update preview
+  const dataUrl = canvas3.toDataURL('image/jpeg', 0.92);
+  WED._invitationImg3 = dataUrl;
+  saveState();
+  const img3 = document.getElementById('inv-page3-img');
+  if (img3) { img3.src = dataUrl; img3.style.display = 'block'; }
+  const p3ph = document.getElementById('inv-page3-placeholder');
+  if (p3ph) p3ph.style.display = 'none';
+  if (cb) cb(dataUrl);
+}
+
 /* Select an invitation design theme and refresh both cards */
 function selectInviteTheme(idx) {
   WED.inviteTheme = idx;
   WED._invitationImg  = null; // force redraw
   WED._invitationImg2 = null;
+  WED._invitationImg3 = null;
   saveState();
   refreshCard1();
   setTimeout(() => refreshCard2(), 80);
+  setTimeout(() => refreshCard3(), 160);
   // Update swatch selection highlights without full re-render
   document.querySelectorAll('.inv-theme-swatch').forEach((el, i) => {
     const t = INVITE_THEMES[i];
@@ -1808,7 +1950,7 @@ function saveWedHashtag(val) {
   saveState();
   // Debounced refresh so we don't hammer canvas on every keystroke
   clearTimeout(saveWedHashtag._t);
-  saveWedHashtag._t = setTimeout(() => { refreshCard1(); refreshCard2(); }, 500);
+  saveWedHashtag._t = setTimeout(() => { refreshCard1(); refreshCard2(); refreshCard3(); }, 500);
 }
 
 /* Save an invite field and refresh card 2 */
@@ -1869,11 +2011,11 @@ function toggleInvUploadSpec() {
   spec.style.display = spec.style.display === 'none' ? 'block' : 'none';
 }
 
-/* Download a wireframe template PNG showing both pages with QR zone */
+/* Download a wireframe template PNG showing all 3 pages with QR zone */
 function downloadInviteTemplate() {
-  const PW = 380, PH = 520, GAP = 30, PAD = 16, TITLE = 36;
+  const PW = 380, PH = 520, GAP = 24, PAD = 16, TITLE = 36;
   const c = document.createElement('canvas');
-  c.width  = PAD*2 + PW*2 + GAP;
+  c.width  = PAD*2 + PW*3 + GAP*2;
   c.height = PAD*2 + TITLE + PH + 20;
   const ctx = c.getContext('2d');
 
@@ -1886,7 +2028,7 @@ function downloadInviteTemplate() {
   ctx.fillStyle = '#7a6045'; ctx.font = '400 10px Figtree,sans-serif';
   ctx.fillText('Use as a base in Canva or Photoshop. Keep the QR zone clear on Page 1.', c.width/2, 34);
 
-  const p1x = PAD, p2x = PAD + PW + GAP, py = PAD + TITLE;
+  const p1x = PAD, p2x = PAD + PW + GAP, p3x = PAD + PW*2 + GAP*2, py = PAD + TITLE;
 
   // ── Page 1 ──
   ctx.fillStyle = '#fef9f4';
@@ -1942,11 +2084,10 @@ function downloadInviteTemplate() {
   ctx.fillText('380 × 520 px', p2x + PW/2, py + 35);
 
   const zones2 = [
-    { y:44, h:54, col:'rgba(106,142,112,0.12)', bc:'rgba(106,142,112,0.3)', lbl:'Dress Code' },
-    { y:108, h:124, col:'rgba(201,169,110,0.10)', bc:'rgba(201,169,110,0.3)', lbl:'Attire Photos (A + B)' },
-    { y:242, h:82, col:'rgba(224,120,152,0.08)', bc:'rgba(224,120,152,0.25)', lbl:'Gifts & Registry Info' },
-    { y:334, h:82, col:'rgba(106,142,112,0.08)', bc:'rgba(106,142,112,0.25)', lbl:'Special Notes' },
-    { y:426, h:56, col:'rgba(201,169,110,0.08)', bc:'rgba(201,169,110,0.25)', lbl:'Program (optional)' },
+    { y:44, h:54,  col:'rgba(106,142,112,0.12)', bc:'rgba(106,142,112,0.3)',  lbl:'Dress Code' },
+    { y:108, h:124, col:'rgba(201,169,110,0.10)', bc:'rgba(201,169,110,0.3)',  lbl:'Attire Photos (Ladies + Gentlemen)' },
+    { y:242, h:90,  col:'rgba(224,120,152,0.08)', bc:'rgba(224,120,152,0.25)', lbl:'Gifts & Registry Info' },
+    { y:342, h:132, col:'rgba(106,142,112,0.08)', bc:'rgba(106,142,112,0.25)', lbl:'Special Notes' },
   ];
   zones2.forEach(z => {
     ctx.fillStyle = z.col; ctx.beginPath(); ctx.roundRect(p2x+20, py+z.y, PW-40, z.h, 6); ctx.fill();
@@ -1956,6 +2097,31 @@ function downloadInviteTemplate() {
     ctx.fillStyle = '#4a3520'; ctx.font = '400 9px Figtree,sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(z.lbl, p2x + PW/2, py + z.y + z.h/2 + 3);
   });
+  ctx.fillStyle = '#7a6045'; ctx.font = 'italic 400 9px Lora,serif'; ctx.textAlign = 'center';
+  ctx.fillText('#YourHashtag', p2x + PW/2, py + PH - 14);
+
+  // ── Page 3 ──
+  ctx.fillStyle = '#f7f4fe';
+  ctx.beginPath(); ctx.roundRect(p3x, py, PW, PH, 16); ctx.fill();
+  ctx.strokeStyle = '#9b5dc8'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(p3x, py, PW, PH, 16); ctx.stroke();
+
+  ctx.fillStyle = '#7c4da8'; ctx.font = '700 11px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('PAGE 3 — PROGRAM', p3x + PW/2, py + 22);
+  ctx.fillStyle = '#7a6045'; ctx.font = '400 9px Figtree,sans-serif';
+  ctx.fillText('380 × 520 px · auto-generated from Schedule', p3x + PW/2, py + 35);
+
+  // Program items zone
+  ctx.fillStyle = 'rgba(124,77,168,0.08)'; ctx.beginPath(); ctx.roundRect(p3x+20, py+44, PW-40, PH-88, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(124,77,168,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.roundRect(p3x+20, py+44, PW-40, PH-88, 6); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#7c4da8'; ctx.font = '400 9px Figtree,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Program items from Schedule tab', p3x + PW/2, py + 44 + (PH-88)/2 - 10);
+  ctx.fillStyle = '#9b5dc8'; ctx.font = 'italic 400 8.5px Lora,serif';
+  ctx.fillText('Time · Event name (auto-listed)', p3x + PW/2, py + 44 + (PH-88)/2 + 6);
+  ctx.fillStyle = '#7a6045'; ctx.font = 'italic 400 9px Lora,serif'; ctx.textAlign = 'center';
+  ctx.fillText('#YourHashtag', p3x + PW/2, py + PH - 14);
 
   // Download
   try {
@@ -3547,6 +3713,7 @@ function addWedSched() {
   closeModal('wed-add-sched-modal');
   renderSchedule();
   showToast('📅 Event added!');
+  WED._invitationImg3 = null; setTimeout(refreshCard3, 200);
 }
 
 function openEditSched(i) {
@@ -3574,6 +3741,7 @@ function submitEditSched() {
   closeModal('wed-edit-sched-modal');
   renderSchedule();
   showToast('📅 Event updated!');
+  WED._invitationImg3 = null; setTimeout(refreshCard3, 200);
 }
 
 function deleteSchedItem(i) {
@@ -3581,6 +3749,7 @@ function deleteSchedItem(i) {
   saveState();
   renderSchedule();
   showToast('🗑 Item removed');
+  WED._invitationImg3 = null; setTimeout(refreshCard3, 200);
 }
 
 /* ═══════════════════════════════════════════════
@@ -5638,6 +5807,7 @@ window.addGuestGroup              = addGuestGroup;
 window.removeGuestGroup           = removeGuestGroup;
 window.refreshCard1               = refreshCard1;
 window.refreshCard2               = refreshCard2;
+window.refreshCard3               = refreshCard3;
 window.saveWedHashtag             = saveWedHashtag;
 window.saveInviteField            = saveInviteField;
 window.uploadCustomCard           = uploadCustomCard;
