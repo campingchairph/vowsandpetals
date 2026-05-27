@@ -1195,9 +1195,8 @@ function _renderPlanTab() {
   /* ── Renew button for active Pro (expiring soon) ── */
   let renewHtml = '';
   if (status === 'expiring') {
-    const annualLink = PAY_LINK_ANNUAL || `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pro Renewal — ' + (_profile?.name||''))}&body=${encodeURIComponent('Hi! I\'d like to renew my Pro plan.\n\nBusiness: ' + (_profile?.name||'') + '\nEmail: ' + (_user?.email||''))}`;
     renewHtml = `
-      <button onclick="window.open('${annualLink}','_blank')" style="width:100%;padding:13px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px">
+      <button onclick="requestProPlan('annual')" style="width:100%;padding:13px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-family:var(--f);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px">
         Renew Pro Now ⭐
       </button>`;
   }

@@ -361,7 +361,7 @@ function openRenewListing(code) {
       </div>
 
       <button id="renew-submit-btn" onclick="_submitRenewRequest('${code}')"
-        style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
+        style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)">
         Submit Renewal Request →
       </button>
       <button onclick="document.getElementById('renew-listing-sheet')?.remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.2);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">Cancel</button>
@@ -649,7 +649,7 @@ function _showPaymentRequestSuccess(email) {
         Once you receive the email, follow the payment instructions and we'll activate your listing within a few hours. 🌸
       </div>
       <button onclick="document.getElementById('payment-req-success-sheet')?.remove()"
-        style="width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dk));border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f)">
+        style="width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f)">
         Done
       </button>
     </div>`;
