@@ -266,12 +266,13 @@ function _refreshSaveSellCard() {
         const statusColors = { active:'#3a7a54', pending:'#8C6640', rejected:'#c07068', expired:'#b03060' };
         const statusColor  = statusColors[effectiveStatus] || '#8C6640';
 
+        const pendingPayment = !!t.hasPendingPayment;
+
         // Delete only for rejected/expired AND no pending payment in progress
         const canDelete = (effectiveStatus === 'rejected' || effectiveStatus === 'expired') && !pendingPayment;
 
         const titleStr = t.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title)}</div>` : '';
 
-        const pendingPayment = !!t.hasPendingPayment;
         const pendingMsg = `<div style="font-size:11px;color:var(--ink-3)">⏳ Payment request submitted — we'll email payment instructions to you shortly.</div>`;
         // Badge: show FOR REVIEW when seller has submitted a payment request
         const displayStatus = pendingPayment && (effectiveStatus === 'rejected' || effectiveStatus === 'expired')
@@ -1096,15 +1097,35 @@ async function _setRefNumber(code, purchaseId) {
   const ref = (inp?.value || '').trim().toUpperCase();
   if (!ref) { showToast('⚠️ Enter a reference number first'); return; }
   try {
-    await DB.collection('kasalko_templates').doc(code)
-      .collection('purchases').doc(purchaseId).update({
-        refNumber:     ref,
-        status:        'verified',
-        verifiedAt:    firebase.firestore.FieldValue.serverTimestamp(),
-        verifiedByUid: window.CURRENT_USER?.uid || null,
-      });
-    showToast('✅ Reference number set! Buyer can now activate the template.');
+    // Read purchase first to get price for earnings calculation
+    const purchaseDoc = await DB.collection('kasalko_templates').doc(code)
+      .collection('purchases').doc(purchaseId).get();
+    const price = purchaseDoc.exists ? (purchaseDoc.data().price || 0) : 0;
+    const sellerEarnings = Math.round(price * 0.70);
+
+    const batch = DB.batch();
+    const purchaseRef = DB.collection('kasalko_templates').doc(code)
+      .collection('purchases').doc(purchaseId);
+    const templateRef = DB.collection('kasalko_templates').doc(code);
+
+    // Update the purchase record
+    batch.update(purchaseRef, {
+      refNumber:     ref,
+      status:        'verified',
+      verifiedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+      verifiedByUid: window.CURRENT_USER?.uid || null,
+    });
+
+    // Increment template sales totals (70% seller cut)
+    batch.update(templateRef, {
+      salesCount:  firebase.firestore.FieldValue.increment(1),
+      totalEarned: firebase.firestore.FieldValue.increment(sellerEarnings),
+    });
+
+    await batch.commit();
+    showToast(`✅ Verified! +₱${sellerEarnings.toLocaleString()} added to earnings.`);
     _loadSellerPurchases(code);
+    _refreshSaveSellCard(); // refresh earnings display
   } catch(e) { showToast('⚠️ ' + e.message); }
 }
 
