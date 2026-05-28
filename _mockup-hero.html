@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hero Mockup</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #E8DDD0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* ── PHONE SHELL ── */
+.phone {
+  width: 390px;
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.35), 0 0 0 10px #1a1a1a, 0 0 0 12px #333;
+  position: relative;
+}
+
+/* ── HERO SECTION ── */
+.lp-hero {
+  position: relative;
+  width: 100%;
+  min-height: 860px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  /* Very light airy gradient — cream centre, barely-there warm glow from all 4 corners */
+  background:
+    linear-gradient(to bottom right, rgba(218,182,128,0.30) 0%, transparent 44%),
+    linear-gradient(to bottom left,  rgba(218,182,128,0.30) 0%, transparent 44%),
+    linear-gradient(to top right,    rgba(218,182,128,0.24) 0%, transparent 44%),
+    linear-gradient(to top left,     rgba(218,182,128,0.24) 0%, transparent 44%),
+    #FAF6EE;
+}
+
+/* ── FLORAL SIDE PANELS ── */
+.floral {
+  position: absolute;
+  top: 60px;
+  width: 115px;
+  height: 520px;
+  pointer-events: none;
+  z-index: 1;
+}
+.floral-left  { left: -10px; }
+.floral-right { right: -10px; transform: scaleX(-1); }
+
+/* ── HERO CONTENT ── */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px 24px 32px;
+  width: 100%;
+}
+
+.hero-eyebrow {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #8C6848;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: '';
+  display: block;
+  width: 22px;
+  height: 1px;
+  background: #8C6848;
+  opacity: 0.7;
+}
+
+h1 {
+  font-size: 38px;
+  font-weight: 800;
+  color: #1E0E08;
+  line-height: 1.12;
+  margin-bottom: 14px;
+}
+h1 em {
+  font-style: italic;
+  color: #7A5030;
+  font-weight: 700;
+}
+
+.hero-sub {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13.5px;
+  color: #5C3A24;
+  line-height: 1.65;
+  margin-bottom: 26px;
+  max-width: 250px;
+}
+
+/* ── BUTTONS ── */
+.hero-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 236px;
+  margin-bottom: 36px;
+}
+.btn-primary {
+  background: #4A2C18;
+  color: #FAF6EE;
+  border: none;
+  border-radius: 50px;
+  padding: 15px 28px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', -apple-system, sans-serif;
+  letter-spacing: 0.01em;
+}
+.btn-secondary {
+  background: transparent;
+  color: #2C1810;
+  border: 1.5px solid rgba(44,24,16,0.28);
+  border-radius: 50px;
+  padding: 13px 28px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* ── COVERFLOW CAROUSEL ── */
+.carousel-stage {
+  position: relative;
+  width: 100%;
+  height: 258px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
+  margin-bottom: 32px;
+}
+
+.card {
+  position: absolute;
+  width: 186px;
+  height: 240px;
+  border-radius: 18px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.card.prev {
+  transform: translateX(-148px) rotateY(44deg) scale(0.8);
+  filter: brightness(0.62) blur(0.4px);
+  opacity: 0.72;
+  z-index: 1;
+}
+.card.active {
+  transform: translateX(0) rotateY(0deg) scale(1);
+  filter: brightness(1);
+  opacity: 1;
+  z-index: 3;
+  box-shadow: 0 18px 52px rgba(44,24,16,0.32), 0 4px 16px rgba(44,24,16,0.18);
+}
+.card.next {
+  transform: translateX(148px) rotateY(-44deg) scale(0.8);
+  filter: brightness(0.62) blur(0.4px);
+  opacity: 0.72;
+  z-index: 1;
+}
+
+/* Wedding photo placeholder gradients */
+.card-1 { background: linear-gradient(165deg, #7A5A48 0%, #B89070 35%, #D4B898 60%, #7A5040 100%); }
+.card-2 { background: linear-gradient(165deg, #3A2820 0%, #6A4838 40%, #C8A888 70%, #4A3028 100%); }
+.card-3 { background: linear-gradient(165deg, #5A4838 0%, #9A7860 45%, #E0C8B0 75%, #5A3828 100%); }
+
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20,10,5,0.7) 0%, transparent 55%);
+}
+.card-label {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Carousel dots */
+.carousel-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: -20px;
+  margin-bottom: 28px;
+}
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(92,58,36,0.22);
+}
+.dot.active {
+  width: 18px;
+  border-radius: 3px;
+  background: #7A5030;
+}
+
+/* ── TRUST ROW ── */
+.trust-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 36px;
+}
+.avatars {
+  display: flex;
+  align-items: center;
+}
+.av {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 2.5px solid #FAF6EE;
+  margin-left: -10px;
+  font-size: 17px;
+  display: flex; align-items: center; justify-content: center;
+  background: #D4B898;
+}
+.av:first-child { margin-left: 0; }
+.av.plus {
+  background: #4A2C18;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+}
+.trust-text {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1E0E08;
+}
+.trust-pills {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 10.5px;
+  color: #8C6848;
+  display: flex;
+  gap: 0;
+}
+.trust-pills span { padding: 0 6px; }
+.trust-pills span + span { border-left: 1px solid rgba(140,104,72,0.35); }
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="lp-hero">
+
+  <!-- ── FLORAL LEFT (flowers only, no stems/leaves) ── -->
+  <svg class="floral floral-left" viewBox="0 0 115 520" xmlns="http://www.w3.org/2000/svg">
+    <!-- Tiny white blossom — top -->
+    <g transform="translate(62,70) scale(1.3)">
+      <ellipse cx="-5" cy="-2" rx="5" ry="3.5" fill="#F8F2EA" opacity="0.9" transform="rotate(-20)"/>
+      <ellipse cx="5"  cy="-2" rx="5" ry="3.5" fill="#F8F2EA" opacity="0.9" transform="rotate(20)"/>
+      <ellipse cx="0"  cy="-7" rx="3.5" ry="5.5" fill="#F8F2EA" opacity="0.9"/>
+      <ellipse cx="0"  cy="7"  rx="3.5" ry="5.5" fill="#F8F2EA" opacity="0.9"/>
+      <ellipse cx="-5" cy="5" rx="4" ry="3" fill="#F0EAE0" opacity="0.85" transform="rotate(-45)"/>
+      <ellipse cx="5"  cy="5" rx="4" ry="3" fill="#F0EAE0" opacity="0.85" transform="rotate(45)"/>
+      <circle cx="0" cy="0" r="4" fill="#F0D8B8" opacity="0.95"/>
+      <circle cx="0" cy="0" r="2" fill="#D8B890"/>
+    </g>
+
+    <!-- Yellow flower — upper area -->
+    <g transform="translate(76,148) scale(1.5)">
+      <ellipse cx="-9" cy="-2"  rx="7.5" ry="4.5" fill="#FAEE88" opacity="0.9" transform="rotate(-20)"/>
+      <ellipse cx="9"  cy="-2"  rx="7.5" ry="4.5" fill="#FAEE88" opacity="0.9" transform="rotate(20)"/>
+      <ellipse cx="0"  cy="-11" rx="4.5" ry="8"   fill="#FAEE88" opacity="0.9"/>
+      <ellipse cx="0"  cy="11"  rx="4.5" ry="8"   fill="#FAEE88" opacity="0.9"/>
+      <ellipse cx="-8" cy="8"   rx="6.5" ry="4"   fill="#F4E870" opacity="0.85" transform="rotate(-50)"/>
+      <ellipse cx="8"  cy="8"   rx="6.5" ry="4"   fill="#F4E870" opacity="0.85" transform="rotate(50)"/>
+      <circle cx="0" cy="0" r="7" fill="#ECC830" opacity="0.97"/>
+      <circle cx="0" cy="0" r="3.5" fill="#D4A820"/>
+    </g>
+
+    <!-- Big pink rose — centre-upper -->
+    <g transform="translate(28,228) scale(1.5)">
+      <circle cx="0" cy="0" r="20" fill="#EDB8B0" opacity="0.15"/>
+      <ellipse cx="-11" cy="-3" rx="10" ry="7"  fill="#F5C8C0" opacity="0.85" transform="rotate(-25)"/>
+      <ellipse cx="11"  cy="-3" rx="10" ry="7"  fill="#F5C8C0" opacity="0.85" transform="rotate(25)"/>
+      <ellipse cx="0"   cy="-13" rx="7" ry="10" fill="#EEC0B8" opacity="0.85"/>
+      <ellipse cx="0"   cy="13"  rx="7" ry="10" fill="#EEC0B8" opacity="0.85"/>
+      <ellipse cx="-9"  cy="9"   rx="8" ry="6"  fill="#E8B0A8" opacity="0.8" transform="rotate(-45)"/>
+      <ellipse cx="9"   cy="9"   rx="8" ry="6"  fill="#E8B0A8" opacity="0.8" transform="rotate(45)"/>
+      <circle cx="0" cy="0" r="8" fill="#DCA0A0" opacity="0.92"/>
+      <circle cx="0" cy="0" r="4.5" fill="#C88888" opacity="0.97"/>
+      <circle cx="0" cy="0" r="2" fill="#B07070"/>
+    </g>
+
+    <!-- Small pink bud — mid -->
+    <g transform="translate(80,310) scale(1.3)">
+      <ellipse cx="0"  cy="-6" rx="5.5" ry="9"  fill="#F7C8D4" opacity="0.87"/>
+      <ellipse cx="-5" cy="0"  rx="4.5" ry="7.5" fill="#EEBAC6" opacity="0.82" transform="rotate(-22)"/>
+      <ellipse cx="5"  cy="0"  rx="4.5" ry="7.5" fill="#EEBAC6" opacity="0.82" transform="rotate(22)"/>
+      <circle cx="0" cy="0" r="4.5" fill="#DDA0B2" opacity="0.93"/>
+      <circle cx="0" cy="0" r="2.2" fill="#CC88A0"/>
+    </g>
+
+    <!-- Peach open flower — lower-mid -->
+    <g transform="translate(26,390) scale(1.4)">
+      <ellipse cx="-8" cy="-2" rx="7" ry="4.5" fill="#F8E0CC" opacity="0.85" transform="rotate(-15)"/>
+      <ellipse cx="8"  cy="-2" rx="7" ry="4.5" fill="#F8E0CC" opacity="0.85" transform="rotate(15)"/>
+      <ellipse cx="0"  cy="-9" rx="4.5" ry="7" fill="#F8E0CC" opacity="0.85"/>
+      <ellipse cx="0"  cy="9"  rx="4.5" ry="7" fill="#F8E0CC" opacity="0.85"/>
+      <ellipse cx="-7" cy="7"  rx="6" ry="4"   fill="#F0D0B8" opacity="0.8" transform="rotate(-48)"/>
+      <ellipse cx="7"  cy="7"  rx="6" ry="4"   fill="#F0D0B8" opacity="0.8" transform="rotate(48)"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ECC8A0" opacity="0.95"/>
+      <circle cx="0" cy="0" r="2.8" fill="#D4A878"/>
+    </g>
+
+    <!-- Berry cluster — bottom (no stems) -->
+    <g transform="translate(65,468)" opacity="0.82">
+      <circle cx="0"   cy="0"   r="5.5" fill="#EEB080"/>
+      <circle cx="11"  cy="-5"  r="5"   fill="#DDA070"/>
+      <circle cx="-9"  cy="-4"  r="4.5" fill="#CC9060"/>
+      <circle cx="5"   cy="-12" r="4"   fill="#EEB080"/>
+      <circle cx="-3"  cy="-13" r="3.5" fill="#DDA070"/>
+    </g>
+
+    <!-- Second yellow small flower — bottom area -->
+    <g transform="translate(28,475) scale(1.1)">
+      <ellipse cx="-7" cy="-2" rx="6" ry="4"   fill="#FAEE88" opacity="0.88" transform="rotate(-20)"/>
+      <ellipse cx="7"  cy="-2" rx="6" ry="4"   fill="#FAEE88" opacity="0.88" transform="rotate(20)"/>
+      <ellipse cx="0"  cy="-8" rx="4" ry="6.5" fill="#FAEE88" opacity="0.88"/>
+      <ellipse cx="0"  cy="8"  rx="4" ry="6.5" fill="#FAEE88" opacity="0.88"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ECC830" opacity="0.95"/>
+      <circle cx="0" cy="0" r="2.5" fill="#D0A820"/>
+    </g>
+  </svg>
+
+  <!-- ── FLORAL RIGHT (mirror of left, flowers only) ── -->
+  <svg class="floral floral-right" viewBox="0 0 115 520" xmlns="http://www.w3.org/2000/svg">
+    <!-- Tiny white blossom — top -->
+    <g transform="translate(62,70) scale(1.3)">
+      <ellipse cx="-5" cy="-2" rx="5" ry="3.5" fill="#F8F2EA" opacity="0.9" transform="rotate(-20)"/>
+      <ellipse cx="5"  cy="-2" rx="5" ry="3.5" fill="#F8F2EA" opacity="0.9" transform="rotate(20)"/>
+      <ellipse cx="0"  cy="-7" rx="3.5" ry="5.5" fill="#F8F2EA" opacity="0.9"/>
+      <ellipse cx="0"  cy="7"  rx="3.5" ry="5.5" fill="#F8F2EA" opacity="0.9"/>
+      <ellipse cx="-5" cy="5" rx="4" ry="3" fill="#F0EAE0" opacity="0.85" transform="rotate(-45)"/>
+      <ellipse cx="5"  cy="5" rx="4" ry="3" fill="#F0EAE0" opacity="0.85" transform="rotate(45)"/>
+      <circle cx="0" cy="0" r="4" fill="#F0D8B8" opacity="0.95"/>
+      <circle cx="0" cy="0" r="2" fill="#D8B890"/>
+    </g>
+
+    <!-- Yellow flower — upper area -->
+    <g transform="translate(76,148) scale(1.5)">
+      <ellipse cx="-9" cy="-2"  rx="7.5" ry="4.5" fill="#FAEE88" opacity="0.9" transform="rotate(-20)"/>
+      <ellipse cx="9"  cy="-2"  rx="7.5" ry="4.5" fill="#FAEE88" opacity="0.9" transform="rotate(20)"/>
+      <ellipse cx="0"  cy="-11" rx="4.5" ry="8"   fill="#FAEE88" opacity="0.9"/>
+      <ellipse cx="0"  cy="11"  rx="4.5" ry="8"   fill="#FAEE88" opacity="0.9"/>
+      <ellipse cx="-8" cy="8"   rx="6.5" ry="4"   fill="#F4E870" opacity="0.85" transform="rotate(-50)"/>
+      <ellipse cx="8"  cy="8"   rx="6.5" ry="4"   fill="#F4E870" opacity="0.85" transform="rotate(50)"/>
+      <circle cx="0" cy="0" r="7" fill="#ECC830" opacity="0.97"/>
+      <circle cx="0" cy="0" r="3.5" fill="#D4A820"/>
+    </g>
+
+    <!-- Big pink rose — centre-upper -->
+    <g transform="translate(28,228) scale(1.5)">
+      <circle cx="0" cy="0" r="20" fill="#EDB8B0" opacity="0.15"/>
+      <ellipse cx="-11" cy="-3" rx="10" ry="7"  fill="#F5C8C0" opacity="0.85" transform="rotate(-25)"/>
+      <ellipse cx="11"  cy="-3" rx="10" ry="7"  fill="#F5C8C0" opacity="0.85" transform="rotate(25)"/>
+      <ellipse cx="0"   cy="-13" rx="7" ry="10" fill="#EEC0B8" opacity="0.85"/>
+      <ellipse cx="0"   cy="13"  rx="7" ry="10" fill="#EEC0B8" opacity="0.85"/>
+      <ellipse cx="-9"  cy="9"   rx="8" ry="6"  fill="#E8B0A8" opacity="0.8" transform="rotate(-45)"/>
+      <ellipse cx="9"   cy="9"   rx="8" ry="6"  fill="#E8B0A8" opacity="0.8" transform="rotate(45)"/>
+      <circle cx="0" cy="0" r="8" fill="#DCA0A0" opacity="0.92"/>
+      <circle cx="0" cy="0" r="4.5" fill="#C88888" opacity="0.97"/>
+      <circle cx="0" cy="0" r="2" fill="#B07070"/>
+    </g>
+
+    <!-- Small pink bud — mid -->
+    <g transform="translate(80,310) scale(1.3)">
+      <ellipse cx="0"  cy="-6" rx="5.5" ry="9"  fill="#F7C8D4" opacity="0.87"/>
+      <ellipse cx="-5" cy="0"  rx="4.5" ry="7.5" fill="#EEBAC6" opacity="0.82" transform="rotate(-22)"/>
+      <ellipse cx="5"  cy="0"  rx="4.5" ry="7.5" fill="#EEBAC6" opacity="0.82" transform="rotate(22)"/>
+      <circle cx="0" cy="0" r="4.5" fill="#DDA0B2" opacity="0.93"/>
+      <circle cx="0" cy="0" r="2.2" fill="#CC88A0"/>
+    </g>
+
+    <!-- Peach open flower — lower-mid -->
+    <g transform="translate(26,390) scale(1.4)">
+      <ellipse cx="-8" cy="-2" rx="7" ry="4.5" fill="#F8E0CC" opacity="0.85" transform="rotate(-15)"/>
+      <ellipse cx="8"  cy="-2" rx="7" ry="4.5" fill="#F8E0CC" opacity="0.85" transform="rotate(15)"/>
+      <ellipse cx="0"  cy="-9" rx="4.5" ry="7" fill="#F8E0CC" opacity="0.85"/>
+      <ellipse cx="0"  cy="9"  rx="4.5" ry="7" fill="#F8E0CC" opacity="0.85"/>
+      <ellipse cx="-7" cy="7"  rx="6" ry="4"   fill="#F0D0B8" opacity="0.8" transform="rotate(-48)"/>
+      <ellipse cx="7"  cy="7"  rx="6" ry="4"   fill="#F0D0B8" opacity="0.8" transform="rotate(48)"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ECC8A0" opacity="0.95"/>
+      <circle cx="0" cy="0" r="2.8" fill="#D4A878"/>
+    </g>
+
+    <!-- Berry cluster — bottom (no stems) -->
+    <g transform="translate(65,468)" opacity="0.82">
+      <circle cx="0"   cy="0"   r="5.5" fill="#EEB080"/>
+      <circle cx="11"  cy="-5"  r="5"   fill="#DDA070"/>
+      <circle cx="-9"  cy="-4"  r="4.5" fill="#CC9060"/>
+      <circle cx="5"   cy="-12" r="4"   fill="#EEB080"/>
+      <circle cx="-3"  cy="-13" r="3.5" fill="#DDA070"/>
+    </g>
+
+    <!-- Second yellow small flower — bottom area -->
+    <g transform="translate(28,475) scale(1.1)">
+      <ellipse cx="-7" cy="-2" rx="6" ry="4"   fill="#FAEE88" opacity="0.88" transform="rotate(-20)"/>
+      <ellipse cx="7"  cy="-2" rx="6" ry="4"   fill="#FAEE88" opacity="0.88" transform="rotate(20)"/>
+      <ellipse cx="0"  cy="-8" rx="4" ry="6.5" fill="#FAEE88" opacity="0.88"/>
+      <ellipse cx="0"  cy="8"  rx="4" ry="6.5" fill="#FAEE88" opacity="0.88"/>
+      <circle cx="0" cy="0" r="5.5" fill="#ECC830" opacity="0.95"/>
+      <circle cx="0" cy="0" r="2.5" fill="#D0A820"/>
+    </g>
+  </svg>
+
+  <!-- ── CONTENT ── -->
+  <div class="hero-content">
+    <div class="hero-eyebrow">Your free wedding planner</div>
+
+    <h1>Your vows,<br>your petals,<br><em>your day.</em></h1>
+
+    <p class="hero-sub">Plan every detail — guests, budget, suppliers, seating, and your full day program.</p>
+
+    <div class="hero-btns">
+      <button class="btn-primary">Start Planning</button>
+      <button class="btn-secondary">Are you a wedding supplier?</button>
+    </div>
+
+    <!-- ── COVER FLOW CAROUSEL ── -->
+    <div class="carousel-stage">
+      <!-- PREV card -->
+      <div class="card card-1 prev">
+        <div class="card-overlay"></div>
+        <div class="card-label">🧑‍🤝‍🧑 Guest &amp; Entourage</div>
+      </div>
+      <!-- ACTIVE card (center) -->
+      <div class="card card-2 active">
+        <div class="card-overlay"></div>
+        <div class="card-label">💐 Plan &amp; Budget</div>
+      </div>
+      <!-- NEXT card -->
+      <div class="card card-3 next">
+        <div class="card-overlay"></div>
+        <div class="card-label">💒 Venue</div>
+      </div>
+    </div>
+
+    <!-- Dots -->
+    <div class="carousel-dots">
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+</body>
+</html>
