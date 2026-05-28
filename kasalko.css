@@ -1282,6 +1282,7 @@ textarea.glass-input {
 /* Desktop sidebar footer + ad hidden on mobile */
 .app-left-footer-desktop { display: none; }
 .sidebar-ad-slot { display: none; }
+.app-right-panel { display: none; }
 
 /* ── DESKTOP SIDEBAR LAYOUT (≥ 900px) ─────────── */
 @media (min-width: 900px) {
@@ -1510,6 +1511,28 @@ textarea.glass-input {
 
   /* app-footer inside app-main */
   .app-main .app-footer { margin-top: auto; }
+
+  /* ── Right panel (Invite Builder + Notes) ── */
+  .app-right-panel {
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-left: 1px solid rgba(184,145,106,0.15);
+    background: rgba(250,246,238,0.98);
+    z-index: 90;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(184,145,106,0.3) transparent;
+  }
+  .app-right-panel::-webkit-scrollbar { width: 4px; }
+  .app-right-panel::-webkit-scrollbar-thumb { background: rgba(184,145,106,0.3); border-radius: 2px; }
+
+  /* Hide Notes tab from left nav — it lives in the right panel */
+  #tab-notes { display: none; }
 }
 
 /* Override 1024px block that adds margin: 0 auto */

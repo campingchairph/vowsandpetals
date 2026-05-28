@@ -312,86 +312,9 @@ function updateHero() {
   if (countdownEl) countdownEl.textContent = getCountdown();
 }
 
-/* ── OVERVIEW ────────────────────────────────── */
-function renderOverview() {
-  const el = document.getElementById('wed-overview-content');
-  if (!el) return;
-  updateHero();
-
-  if (!WED.couple.p1 && !WED.couple.p2) {
-    el.innerHTML = `<div class="empty-state">
-      <div class="empty-emoji">💍</div>
-      <div class="empty-title">Start Planning Your Wedding</div>
-      <div class="empty-sub">Add your names, date, venue, and budget<br>to begin your planning journey.</div>
-      <button onclick="openSetupModal()" class="cta-btn" style="max-width:260px;margin:0 auto">✏️ Set Up Wedding Details</button>
-    </div>`;
-    return;
-  }
-
-  const totalDone  = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
-  const totalItems = WED.checklist.reduce((a,p)=>a+p.items.length,0);
-  const pct        = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
-  const totalSpent = WED.expenses.reduce((a,e)=>a+e.amount,0);
-  const paid       = WED.expenses.filter(e=>e.paid).reduce((a,e)=>a+e.amount,0);
-  const attending  = WED.guests.filter(g=>g.rsvp==='attending').length;
-
-  el.innerHTML = `
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
-      <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
-    </div>
-
-    <!-- ── COMBINED EVENT OVERVIEW CARD ── -->
-    <div style="padding:20px;border-radius:20px;margin-bottom:16px" class="glass">
-      <!-- Couple names + date/venue headline -->
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-family:var(--f2);font-size:28px;font-style:italic;font-weight:600;color:var(--ink);line-height:1.15">${WED.couple.p1} &amp; ${WED.couple.p2}</div>
-        ${WED.date ? `<div style="font-size:13px;font-weight:600;color:var(--tan-dark);margin-top:4px">📅 ${new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>` : ''}
-        ${WED.venue ? `<div style="font-size:12px;color:var(--ink-3);margin-top:2px">📍 ${WED.venue}</div>` : ''}
-      </div>
-
-      <!-- 4-stat row -->
-      <div class="ev-stat-row">
-        <div class="ev-stat">
-          <span class="ev-stat-val">${getCountdown().replace(' to go','').replace(/ days?/,'d').replace(/ months?,\s*/,'mo ')}</span>
-          <span class="ev-stat-lbl">To the Day</span>
-        </div>
-        <div class="ev-stat">
-          <span class="ev-stat-val">${attending} / ${WED.guests.length}</span>
-          <span class="ev-stat-lbl">Guests</span>
-        </div>
-        <div class="ev-stat">
-          <span class="ev-stat-val">₱${totalSpent >= 1000 ? (totalSpent/1000).toFixed(0)+'k' : totalSpent.toLocaleString()}</span>
-          <span class="ev-stat-lbl">Committed</span>
-        </div>
-        <div class="ev-stat">
-          <span class="ev-stat-val">${pct}%</span>
-          <span class="ev-stat-lbl">Planned</span>
-        </div>
-      </div>
-
-      <!-- Progress bar -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div class="progress-bar-wrap" style="flex:1">
-          <div class="progress-bar-fill" style="width:${pct}%"></div>
-        </div>
-        <span style="font-size:12px;font-weight:700;color:var(--tan-dark);white-space:nowrap">${totalDone}/${totalItems} tasks</span>
-      </div>
-
-      <!-- Budget row -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,252,247,0.65);border:1px solid rgba(184,145,106,0.18)">
-        <div>
-          <div style="font-size:11px;color:var(--ink-4);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Budget</div>
-          <div style="font-family:var(--f);font-size:19px;font-style:normal;font-weight:800;color:var(--ink);letter-spacing:-0.3px">₱${WED.budget.toLocaleString()}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:var(--ink-4)">Committed: <b style="color:var(--ink)">₱${totalSpent.toLocaleString()}</b></div>
-          <div style="font-size:11px;margin-top:2px;font-weight:700;color:${(WED.budget-totalSpent)>=0?'var(--green-deep)':'var(--pink-deep)'}">
-            ${(WED.budget-totalSpent)>=0?'₱'+(WED.budget-totalSpent).toLocaleString()+' remaining':'₱'+Math.abs(WED.budget-totalSpent).toLocaleString()+' over budget'}
-          </div>
-        </div>
-      </div>
-    </div>
-
+/* ── INVITATION BUILDER HTML (shared: mobile overview + desktop right panel) ── */
+function _buildInviteBuilderHTML() {
+  return `
     <!-- ── INVITATION BUILDER ── -->
     <div style="padding:16px;border-radius:18px;margin-bottom:12px" class="glass">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -520,7 +443,91 @@ function renderOverview() {
 
         return tabBar + `<div style="${panelStyle}">${content}</div>`;
       })()}
+    </div>`;
+}
+
+/* ── OVERVIEW ────────────────────────────────── */
+function renderOverview() {
+  const el = document.getElementById('wed-overview-content');
+  if (!el) return;
+  updateHero();
+
+  if (!WED.couple.p1 && !WED.couple.p2) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-emoji">💍</div>
+      <div class="empty-title">Start Planning Your Wedding</div>
+      <div class="empty-sub">Add your names, date, venue, and budget<br>to begin your planning journey.</div>
+      <button onclick="openSetupModal()" class="cta-btn" style="max-width:260px;margin:0 auto">✏️ Set Up Wedding Details</button>
+    </div>`;
+    return;
+  }
+
+  const totalDone  = WED.checklist.reduce((a,p)=>a+p.items.filter(i=>i.done).length,0);
+  const totalItems = WED.checklist.reduce((a,p)=>a+p.items.length,0);
+  const pct        = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
+  const totalSpent = WED.expenses.reduce((a,e)=>a+e.amount,0);
+  const paid       = WED.expenses.filter(e=>e.paid).reduce((a,e)=>a+e.amount,0);
+  const attending  = WED.guests.filter(g=>g.rsvp==='attending').length;
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
+      <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
     </div>
+
+    <!-- ── COMBINED EVENT OVERVIEW CARD ── -->
+    <div style="padding:20px;border-radius:20px;margin-bottom:16px" class="glass">
+      <!-- Couple names + date/venue headline -->
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-family:var(--f2);font-size:28px;font-style:italic;font-weight:600;color:var(--ink);line-height:1.15">${WED.couple.p1} &amp; ${WED.couple.p2}</div>
+        ${WED.date ? `<div style="font-size:13px;font-weight:600;color:var(--tan-dark);margin-top:4px">📅 ${new Date(WED.date).toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>` : ''}
+        ${WED.venue ? `<div style="font-size:12px;color:var(--ink-3);margin-top:2px">📍 ${WED.venue}</div>` : ''}
+      </div>
+
+      <!-- 4-stat row -->
+      <div class="ev-stat-row">
+        <div class="ev-stat">
+          <span class="ev-stat-val">${getCountdown().replace(' to go','').replace(/ days?/,'d').replace(/ months?,\s*/,'mo ')}</span>
+          <span class="ev-stat-lbl">To the Day</span>
+        </div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">${attending} / ${WED.guests.length}</span>
+          <span class="ev-stat-lbl">Guests</span>
+        </div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">₱${totalSpent >= 1000 ? (totalSpent/1000).toFixed(0)+'k' : totalSpent.toLocaleString()}</span>
+          <span class="ev-stat-lbl">Committed</span>
+        </div>
+        <div class="ev-stat">
+          <span class="ev-stat-val">${pct}%</span>
+          <span class="ev-stat-lbl">Planned</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="progress-bar-wrap" style="flex:1">
+          <div class="progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:var(--tan-dark);white-space:nowrap">${totalDone}/${totalItems} tasks</span>
+      </div>
+
+      <!-- Budget row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,252,247,0.65);border:1px solid rgba(184,145,106,0.18)">
+        <div>
+          <div style="font-size:11px;color:var(--ink-4);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Budget</div>
+          <div style="font-family:var(--f);font-size:19px;font-style:normal;font-weight:800;color:var(--ink);letter-spacing:-0.3px">₱${WED.budget.toLocaleString()}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink-4)">Committed: <b style="color:var(--ink)">₱${totalSpent.toLocaleString()}</b></div>
+          <div style="font-size:11px;margin-top:2px;font-weight:700;color:${(WED.budget-totalSpent)>=0?'var(--green-deep)':'var(--pink-deep)'}">
+            ${(WED.budget-totalSpent)>=0?'₱'+(WED.budget-totalSpent).toLocaleString()+' remaining':'₱'+Math.abs(WED.budget-totalSpent).toLocaleString()+' over budget'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${window.innerWidth < 900 ? _buildInviteBuilderHTML() : ''}
+
 
     ${typeof renderCloudSection === 'function' ? renderCloudSection() : `
     <div style="padding:16px;border-radius:18px;margin-top:12px" class="glass">
@@ -606,10 +613,37 @@ function submitSetup() {
 const _collapsedExpenseCats = new Set(); // UI-only collapse state for expense groups
 let _budgetCatCollapsed = true;          // By Category section — collapsed by default
 let _activeInvTab = 'page1';             // Invitation builder active tab
+let _activeRightTab = 'invite';              // Right panel active tab (desktop only)
 
 function setInvTab(page) {
   _activeInvTab = page;
-  renderOverview();
+  if (window.innerWidth >= 900) {
+    renderRightPanel();
+  } else {
+    renderOverview();
+  }
+}
+
+function renderRightPanel() {
+  const panel = document.getElementById('app-right-panel');
+  if (!panel) return;
+  const tab = _activeRightTab || 'invite';
+  panel.innerHTML = `
+    <div style="display:flex;border-bottom:1px solid rgba(184,145,106,0.15);position:sticky;top:0;z-index:2;background:rgba(250,246,238,0.98);flex-shrink:0">
+      <button onclick="setRightTab('invite')" style="flex:1;padding:11px 8px;border:none;background:${tab==='invite'?'rgba(252,232,238,0.9)':'transparent'};font-size:12.5px;font-weight:${tab==='invite'?'700':'600'};color:${tab==='invite'?'var(--pink-deep)':'var(--ink-3)'};cursor:pointer;border-bottom:2.5px solid ${tab==='invite'?'var(--pink-deep)':'transparent'};transition:all 0.15s;font-family:var(--f)">💌 Invite</button>
+      <button onclick="setRightTab('notes')" style="flex:1;padding:11px 8px;border:none;background:${tab==='notes'?'rgba(232,245,237,0.9)':'transparent'};font-size:12.5px;font-weight:${tab==='notes'?'700':'600'};color:${tab==='notes'?'var(--green-deep)':'var(--ink-3)'};cursor:pointer;border-bottom:2.5px solid ${tab==='notes'?'var(--green-deep)':'transparent'};transition:all 0.15s;font-family:var(--f)">📝 Notes</button>
+    </div>
+    <div id="rp-invite-content" style="padding:12px;${tab==='invite'?'display:block':'display:none'}">
+      ${tab === 'invite' ? _buildInviteBuilderHTML() : ''}
+    </div>
+    <div id="rp-notes-content" style="padding:12px;${tab==='notes'?'display:block':'display:none'}"></div>
+  `;
+  if (tab === 'notes') renderNotes();
+}
+
+function setRightTab(tab) {
+  _activeRightTab = tab;
+  renderRightPanel();
 }
 
 function toggleBudgetCatSection() {
@@ -1986,6 +2020,7 @@ async function uploadCustomCard(event) {
     WED.customCardImage = dataUrl;
     saveState();
     renderOverview();
+    if (window.innerWidth >= 900) renderRightPanel();
     showToast('🖼 Custom design uploaded!');
   } catch(e) { showToast('❌ Upload failed'); }
 }
@@ -2002,6 +2037,7 @@ async function uploadAttirePhoto(event, which) {
     else               WED.inviteSettings.attirePhotoB = dataUrl;
     saveState();
     renderOverview();
+    if (window.innerWidth >= 900) renderRightPanel();
     setTimeout(() => refreshCard2(), 80);
     showToast('📷 Attire photo saved!');
   } catch(e) { showToast('❌ Upload failed'); }
@@ -2015,6 +2051,7 @@ function clearAttirePhoto(which) {
   saveState();
   refreshCard2();
   renderOverview();
+  if (window.innerWidth >= 900) renderRightPanel();
 }
 
 /* Toggle upload-spec panel visibility */
@@ -2180,6 +2217,7 @@ window.clearCustomCard = function() {
   saveState();
   showToast('↩ Showing default invitation card');
   renderOverview();
+  if (window.innerWidth >= 900) renderRightPanel();
   setTimeout(() => refreshCard1(), 80);
 };
 
@@ -5025,6 +5063,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Start on overview
   wedTab('overview');
+  // Initialize right panel on desktop
+  if (window.innerWidth >= 900) renderRightPanel();
   // Landing page is always the home — always show on fresh page load
   // enterApp() is called by the user clicking a CTA on the landing page
 });
@@ -5256,7 +5296,9 @@ function _openNoteSection(key) { _activeNoteKey = key; renderNotes(); }
 function _closeNoteSection()   { _activeNoteKey = null; renderNotes(); }
 
 function renderNotes() {
-  const el = document.getElementById('wed-notes-content');
+  const isDesktop = window.innerWidth >= 900;
+  const rpEl = isDesktop ? document.getElementById('rp-notes-content') : null;
+  const el = rpEl || document.getElementById('wed-notes-content');
   if (!el) return;
   const sections = _allNoteSections();
 
@@ -5841,6 +5883,8 @@ window.generateCategoryReceipt    = generateCategoryReceipt;
 window.generateFullReceipt        = generateFullReceipt;
 window.toggleBudgetCatSection     = toggleBudgetCatSection;
 window.setInvTab                  = setInvTab;
+window.setRightTab                = setRightTab;
+window.renderRightPanel           = renderRightPanel;
 window.toggleExpenseCat           = toggleExpenseCat;
 window.toggleGuestGroup           = toggleGuestGroup;
 window.setSupplierView            = setSupplierView;
