@@ -1560,7 +1560,7 @@ textarea.glass-input {
     flex-direction: column;
     min-height: 100vh;
     overflow-x: hidden;
-    background: rgba(245,230,200,0.55);
+    background: rgba(242,232,213,0.78);
   }
 
   /* Panels — no max-width, fill available space */

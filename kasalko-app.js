@@ -1114,7 +1114,7 @@ function _guestCard(g) {
   </select>`;
 
   return `<div class="guest-card" onclick="toggleGuestCard(event,this)" style="border-bottom:1px solid rgba(184,145,106,0.1)">
-    <div style="display:flex;align-items:center;gap:8px;padding:5px 10px">
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#fff">
       <div style="width:22px;height:22px;border-radius:3px;background:${bgColor};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${txtColor};flex-shrink:0">${initials}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
