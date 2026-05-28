@@ -465,12 +465,13 @@ function renderOverview() {
   const attending  = WED.guests.filter(g=>g.rsvp==='attending').length;
 
   el.innerHTML = `
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
-      <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
-    </div>
-
     <!-- ── COMBINED EVENT OVERVIEW CARD ── -->
     <div style="padding:20px;border-radius:20px;margin-bottom:16px" class="glass">
+      <!-- Edit button row -->
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
+        <button onclick="openSetupModal()" class="icon-btn">✏️ Edit Details</button>
+      </div>
+
       <!-- Couple names + date/venue headline -->
       <div style="text-align:center;margin-bottom:16px">
         <div style="font-family:var(--f2);font-size:28px;font-style:italic;font-weight:600;color:var(--ink);line-height:1.15">${WED.couple.p1} &amp; ${WED.couple.p2}</div>
@@ -736,11 +737,11 @@ function renderBudget() {
         <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(90,171,122,0.15);color:var(--green-deep);border:1px solid rgba(90,171,122,0.2)">Paid ₱${paid.toLocaleString()}</span>
         <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(224,120,152,0.12);color:var(--pink-deep);border:1px solid rgba(224,120,152,0.2)">Pending ₱${(totalSpent-paid).toLocaleString()}</span>
       </div>
-      ${WED.expenses.length ? `<button onclick="generateFullReceipt()" style="margin-top:12px;width:100%;padding:10px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.55);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🧾 Generate Full Receipt</button>` : ''}
+      ${WED.expenses.length ? `<button onclick="generateFullReceipt()" style="margin-top:12px;width:100%;padding:10px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.3);background:rgba(242,232,213,0.55);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🧾 Generate Full Receipt</button>` : ''}
     </div>
 
     ${Object.keys(byCat).length ? `
-    <div onclick="toggleBudgetCatSection()" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${_budgetCatCollapsed?'8':'8'}px;cursor:pointer;user-select:none;padding:8px 10px;border-radius:var(--r-md);background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18)">
+    <div onclick="toggleBudgetCatSection()" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${_budgetCatCollapsed?'8':'8'}px;cursor:pointer;user-select:none;padding:8px 10px;border-radius:var(--r-md);background:rgba(242,232,213,0.35);border:1px solid rgba(201,169,110,0.18)">
       <div style="display:flex;align-items:center;gap:7px">
         <span style="font-size:13px;color:var(--ink-4)">${_budgetCatCollapsed ? '▶' : '▼'}</span>
         <span class="sec-title" style="margin-bottom:0;font-size:13px">By Category</span>
@@ -768,7 +769,7 @@ function renderBudget() {
         </div>`;}).join('')}
     </div>` : ''}` : `
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button onclick="openManageCategories()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage Categories</button>
+      <button onclick="openManageCategories()" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.55);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⚙️ Manage Categories</button>
     </div>`}
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -794,7 +795,7 @@ function renderBudget() {
         const paidCount = items.filter(e => e.paid).length;
         return `
         <div style="margin-bottom:8px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(201,169,110,0.18)">
-          <div onclick="toggleExpenseCat('${cat.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(245,230,200,0.45);cursor:pointer;user-select:none">
+          <div onclick="toggleExpenseCat('${cat.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(242,232,213,0.45);cursor:pointer;user-select:none">
             <span style="font-size:17px;flex-shrink:0">${catEmoji}</span>
             <div style="flex:1;min-width:0">
               <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${catLabel}</div>
@@ -880,7 +881,7 @@ function openManageCategories() {
       <div style="font-size:11.5px;color:var(--ink-4);margin-bottom:12px">Built-in categories cannot be removed. Add your own below.</div>
       <div id="cat-list-built" style="margin-bottom:10px">
         ${Object.keys(CAT_EMOJIS).map(k=>
-          `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:rgba(245,230,200,0.3);margin-bottom:4px">
+          `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:rgba(242,232,213,0.3);margin-bottom:4px">
             <span style="font-size:16px">${CAT_EMOJIS[k]}</span>
             <span style="font-size:12.5px;font-weight:600;color:var(--ink);flex:1;text-transform:capitalize">${k}</span>
             <span style="font-size:10px;font-weight:700;color:var(--ink-4);padding:2px 7px;border-radius:6px;background:rgba(201,169,110,0.12)">Built-in</span>
@@ -993,7 +994,7 @@ function generateFullReceipt() {
           <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">⏳ Total Pending</span>
           <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">₱${(total-paid).toLocaleString()}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.5);border:1.5px solid rgba(201,169,110,0.25)">
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(242,232,213,0.5);border:1.5px solid rgba(201,169,110,0.25)">
           <span style="font-size:15px;font-weight:800;color:var(--ink)">Grand Total</span>
           <span style="font-size:15px;font-weight:800;color:var(--ink)">₱${total.toLocaleString()}</span>
         </div>
@@ -1003,7 +1004,7 @@ function generateFullReceipt() {
           <span style="font-size:12px;font-weight:700;color:${total<=WED.budget?'var(--green-deep)':'var(--pink-deep)'}">₱${Math.abs(WED.budget-total).toLocaleString()}</span>
         </div>` : ''}
       </div>
-      <button onclick="window.print()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.3);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print Receipt</button>
+      <button onclick="window.print()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(242,232,213,0.7);border:1px solid rgba(201,169,110,0.3);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print Receipt</button>
       <button onclick="document.getElementById('receipt-modal').remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;background:none;border:none;font-size:13px;color:var(--ink-4);cursor:pointer">Close</button>
     </div>`;
   document.body.appendChild(el);
@@ -1053,12 +1054,12 @@ function generateCategoryReceipt(catKey) {
           <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">⏳ Pending</span>
           <span style="font-size:11.5px;color:var(--pink-deep);font-weight:700">₱${pending.toLocaleString()}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.22)">
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(242,232,213,0.5);border:1px solid rgba(201,169,110,0.22)">
           <span style="font-size:14px;font-weight:700;color:var(--ink)">Total</span>
           <span style="font-size:14px;font-weight:700;color:var(--ink)">₱${total.toLocaleString()}</span>
         </div>
       </div>
-      <button onclick="window.print()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(245,230,200,0.7);border:1px solid rgba(201,169,110,0.3);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print Receipt</button>
+      <button onclick="window.print()" style="width:100%;margin-top:14px;padding:11px;border-radius:12px;background:rgba(242,232,213,0.7);border:1px solid rgba(201,169,110,0.3);font-size:13px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print Receipt</button>
       <button onclick="document.getElementById('receipt-modal').remove()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;background:none;border:none;font-size:13px;color:var(--ink-4);cursor:pointer">Close</button>
     </div>`;
   document.body.appendChild(el);
@@ -1092,7 +1093,7 @@ function setGuestFilter(val) {
 function _guestCard(g) {
   const chair      = WED.furniture.find(f => g._chairId === f.id);
   const initials   = g.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-  const bgColor    = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(245,230,200,0.8)';
+  const bgColor    = g.rsvp==='attending'?'rgba(232,245,237,0.8)':g.rsvp==='declined'?'rgba(252,232,238,0.8)':'rgba(242,232,213,0.8)';
   const txtColor   = g.rsvp==='attending'?'var(--green-deep)':g.rsvp==='declined'?'var(--pink-deep)':'var(--tan-dark)';
   const sentAt     = g._inviteSentAt ? new Date(g._inviteSentAt).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '';
   const rsvpEmoji  = g.rsvp==='attending'?'✅':g.rsvp==='declined'?'❌':'⏳';
@@ -1104,7 +1105,7 @@ function _guestCard(g) {
   const linkBtn = chair
     ? `<button onclick="event.stopPropagation();copyGuestLink(${g.id})" title="Copy RSVP link" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(90,171,122,0.1);font-size:11.5px;font-weight:700;color:var(--green-deep);cursor:pointer;font-family:var(--f)">🔗 Link</button>`
     : `<button onclick="event.stopPropagation();showToast('🪑 Assign a seat first in the Seating tab')" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(201,169,110,0.07);font-size:11.5px;color:var(--ink-4);cursor:not-allowed;opacity:0.4;font-family:var(--f)">🔗 Link</button>`;
-  const editBtn = `<button onclick="event.stopPropagation();openEditGuest(${g.id})" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(245,230,200,0.55);font-size:11.5px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:var(--f)">✏️ Edit</button>`;
+  const editBtn = `<button onclick="event.stopPropagation();openEditGuest(${g.id})" style="padding:5px 11px;border-radius:14px;border:none;background:rgba(242,232,213,0.55);font-size:11.5px;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:var(--f)">✏️ Edit</button>`;
   const delBtn  = `<button onclick="event.stopPropagation();removeGuest(${g.id})" style="padding:5px 11px;border-radius:14px;border:none;background:transparent;font-size:11.5px;font-weight:600;color:var(--rose);cursor:pointer;opacity:0.75;font-family:var(--f)">🗑 Remove</button>`;
   const rsvpSel = (extraStyle='') => `<select onchange="updateGuestRSVP(${g.id},this.value)" onclick="event.stopPropagation()" style="padding:4px 8px;border-radius:8px;border:1px solid rgba(201,169,110,0.25);background:rgba(255,253,248,0.9);font-size:11px;font-weight:700;color:var(--ink-2);font-family:var(--f);cursor:pointer;outline:none${extraStyle}">
     <option value="attending" ${g.rsvp==='attending'?'selected':''}>✅ Attending</option>
@@ -1133,7 +1134,7 @@ function _guestCard(g) {
       <div class="guest-actions-col">
         ${rsvpSel()}
         ${sendBtn}${linkBtn}
-        <button onclick="event.stopPropagation();openEditGuest(${g.id})" style="width:22px;height:22px;border-radius:4px;border:none;background:rgba(245,230,200,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
+        <button onclick="event.stopPropagation();openEditGuest(${g.id})" style="width:22px;height:22px;border-radius:4px;border:none;background:rgba(242,232,213,0.55);font-size:11px;cursor:pointer;color:var(--tan-dark);flex-shrink:0">✏️</button>
         <button onclick="event.stopPropagation();removeGuest(${g.id})" style="width:22px;height:22px;border-radius:4px;border:none;background:rgba(224,120,152,0.12);font-size:11px;cursor:pointer;color:var(--pink-deep);flex-shrink:0">🗑</button>
       </div>
     </div>
@@ -1216,29 +1217,32 @@ function renderGuests() {
   }
 
   el.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-      <div class="glass-green" style="padding:12px;border-radius:var(--r-md);text-align:center">
-        <div style="font-size:24px;font-weight:800;color:var(--green-deep);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${attending}</div>
-        <div style="font-size:10.5px;color:var(--green-deep);font-weight:700">Attending</div>
+    <!-- ── COMBINED GUEST OVERVIEW CARD ── -->
+    <div style="padding:20px;border-radius:20px;margin-bottom:16px" class="glass">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+        <div class="glass-green" style="padding:12px;border-radius:var(--r-md);text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--green-deep);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${attending}</div>
+          <div style="font-size:10.5px;color:var(--green-deep);font-weight:700">Attending</div>
+        </div>
+        <div class="glass-cream" style="padding:12px;border-radius:var(--r-md);text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--tan-dark);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${pending}</div>
+          <div style="font-size:10.5px;color:var(--tan-dark);font-weight:700">Pending</div>
+        </div>
+        <div class="glass-pink" style="padding:12px;border-radius:var(--r-md);text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--pink-deep);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${declined}</div>
+          <div style="font-size:10.5px;color:var(--pink-deep);font-weight:700">Declined</div>
+        </div>
       </div>
-      <div class="glass-cream" style="padding:12px;border-radius:var(--r-md);text-align:center">
-        <div style="font-size:24px;font-weight:800;color:var(--tan-dark);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${pending}</div>
-        <div style="font-size:10.5px;color:var(--tan-dark);font-weight:700">Pending</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11.5px;font-weight:600;color:var(--ink-4)">${WED.guests.length} guest${WED.guests.length!==1?'s':''}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="syncRSVPsFromCloud()" style="padding:5px 10px;border-radius:16px;background:rgba(252,232,238,0.6);border:1px solid rgba(224,120,152,0.28);font-size:11.5px;font-weight:600;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">💌 Sync RSVPs</button>
+          <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:5px 10px;border-radius:16px;background:transparent;border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:600;color:var(--ink-3);cursor:pointer;font-family:var(--f)">👥 Groups</button>
+          <button onclick="openModal('wed-add-guest-modal')" style="padding:7px 16px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;font-size:12.5px;font-weight:700;color:white;cursor:pointer;font-family:var(--f)">+ Add</button>
+        </div>
       </div>
-      <div class="glass-pink" style="padding:12px;border-radius:var(--r-md);text-align:center">
-        <div style="font-size:24px;font-weight:800;color:var(--pink-deep);font-family:var(--f);font-style:normal;letter-spacing:-0.5px">${declined}</div>
-        <div style="font-size:10.5px;color:var(--pink-deep);font-weight:700">Declined</div>
-      </div>
+      <div style="font-size:10.5px;color:var(--ink-4)">RSVP statuses don't update live — tap 💌 Sync RSVPs to pull the latest responses.</div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <span style="font-size:11.5px;font-weight:600;color:var(--ink-4)">${WED.guests.length} guest${WED.guests.length!==1?'s':''}</span>
-      <div style="display:flex;align-items:center;gap:6px">
-        <button onclick="syncRSVPsFromCloud()" style="padding:5px 10px;border-radius:16px;background:rgba(252,232,238,0.6);border:1px solid rgba(224,120,152,0.28);font-size:11.5px;font-weight:600;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">💌 Sync RSVPs</button>
-        <button onclick="renderGuestGroupModal();openModal('wed-add-guest-group-modal')" style="padding:5px 10px;border-radius:16px;background:transparent;border:1px solid rgba(201,169,110,0.28);font-size:11.5px;font-weight:600;color:var(--ink-3);cursor:pointer;font-family:var(--f)">👥 Groups</button>
-        <button onclick="openModal('wed-add-guest-modal')" style="padding:7px 16px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;font-size:12.5px;font-weight:700;color:white;cursor:pointer;font-family:var(--f)">+ Add</button>
-      </div>
-    </div>
-    <div style="font-size:10.5px;color:var(--ink-4);margin-bottom:10px">RSVP statuses don't update live — tap 💌 Sync RSVPs to pull the latest responses.</div>
     <div style="position:relative;margin-bottom:8px">
       <input id="guest-search-input" type="search" placeholder="🔍 Search guests or groups…" value="${_guestSearch}"
         oninput="updateGuestSearch(this.value)"
@@ -1247,9 +1251,9 @@ function renderGuests() {
     <!-- Filter pills -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
       ${[
-        { val:'all',       label:'All',            count: WED.guests.length,                                       col:'var(--tan-dark)',   bg:'rgba(245,230,200,0.6)',  bd:'rgba(201,169,110,0.32)' },
+        { val:'all',       label:'All',            count: WED.guests.length,                                       col:'var(--tan-dark)',   bg:'rgba(242,232,213,0.6)',  bd:'rgba(201,169,110,0.32)' },
         { val:'attending', label:'✅ Attending',   count: WED.guests.filter(g=>g.rsvp==='attending').length,       col:'var(--green-deep)', bg:'rgba(90,171,122,0.15)',  bd:'rgba(90,171,122,0.35)'  },
-        { val:'pending',   label:'⏳ Pending',     count: WED.guests.filter(g=>g.rsvp==='pending').length,         col:'var(--tan-dark)',   bg:'rgba(245,230,200,0.5)',  bd:'rgba(201,169,110,0.28)' },
+        { val:'pending',   label:'⏳ Pending',     count: WED.guests.filter(g=>g.rsvp==='pending').length,         col:'var(--tan-dark)',   bg:'rgba(242,232,213,0.5)',  bd:'rgba(201,169,110,0.28)' },
         { val:'declined',  label:'❌ Declined',    count: WED.guests.filter(g=>g.rsvp==='declined').length,        col:'var(--pink-deep)',  bg:'rgba(252,232,238,0.5)',  bd:'rgba(224,120,152,0.28)' },
         { val:'not-sent',  label:'💌 Not Sent',    count: WED.guests.filter(g=>!g._inviteSent).length,             col:'var(--pink-deep)',  bg:'rgba(252,232,238,0.6)',  bd:'rgba(224,120,152,0.32)' },
       ].map(f => {
@@ -2363,7 +2367,7 @@ async function _loadSupplierProfile(id) {
 }
 
 function _supplierCard(s) {
-  const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 6px">✔ Verified</span>` : `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--ink-4);background:rgba(245,230,200,0.4);border:1px solid rgba(184,145,106,0.2);border-radius:6px;padding:2px 6px">Unverified</span>`;
+  const verifiedBadge = s.verified ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);border-radius:6px;padding:2px 6px">✔ Verified</span>` : `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--ink-4);background:rgba(242,232,213,0.4);border:1px solid rgba(184,145,106,0.2);border-radius:6px;padding:2px 6px">Unverified</span>`;
   const proBadge      = s.pro      ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#b5522b;background:rgba(181,82,43,0.1);border:1px solid rgba(181,82,43,0.22);border-radius:6px;padding:2px 6px">⭐ Featured</span>` : '';
   const stars = s.rating_avg ? '★'.repeat(Math.round(s.rating_avg)) + '☆'.repeat(5-Math.round(s.rating_avg)) : '';
   const priceStr = s.price_from ? `₱${Number(s.price_from).toLocaleString()}${s.price_to?' – ₱'+Number(s.price_to).toLocaleString():'+'} ` : '';
@@ -2371,7 +2375,7 @@ function _supplierCard(s) {
     <div onclick="openSupplierProfile('${s.id}')" class="glass" style="border-radius:var(--r-md);overflow:hidden;cursor:pointer;margin-bottom:10px">
       ${s.cover_photo ? `<div style="height:130px;background:url('${s.cover_photo}') center/cover no-repeat;position:relative">
         <div style="position:absolute;top:7px;right:7px;display:flex;gap:4px">${proBadge}${verifiedBadge}</div>
-      </div>` : `<div style="height:80px;background:linear-gradient(135deg,rgba(245,230,200,0.5),rgba(232,245,237,0.5));display:flex;align-items:center;justify-content:center;position:relative">
+      </div>` : `<div style="height:80px;background:linear-gradient(135deg,rgba(242,232,213,0.5),rgba(232,245,237,0.5));display:flex;align-items:center;justify-content:center;position:relative">
         <span style="font-size:36px">${getSupplierEmoji(s.category)}</span>
         <div style="position:absolute;top:7px;right:7px;display:flex;gap:4px">${proBadge}${verifiedBadge}</div>
       </div>`}
@@ -2432,13 +2436,24 @@ function _renderSuppliersMain(el) {
         </div>`).join('');
       return `
         <div style="margin-bottom:12px;border-radius:6px;overflow:hidden;border:1px solid rgba(184,145,106,0.18)">
-          <div style="font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;padding:4px 10px;background:rgba(245,230,200,0.45);border-bottom:1px solid rgba(184,145,106,0.18)">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;opacity:0.7">${vendors.length}</span></div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;padding:4px 10px;background:rgba(242,232,213,0.45);border-bottom:1px solid rgba(184,145,106,0.18)">${catEmoji} ${catLabel} <span style="font-weight:400;text-transform:none;opacity:0.7">${vendors.length}</span></div>
           ${cards}
         </div>`;
     }).join('');
   }
 
   el.innerHTML = `
+    <!-- Browse Marketplace button — top -->
+    <div onclick="setSupplierView('browse')" class="glass"
+      style="margin-bottom:16px;padding:16px;border-radius:var(--r-lg);cursor:pointer;background:linear-gradient(135deg,rgba(242,232,213,0.55),rgba(232,245,237,0.5));border:1.5px solid rgba(201,169,110,0.3);display:flex;align-items:center;gap:12px">
+      <div style="font-size:32px;flex-shrink:0">🏪</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">Browse Supplier Marketplace</div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">Find verified wedding suppliers for Philippine weddings</div>
+      </div>
+      <div style="font-size:20px;color:var(--tan-dark);flex-shrink:0">›</div>
+    </div>
+
     <!-- My Vendors -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <span class="sec-title" style="margin-bottom:0">My Vendors</span>
@@ -2448,19 +2463,8 @@ function _renderSuppliersMain(el) {
     </div>
     ${vendorList}
 
-    <!-- Browse Marketplace button -->
-    <div onclick="setSupplierView('browse')" class="glass"
-      style="margin-top:16px;padding:16px;border-radius:var(--r-lg);cursor:pointer;background:linear-gradient(135deg,rgba(245,230,200,0.55),rgba(232,245,237,0.5));border:1.5px solid rgba(201,169,110,0.3);display:flex;align-items:center;gap:12px">
-      <div style="font-size:32px;flex-shrink:0">🏪</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:700;color:var(--ink)">Browse Supplier Marketplace</div>
-        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">Find verified wedding suppliers for Philippine weddings</div>
-      </div>
-      <div style="font-size:20px;color:var(--tan-dark);flex-shrink:0">›</div>
-    </div>
-
     <!-- Are you a supplier CTA -->
-    <div style="margin-top:10px;padding:14px 16px;border-radius:var(--r-lg);background:rgba(245,230,200,0.3);border:1px solid rgba(184,145,106,0.18);display:flex;align-items:center;gap:12px">
+    <div style="margin-top:10px;padding:14px 16px;border-radius:var(--r-lg);background:rgba(242,232,213,0.3);border:1px solid rgba(184,145,106,0.18);display:flex;align-items:center;gap:12px">
       <span style="font-size:24px;flex-shrink:0">🤝</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:2px">Are you a wedding supplier?</div>
@@ -2494,11 +2498,11 @@ function openVendorDetail(vId) {
         </div>
         ${v._marketplaceId ? `<span style="margin-left:auto;font-size:9.5px;font-weight:700;color:#1a73e8;background:rgba(26,115,232,0.08);border:1px solid rgba(26,115,232,0.18);border-radius:6px;padding:3px 8px">🏪 Listed</span>` : ''}
       </div>
-      ${v.price ? `<div style="padding:8px 12px;border-radius:var(--r-sm);background:rgba(245,230,200,0.5);border:1px solid rgba(201,169,110,0.18);margin-bottom:10px;font-size:13px;font-weight:700;color:var(--tan-dark)">💰 ₱${Number(v.price).toLocaleString()}</div>` : ''}
+      ${v.price ? `<div style="padding:8px 12px;border-radius:var(--r-sm);background:rgba(242,232,213,0.5);border:1px solid rgba(201,169,110,0.18);margin-bottom:10px;font-size:13px;font-weight:700;color:var(--tan-dark)">💰 ₱${Number(v.price).toLocaleString()}</div>` : ''}
       ${v.notes ? `<div style="padding:10px 12px;border-radius:var(--r-sm);background:rgba(255,252,247,0.7);border:1px solid rgba(184,145,106,0.14);margin-bottom:10px;font-size:12.5px;color:var(--ink-3);line-height:1.6;font-style:italic">"${v.notes}"</div>` : ''}
       <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
         ${v.phone ? `<a href="tel:${v.phone.replace(/\s/g,'')}" style="display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:var(--r-md);border:1px solid rgba(90,171,122,0.25);background:rgba(90,171,122,0.1);font-size:13px;font-weight:700;color:var(--green-deep);text-decoration:none">📞 <span>${v.phone}</span></a>` : ''}
-        ${v.link ? `<a href="${v.link}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(245,230,200,0.5);font-size:12.5px;font-weight:700;color:var(--tan-dark);text-decoration:none;word-break:break-all">🔗 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.link}</span></a>` : ''}
+        ${v.link ? `<a href="${v.link}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.25);background:rgba(242,232,213,0.5);font-size:12.5px;font-weight:700;color:var(--tan-dark);text-decoration:none;word-break:break-all">🔗 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.link}</span></a>` : ''}
         ${v._marketplaceId ? `<button onclick="document.getElementById('vendor-detail-sheet')?.remove();openSupplierProfile('${v._marketplaceId}')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;border-radius:var(--r-md);border:1.5px solid rgba(26,115,232,0.25);background:rgba(26,115,232,0.07);font-size:12.5px;font-weight:700;color:#1a73e8;cursor:pointer;font-family:var(--f)">🏪 View Full Profile in Marketplace</button>` : ''}
       </div>
       <button onclick="if(confirm('Remove ${v.name.replace(/'/g,"\\'")}?')){deleteVendor(${v.id});document.getElementById('vendor-detail-sheet')?.remove();}" style="width:100%;padding:9px;border-radius:var(--r-md);border:1px solid rgba(224,120,152,0.25);background:rgba(252,232,238,0.5);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;font-family:var(--f)">🗑 Remove Vendor</button>
@@ -2599,7 +2603,7 @@ function _renderSuppliersBrowse(el) {
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <button onclick="setSupplierView('main')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+      <button onclick="setSupplierView('main')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--ink)">Supplier Marketplace</div>
         <div style="font-size:11px;color:var(--ink-4)">All registered Philippine wedding suppliers</div>
@@ -2644,7 +2648,7 @@ function _renderSuppliersCategory(el, cat, catLabel) {
   // Show loading skeleton immediately, load from Firestore async
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <button onclick="setSupplierView('browse')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+      <button onclick="setSupplierView('browse')" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--ink)">${catLabel}</div>
         <div style="font-size:11px;color:var(--ink-4)">All suppliers · verified first</div>
@@ -2694,7 +2698,7 @@ function _fbToMessenger(fbUrl) {
 function _renderSupplierProfileView(el, supplierId) {
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <button onclick="_goBackFromProfile()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+      <button onclick="_goBackFromProfile()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
     </div>
     <div id="supplier-profile-content" style="text-align:center;padding:30px 0;color:var(--ink-4)">Loading profile…</div>`;
 
@@ -2732,7 +2736,7 @@ function _renderSupplierProfileView(el, supplierId) {
           if (msngr) btns.push(`<a href="${msngr}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(0,153,255,0.1);border:1px solid rgba(0,153,255,0.25);font-size:12px;font-weight:700;color:#0099ff;text-decoration:none">💬 Messenger</a>`);
           if (s.fb)      btns.push(`<a href="${s.fb}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(26,115,232,0.1);border:1px solid rgba(26,115,232,0.22);font-size:12px;font-weight:700;color:#1a73e8;text-decoration:none">📘 Facebook</a>`);
           if (s.ig)      btns.push(`<a href="${s.ig.startsWith('http')?s.ig:'https://instagram.com/'+s.ig.replace(/^@/,'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(181,63,137,0.1);border:1px solid rgba(181,63,137,0.22);font-size:12px;font-weight:700;color:#b53f89;text-decoration:none">📸 Instagram</a>`);
-          if (s.website) btns.push(`<a href="${s.website}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.28);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗 Website</a>`);
+          if (s.website) btns.push(`<a href="${s.website}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:10px;background:rgba(242,232,213,0.55);border:1px solid rgba(201,169,110,0.28);font-size:12px;font-weight:700;color:var(--tan-dark);text-decoration:none">🔗 Website</a>`);
           return btns.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">${btns.join('')}</div>` : '';
         })()}
 
@@ -2948,10 +2952,10 @@ function _showTemplatePreview(code, data) {
         ${data.sellerTikTok ? ` · <a href="${data.sellerTikTok}" target="_blank" style="color:var(--gold);font-weight:700">TikTok ↗</a>` : ''}
         ${data.sellerIG     ? ` · <a href="${data.sellerIG}"     target="_blank" style="color:var(--gold);font-weight:700">IG ↗</a>` : ''}
       </div>
-      ${data.description ? `<div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:12px;padding:11px 13px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18)">${data.description}</div>` : ''}
+      ${data.description ? `<div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:12px;padding:11px 13px;border-radius:10px;background:rgba(242,232,213,0.35);border:1px solid rgba(201,169,110,0.18)">${data.description}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
         ${[['💸',expenses,'Budget Items'],[`✅`,tasks,'Tasks'],['🤝',vendors,'Vendors'],['📅',schedule,'Events']].map(([e,n,l])=>`
-        <div style="padding:11px;border-radius:10px;background:rgba(245,230,200,0.35);border:1px solid rgba(201,169,110,0.18);text-align:center">
+        <div style="padding:11px;border-radius:10px;background:rgba(242,232,213,0.35);border:1px solid rgba(201,169,110,0.18);text-align:center">
           <div style="font-size:18px;font-weight:800;color:var(--ink)">${n}</div>
           <div style="font-size:10px;font-weight:600;color:var(--ink-4)">${e} ${l}</div>
         </div>`).join('')}
@@ -2962,7 +2966,7 @@ function _showTemplatePreview(code, data) {
         ✗ Excludes: couple names, date, venue, guests, seating layout
       </div>
       ${price > 0 ? `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;background:rgba(245,230,200,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;background:rgba(242,232,213,0.55);border:1.5px solid rgba(201,169,110,0.28);margin-bottom:14px">
           <div>
             <div style="font-size:10px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px">Price</div>
             <div style="font-size:22px;font-weight:800;color:var(--ink)">₱${Number(price).toLocaleString()}</div>
@@ -2990,7 +2994,7 @@ function _showTemplatePayment(code, price) {
     <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px">💳 Buy Template VP-${code}</div>
     <div style="font-size:11.5px;color:var(--ink-3);line-height:1.55;margin-bottom:14px">Submit your purchase request, then email us your GCash receipt. We'll verify and send you a reference number to activate the template.</div>
 
-    <div style="padding:10px 14px;border-radius:10px;background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
+    <div style="padding:10px 14px;border-radius:10px;background:rgba(242,232,213,0.45);border:1px solid rgba(201,169,110,0.22);margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Template Price</div>
       <div style="font-size:24px;font-weight:800;color:var(--tan-dark)">₱${Number(price).toLocaleString()}</div>
     </div>
@@ -3056,7 +3060,7 @@ async function _submitBuyerPurchaseRequest(code, price) {
           style="display:block;width:100%;padding:12px;border-radius:var(--r-md);background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:#fff;font-size:13px;font-weight:700;text-decoration:none;text-align:center;font-family:var(--f);box-sizing:border-box;margin-bottom:8px">
           📧 Email GCash Receipt Now →
         </a>
-        <button onclick="_showBuyerActivation('${code}')" style="width:100%;padding:11px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.5);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f);margin-bottom:8px">🔑 I already have a reference number →</button>
+        <button onclick="_showBuyerActivation('${code}')" style="width:100%;padding:11px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,0.3);background:rgba(242,232,213,0.5);font-size:12.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;font-family:var(--f);margin-bottom:8px">🔑 I already have a reference number →</button>
         <button onclick="document.getElementById('tpl-preview-sheet')?.remove()" style="width:100%;padding:10px;border-radius:var(--r-md);border:1px solid rgba(184,145,106,0.18);background:transparent;font-size:12px;font-weight:600;color:var(--ink-4);cursor:pointer;font-family:var(--f)">Close</button>
       </div>`;
   } catch(e) {
@@ -3179,7 +3183,7 @@ function openQuickDials() {
 
   const vendorRows = vendorContacts.length
     ? vendorContacts.map(v => `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(245,230,200,0.55);border:1px solid rgba(201,169,110,0.18)">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);margin-bottom:5px;background:rgba(242,232,213,0.55);border:1px solid rgba(201,169,110,0.18)">
           <span style="font-size:20px;flex-shrink:0">${getSupplierEmoji(v.category)}</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.name}</div>
@@ -3351,7 +3355,7 @@ function renderChecklist() {
   /* ── Setup screen when planning window not set ── */
   if (WED.planningMonths === null) {
     el.innerHTML = `
-      <div style="max-width:360px;margin:24px auto 0;padding:28px 22px 26px;border-radius:var(--r-lg);background:rgba(255,252,247,0.9);border:1px solid rgba(184,145,106,0.22);text-align:center">
+      <div style="max-width:360px;margin:24px auto 0;padding:28px 22px 26px;border-radius:var(--r-lg);background:transparent;border:none;text-align:center">
         <div style="font-size:26px;margin-bottom:10px">💍</div>
         <div style="font-family:var(--f2);font-size:20px;font-style:italic;color:var(--ink);margin-bottom:6px">Let's build your checklist</div>
         <div style="font-size:12.5px;color:var(--ink-3);line-height:1.6;margin-bottom:20px">How many months do you have until your wedding? We'll create the right planning phases for you.</div>
@@ -3381,7 +3385,7 @@ function renderChecklist() {
   };
 
   el.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:8px 12px;border-radius:var(--r-md);background:rgba(245,230,200,0.40);border:1px solid rgba(201,169,110,0.16)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:8px 12px;border-radius:var(--r-md);background:rgba(242,232,213,0.40);border:1px solid rgba(201,169,110,0.16)">
       <span style="font-size:11.5px;font-weight:700;color:var(--ink-3)">📅 ${WED.planningMonths}-month plan</span>
       <div style="display:flex;gap:6px">
         <button onclick="showChecklistTimelineChanger()" style="padding:4px 10px;border-radius:6px;background:rgba(255,253,248,0.9);border:1px solid rgba(184,145,106,0.25);font-size:10.5px;font-weight:700;color:var(--gold-dark);cursor:pointer">Change →</button>
@@ -3403,7 +3407,7 @@ function renderChecklist() {
         <button onclick="document.getElementById('checklist-timeline-changer').style.display='none'" style="padding:9px 14px;border-radius:var(--r-md);background:transparent;border:1px solid rgba(184,145,106,0.22);font-size:12px;color:var(--ink-4);cursor:pointer">Cancel</button>
       </div>
     </div>
-    <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(245,230,200,0.45);border:1px solid rgba(201,169,110,0.18);margin-bottom:14px">
+    <div style="padding:12px 14px;border-radius:var(--r-md);background:rgba(242,232,213,0.45);border:1px solid rgba(201,169,110,0.18);margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:12px;font-weight:700;color:var(--ink-3)">Overall Progress</span>
         <span style="font-size:12px;font-weight:700;color:var(--tan-dark)">${totalDone}/${totalItems} · ${pct}%</span>
@@ -3417,7 +3421,7 @@ function renderChecklist() {
       const collapsed = WED._collapsedPhases.includes(phase.phase);
       return `
       <div style="margin-bottom:14px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.14)">
-        <div onclick="togglePhaseCollapse(${pi})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:rgba(245,230,200,0.55);cursor:pointer;user-select:none">
+        <div onclick="togglePhaseCollapse(${pi})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:rgba(242,232,213,0.55);cursor:pointer;user-select:none">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:13px;color:var(--ink-3);transition:transform 0.2s;display:inline-block;transform:rotate(${collapsed?'-90':'0'}deg)">▾</span>
             <span style="font-size:13px;font-weight:700;color:var(--ink-2)">${phase.phase}</span>
@@ -3539,7 +3543,7 @@ function deleteChecklistItem(id) {
 let _editSchedIndex = null;
 const SCHED_COLORS = {
   pink:  'rgba(252,232,238,0.72)',
-  sand:  'rgba(245,230,200,0.72)',
+  sand:  'rgba(242,232,213,0.72)',
   green: 'rgba(232,245,237,0.72)',
   cream: 'rgba(255,253,248,0.72)',
 };
@@ -3734,7 +3738,7 @@ function _renderDayView(d) {
               </div>
               <div style="display:flex;gap:5px;flex-shrink:0">
                 <button onclick="toggleSchedule(${i})" style="width:26px;height:26px;border-radius:8px;border:2px solid ${s.done?'var(--green-accent)':'var(--ink-4)'};background:${s.done?'var(--green-accent)':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer">${s.done?'<span style="color:white;font-size:11px;font-weight:700">✓</span>':''}</button>
-                <button onclick="openEditSched(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:13px;cursor:pointer">✏️</button>
+                <button onclick="openEditSched(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.55);font-size:13px;cursor:pointer">✏️</button>
                 <button onclick="deleteSchedItem(${i})" style="width:26px;height:26px;border-radius:8px;border:1px solid rgba(224,120,152,0.22);background:rgba(252,232,238,0.55);font-size:14px;cursor:pointer;color:var(--pink-deep)">×</button>
               </div>
             </div>
@@ -3996,7 +4000,7 @@ function drawFurniture(f) {
   } else if (f.type === 'chair') {
     const assignedGuest = WED.guests.find(g => g._chairId === f.id);
     cx.beginPath(); cx.roundRect(x,y,w,h,5);
-    cx.fillStyle = assignedGuest ? 'rgba(90,171,122,0.35)' : (selected ? 'rgba(201,169,110,0.28)' : 'rgba(245,230,200,0.75)');
+    cx.fillStyle = assignedGuest ? 'rgba(90,171,122,0.35)' : (selected ? 'rgba(201,169,110,0.28)' : 'rgba(242,232,213,0.75)');
     cx.fill();
     cx.strokeStyle = assignedGuest ? '#3a7a54' : (selected ? 'rgba(201,169,110,0.9)' : 'rgba(201,169,110,0.5)');
     cx.lineWidth = assignedGuest||selected ? 2 : 1; cx.stroke();
@@ -4023,7 +4027,7 @@ function drawFurniture(f) {
   } else if (f.type === 'freechair') {
     const assignedGuest = WED.guests.find(g => g._chairId === f.id);
     cx.beginPath(); cx.roundRect(x,y,w,h,6);
-    cx.fillStyle = assignedGuest ? 'rgba(90,171,122,0.3)' : (selected ? 'rgba(201,169,110,0.4)' : 'rgba(245,230,200,0.95)');
+    cx.fillStyle = assignedGuest ? 'rgba(90,171,122,0.3)' : (selected ? 'rgba(201,169,110,0.4)' : 'rgba(242,232,213,0.95)');
     cx.fill();
     cx.strokeStyle = assignedGuest ? '#3a7a54' : (selected ? '#c9a96e' : 'rgba(201,169,110,0.85)');
     cx.lineWidth = selected||assignedGuest ? 2.5 : 1.5; cx.stroke();
@@ -4056,7 +4060,7 @@ function drawFurniture(f) {
     if (selected) { cx.fillStyle='rgba(90,171,122,0.9)'; cx.font='bold 11px serif'; cx.textAlign='center'; cx.fillText('⟳',x+w/2,y-5); }
   } else {
     cx.beginPath(); cx.roundRect(x,y,w,h,8);
-    cx.fillStyle = selected ? 'rgba(245,230,200,0.7)' : 'rgba(255,253,248,0.88)';
+    cx.fillStyle = selected ? 'rgba(242,232,213,0.7)' : 'rgba(255,253,248,0.88)';
     cx.fill();
     cx.strokeStyle = selected ? 'rgba(201,169,110,0.8)' : 'rgba(201,169,110,0.5)';
     cx.lineWidth = selected ? 2 : 1.5; cx.stroke();
@@ -4471,13 +4475,13 @@ function openAddTableModal(type) {
 
       <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:8px">
         <button onclick="changeTableSeats(-1,${maxSeats})"
-          style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(201,169,110,0.4);background:rgba(245,230,200,0.65);font-size:22px;font-weight:700;color:var(--tan-dark);cursor:pointer;line-height:1;font-family:var(--f)">−</button>
+          style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(201,169,110,0.4);background:rgba(242,232,213,0.65);font-size:22px;font-weight:700;color:var(--tan-dark);cursor:pointer;line-height:1;font-family:var(--f)">−</button>
         <div style="text-align:center;min-width:64px">
           <div id="table-seats-display" style="font-size:42px;font-weight:800;font-family:var(--f);font-style:normal;color:var(--ink);line-height:1;letter-spacing:-1px">${_tableSeatsCount[type]}</div>
           <div style="font-size:11px;color:var(--ink-4);margin-top:2px">seats</div>
         </div>
         <button onclick="changeTableSeats(+1,${maxSeats})"
-          style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(201,169,110,0.4);background:rgba(245,230,200,0.65);font-size:22px;font-weight:700;color:var(--tan-dark);cursor:pointer;line-height:1;font-family:var(--f)">+</button>
+          style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(201,169,110,0.4);background:rgba(242,232,213,0.65);font-size:22px;font-weight:700;color:var(--tan-dark);cursor:pointer;line-height:1;font-family:var(--f)">+</button>
       </div>
       <div style="text-align:center;font-size:10.5px;color:var(--ink-4);margin-bottom:20px">min 2 · max ${maxSeats}</div>
 
@@ -4680,7 +4684,7 @@ function _renderChairRow(c) {
       <button onclick="assignChairGuest('${c.id}',null)" style="padding:2px 8px;border-radius:5px;border:none;background:rgba(224,120,152,0.12);font-size:10.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;flex-shrink:0">✕</button>
     </div>`;
   }
-  return `<div onclick="openChairGuestPicker('${c.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:rgba(245,230,200,0.35);border:1.5px dashed rgba(201,169,110,0.22);cursor:pointer">
+  return `<div onclick="openChairGuestPicker('${c.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:rgba(242,232,213,0.35);border:1.5px dashed rgba(201,169,110,0.22);cursor:pointer">
     <span style="font-size:10.5px;color:var(--ink-4);min-width:22px;flex-shrink:0;font-weight:700">${seat}</span>
     <span style="font-size:12px;color:var(--ink-4);flex:1;font-style:italic">Empty</span>
     <span style="font-size:10px;color:var(--tan-dark);font-weight:700;flex-shrink:0">+ Assign</span>
@@ -4731,7 +4735,7 @@ function renderSeatAssignments() {
     hasContent = true;
     html += `
       <div style="margin-bottom:7px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.14)">
-        <div onclick="toggleSeatTable('${table.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(245,230,200,0.55);cursor:pointer;user-select:none">
+        <div onclick="toggleSeatTable('${table.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(242,232,213,0.55);cursor:pointer;user-select:none">
           <div style="display:flex;align-items:center;gap:7px">
             <span style="font-size:11px;color:var(--ink-3)">${arrow}</span>
             <span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">${table.label}</span>
@@ -4753,7 +4757,7 @@ function renderSeatAssignments() {
       const arrow         = isCollapsed ? '▸' : '▾';
       html += `
         <div style="margin-bottom:7px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(184,145,106,0.12)">
-          <div onclick="toggleSeatTable('__free__')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(245,230,200,0.45);cursor:pointer;user-select:none">
+          <div onclick="toggleSeatTable('__free__')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(242,232,213,0.45);cursor:pointer;user-select:none">
             <div style="display:flex;align-items:center;gap:7px">
               <span style="font-size:11px;color:var(--ink-3)">${arrow}</span>
               <span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">Individual Chairs</span>
@@ -4823,14 +4827,14 @@ function renderCanvasActions() {
     html += `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:6px">
       <span style="font-size:11px;font-weight:700;color:var(--ink-4)">Resize:</span>
       <div style="display:flex;align-items:center;gap:4px">
-        <button onclick="resizeLongTable(-12,0)" style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.65);color:var(--tan-dark)">−W</button>
+        <button onclick="resizeLongTable(-12,0)" style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(242,232,213,0.65);color:var(--tan-dark)">−W</button>
         <span style="font-size:11px;color:var(--ink-3);min-width:34px;text-align:center;font-weight:700">${sel.w}px</span>
-        <button onclick="resizeLongTable(12,0)"  style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.65);color:var(--tan-dark)">+W</button>
+        <button onclick="resizeLongTable(12,0)"  style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(242,232,213,0.65);color:var(--tan-dark)">+W</button>
       </div>
       <div style="display:flex;align-items:center;gap:4px">
-        <button onclick="resizeLongTable(0,-8)"  style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.65);color:var(--tan-dark)">−H</button>
+        <button onclick="resizeLongTable(0,-8)"  style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(242,232,213,0.65);color:var(--tan-dark)">−H</button>
         <span style="font-size:11px;color:var(--ink-3);min-width:34px;text-align:center;font-weight:700">${sel.h}px</span>
-        <button onclick="resizeLongTable(0,8)"   style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(245,230,200,0.65);color:var(--tan-dark)">+H</button>
+        <button onclick="resizeLongTable(0,8)"   style="${btnBase};padding:4px 10px;border:1px solid rgba(201,169,110,0.3);background:rgba(242,232,213,0.65);color:var(--tan-dark)">+H</button>
       </div>
     </div>`;
   }
@@ -5145,7 +5149,7 @@ function renderEntourage() {
         <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${total} member${total!==1?'s':''}</div>
       </div>
       <div style="display:flex;gap:6px">
-        <button onclick="exportEntourage()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
+        <button onclick="exportEntourage()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
         <button onclick="openEntourageMemberModal()" class="icon-btn">+ Add</button>
       </div>
     </div>
@@ -5223,7 +5227,7 @@ function _buildEntouragePickerUI(searchVal) {
   const roleOpts = ENTOURAGE_ROLES.map(r => `<option value="${r.role}" ${r.role===_entouragePresetRole?'selected':''}>${r.emoji} ${r.role}</option>`).join('');
 
   const roleSection = _entouragePickedGuest ? `
-    <div style="margin-top:10px;padding:12px;border-radius:var(--r-md);background:rgba(245,230,200,0.42);border:1px solid rgba(201,169,110,0.2)">
+    <div style="margin-top:10px;padding:12px;border-radius:var(--r-md);background:rgba(242,232,213,0.42);border:1px solid rgba(201,169,110,0.2)">
       <div style="font-size:11.5px;font-weight:700;color:var(--ink-3);margin-bottom:8px">Role for <em>${_entouragePickedGuest.name}</em>:</div>
       <select id="entourage-member-role" class="glass-input" style="margin-bottom:8px">${roleOpts}</select>
       <input type="text" id="entourage-member-note" class="glass-input" placeholder="Note — e.g. travelling from Cebu…" style="margin-bottom:10px">
@@ -5361,12 +5365,12 @@ function renderNotes() {
     const isCustom = s.key.startsWith('custom_');
     el.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <button onclick="_closeNoteSection()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
+        <button onclick="_closeNoteSection()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.55);font-size:12px;font-weight:700;color:var(--tan-dark);cursor:pointer">← Back</button>
         <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0">
           <span style="font-size:20px">${s.emoji}</span>
           <span style="font-size:15px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.label}</span>
         </div>
-        <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;flex-shrink:0">🖨 Print</button>
+        <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer;flex-shrink:0">🖨 Print</button>
       </div>
       <div class="glass" style="border-radius:var(--r-md);padding:14px;margin-bottom:12px">
         <textarea
@@ -5410,7 +5414,7 @@ function renderNotes() {
         <span class="sec-title" style="margin-bottom:0">Notes &amp; Mood Board</span>
         <div style="font-size:11px;color:var(--ink-4);margin-top:2px">${totalChars ? totalChars.toLocaleString() + ' characters saved' : 'Tap a section to start writing'}</div>
       </div>
-      <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(245,230,200,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
+      <button onclick="exportNotes()" style="padding:7px 12px;border-radius:var(--r-md);border:1px solid rgba(201,169,110,0.28);background:rgba(242,232,213,0.65);font-size:11.5px;font-weight:700;color:var(--tan-dark);cursor:pointer">🖨 Print</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
       ${cards}

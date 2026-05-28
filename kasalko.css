@@ -268,7 +268,7 @@ body {
 .lp-mosaic-stack { display: flex; flex-direction: column; gap: 6px; }
 .lp-mosaic-sm   { flex: 1; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid rgba(184,145,106,0.15); }
 .lp-photo-b { background: linear-gradient(150deg, rgba(178,200,182,0.80) 0%, rgba(106,142,112,0.50) 100%); }
-.lp-photo-c { background: linear-gradient(150deg, rgba(245,230,200,0.90) 0%, rgba(201,169,110,0.55) 100%); }
+.lp-photo-c { background: linear-gradient(150deg, rgba(242,232,213,0.90) 0%, rgba(201,169,110,0.55) 100%); }
 .lp-photo-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 12px 14px; }
 .lp-photo-tag { font-size: 10px; font-weight: 700; color: rgba(44,31,14,0.50); letter-spacing: 0.5px; text-transform: uppercase; }
 
@@ -354,7 +354,7 @@ body {
 
 /* ── FEATURES BAND ─────────────────────────────── */
 .lp-features {
-  background: linear-gradient(160deg, rgba(234,192,186,0.22) 0%, rgba(245,230,200,0.38) 100%);
+  background: linear-gradient(160deg, rgba(234,192,186,0.22) 0%, rgba(242,232,213,0.38) 100%);
   border-top: 1px solid rgba(192,112,104,0.12);
   border-bottom: 1px solid rgba(184,145,106,0.12);
   padding: 56px 28px;
@@ -410,7 +410,7 @@ body {
 .lp-why-h { font-family: var(--f2); font-size: clamp(28px, 6vw, 42px); font-weight: 600; color: var(--ink); line-height: 1.15; letter-spacing: -0.5px; margin: 10px 0 14px; }
 .lp-why-p { font-size: 14px; line-height: 1.75; color: var(--ink-3); margin-bottom: 20px; }
 .lp-why-list { list-style: none; padding: 0; margin: 0 0 28px; display: flex; flex-direction: column; gap: 10px; }
-.lp-why-list li { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 8px 14px; border-radius: var(--r-md); background: rgba(245,230,200,0.55); border-left: 3px solid var(--gold); }
+.lp-why-list li { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 8px 14px; border-radius: var(--r-md); background: rgba(242,232,213,0.55); border-left: 3px solid var(--gold); }
 .lp-btn-dark {
   padding: 14px 36px;
   background: var(--ink);
@@ -682,7 +682,7 @@ body {
   padding: 6px 10px;
   border-radius: var(--r-md);
   border: 1px solid rgba(201,169,110,0.28);
-  background: rgba(245,230,200,0.55);
+  background: rgba(242,232,213,0.55);
   cursor: pointer;
   font-family: var(--f);
   font-size: 11.5px;
@@ -1633,15 +1633,48 @@ textarea.glass-input {
     z-index: 90;
   }
   #rp-resize-handle {
-    width: 5px;
+    width: 10px;
     flex-shrink: 0;
     cursor: ew-resize;
-    background: transparent;
-    transition: background 0.15s;
+    background: rgba(184,145,106,0.07);
+    border-left: 1px solid rgba(184,145,106,0.18);
+    transition: background 0.15s, border-color 0.15s;
     align-self: stretch;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #rp-resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 28px;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(184,145,106,0.45) 0px,
+      rgba(184,145,106,0.45) 2.5px,
+      transparent 2.5px,
+      transparent 6px
+    );
+    border-radius: 2px;
+    pointer-events: none;
   }
   #rp-resize-handle:hover, #rp-resize-handle.dragging {
-    background: rgba(184,145,106,0.3);
+    background: rgba(184,145,106,0.18);
+    border-color: rgba(184,145,106,0.4);
+  }
+  #rp-resize-handle:hover::after, #rp-resize-handle.dragging::after {
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(184,145,106,0.75) 0px,
+      rgba(184,145,106,0.75) 2.5px,
+      transparent 2.5px,
+      transparent 6px
+    );
   }
   .rp-scroll-body {
     flex: 1;
@@ -1681,7 +1714,7 @@ textarea.glass-input {
 .sched-view-switcher {
   display: flex;
   gap: 3px;
-  background: rgba(245,230,200,0.55);
+  background: rgba(242,232,213,0.55);
   border: 1px solid rgba(201,169,110,0.22);
   border-radius: var(--r-md);
   padding: 3px;
@@ -1706,7 +1739,7 @@ textarea.glass-input {
 .sched-add-btn {
   padding: 8px 14px;
   border-radius: var(--r-md);
-  background: rgba(245,230,200,0.65);
+  background: rgba(242,232,213,0.65);
   border: 1px solid rgba(201,169,110,0.28);
   font-size: 12px;
   font-weight: 700;
@@ -1729,7 +1762,7 @@ textarea.glass-input {
   height: 34px;
   border-radius: 50%;
   border: 1px solid rgba(184,145,106,0.25);
-  background: rgba(245,230,200,0.55);
+  background: rgba(242,232,213,0.55);
   font-size: 18px;
   color: var(--ink-2);
   cursor: pointer;
@@ -1740,7 +1773,7 @@ textarea.glass-input {
   line-height: 1;
   transition: background 0.15s;
 }
-.cal-nav-btn:hover { background: rgba(245,230,200,0.9); }
+.cal-nav-btn:hover { background: rgba(242,232,213,0.9); }
 .cal-nav-title {
   font-family: var(--f2);
   font-size: 16px;
@@ -1781,7 +1814,7 @@ textarea.glass-input {
   transition: background 0.15s;
   position: relative;
 }
-.cal-month-cell:hover { background: rgba(245,230,200,0.65); }
+.cal-month-cell:hover { background: rgba(242,232,213,0.65); }
 .cal-month-empty {
   background: transparent !important;
   border-color: transparent !important;
@@ -1789,7 +1822,7 @@ textarea.glass-input {
   pointer-events: none;
 }
 .cal-today {
-  background: rgba(245,230,200,0.85) !important;
+  background: rgba(242,232,213,0.85) !important;
   border-color: rgba(184,145,106,0.30) !important;
 }
 .cal-wed-day {
@@ -1854,7 +1887,7 @@ textarea.glass-input {
   background: rgba(255,252,247,0.65);
 }
 .cal-week-today {
-  background: rgba(245,230,200,0.75) !important;
+  background: rgba(242,232,213,0.75) !important;
   border-color: rgba(184,145,106,0.28) !important;
 }
 .cal-week-wedday {
@@ -1864,12 +1897,12 @@ textarea.glass-input {
 .cal-week-header {
   text-align: center;
   padding: 8px 4px;
-  background: rgba(245,230,200,0.45);
+  background: rgba(242,232,213,0.45);
   border-bottom: 1px solid rgba(184,145,106,0.12);
   cursor: pointer;
   transition: background 0.15s;
 }
-.cal-week-header:hover { background: rgba(245,230,200,0.75); }
+.cal-week-header:hover { background: rgba(242,232,213,0.75); }
 .cal-week-dow {
   font-size: 9px;
   font-weight: 700;
@@ -1899,7 +1932,7 @@ textarea.glass-input {
   cursor: pointer;
   transition: background 0.12s;
 }
-.cal-week-event:hover { background: rgba(245,230,200,0.7); }
+.cal-week-event:hover { background: rgba(242,232,213,0.7); }
 .cal-week-event-time {
   font-size: 9px;
   color: var(--ink-4);
@@ -2050,7 +2083,7 @@ textarea.glass-input {
   cursor: pointer;
   position: relative;
   border: 1px solid rgba(184,145,106,0.15);
-  background: rgba(245,230,200,0.3);
+  background: rgba(242,232,213,0.3);
 }
 .gallery-thumb img {
   width: 100%; height: 100%;
@@ -2092,7 +2125,7 @@ textarea.glass-input {
   color: var(--ink-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: rgba(245,230,200,0.45);
+  background: rgba(242,232,213,0.45);
   border-bottom: 1px solid rgba(184,145,106,0.18);
 }
 
