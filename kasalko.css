@@ -1983,6 +1983,25 @@ textarea.glass-input {
   border-right: 1px solid rgba(184,145,106,0.14);
 }
 .ev-stat:last-child { border-right: none; }
+
+/* Mobile: countdown spans full width on top, 3 stats below */
+@media (max-width: 479px) {
+  .ev-stat-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ev-stat:first-child {
+    grid-column: 1 / -1;
+    border-right: none;
+    border-bottom: 1px solid rgba(184,145,106,0.14);
+    padding: 12px 8px 10px;
+  }
+  .ev-stat:first-child .ev-stat-val {
+    font-size: 26px;
+  }
+  .ev-stat:first-child .ev-stat-lbl {
+    font-size: 9px;
+  }
+}
 .ev-stat-val {
   font-family: var(--f);
   font-size: 20px;
