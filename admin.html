@@ -423,6 +423,7 @@ function esc(str) {
 ══════════════════════════════════════════════════ */
 let _suppFilter = 'all';
 let _suppCache  = [];
+let _leadsCache = [];
 
 async function loadSuppliers() {
   const el = document.getElementById('p-suppliers');
@@ -464,6 +465,7 @@ function renderSuppliers() {
           `<button class="filt-btn ${_suppFilter===f?'on':''}" onclick="_suppFilter='${f}';renderSuppliers()">${f}</button>`
         ).join('')}
         <button class="filt-btn" onclick="loadSuppliers()" title="Refresh">↺</button>
+        ${_suppCache.length > 0 ? `<button class="filt-btn" onclick="clearAllSuppliers()" style="color:var(--rose);border-color:rgba(192,112,104,0.35)" title="Delete ALL suppliers">🗑 Clear All</button>` : ''}
       </div>
     </div>
     ${list.length === 0
@@ -516,6 +518,9 @@ function renderSupplierCard(s) {
         ${s.ig         ? `<a href="${esc(s.ig)}" target="_blank" style="color:#c13584;text-decoration:none;font-size:11px;font-weight:700">IG ↗</a>` : ''}
         ${s.website    ? `<a href="${esc(s.website)}" target="_blank" style="color:#1a73e8;text-decoration:none;font-size:11px;font-weight:700">🌐 Site ↗</a>` : ''}
       </div>
+      <div style="margin-top:8px;text-align:right">
+        <button class="act-btn act-danger" onclick="deleteSupplier('${s._docId}','${esc((s.businessName||'this supplier').replace(/'/g,"\\'"))}')" style="font-size:11px;padding:4px 10px;opacity:0.7">🗑 Delete</button>
+      </div>
     </div>`;
 }
 
@@ -555,6 +560,32 @@ async function toggleHidden(docId, isHidden) {
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 
+async function deleteSupplier(docId, name) {
+  if (!confirm(`Delete "${name}" permanently?\n\nThis removes the supplier from the marketplace and cannot be undone.`)) return;
+  try {
+    await DB.collection('kasalko_marketplace').doc(docId).delete();
+    _suppCache = _suppCache.filter(s => s._docId !== docId);
+    renderSuppliers();
+    toast('🗑 Supplier deleted');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function clearAllSuppliers() {
+  const count = _suppCache.length;
+  if (!count) { toast('No suppliers to clear'); return; }
+  if (!confirm(`Delete ALL ${count} supplier${count!==1?'s':''}?\n\nEvery supplier will be permanently removed from the marketplace. This cannot be undone.`)) return;
+  try {
+    for (let i = 0; i < _suppCache.length; i += 490) {
+      const batch = DB.batch();
+      _suppCache.slice(i, i + 490).forEach(s => batch.delete(DB.collection('kasalko_marketplace').doc(s._docId)));
+      await batch.commit();
+    }
+    _suppCache = [];
+    renderSuppliers();
+    toast(`🗑 ${count} supplier${count!==1?'s':''} deleted`);
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
 /* ══════════════════════════════════════════════════
    📋  VENDOR LEADS TAB
 ══════════════════════════════════════════════════ */
@@ -565,7 +596,8 @@ async function loadLeads() {
     let snap;
     try   { snap = await DB.collection('kasalko_vendor_leads').orderBy('addedAt','desc').get(); }
     catch { snap = await DB.collection('kasalko_vendor_leads').get(); }
-    const leads = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    _leadsCache = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+    const leads = _leadsCache;
 
     _updateTabBadge('leads', leads.length);
     if (leads.length === 0) {
@@ -580,7 +612,10 @@ async function loadLeads() {
     el.innerHTML = `
       <div class="tab-bar">
         <div class="tab-stats">${leads.length} lead${leads.length!==1?'s':''}</div>
-        <button class="filt-btn" onclick="loadLeads()" title="Refresh">↺ Refresh</button>
+        <div style="display:flex;gap:6px">
+          <button class="filt-btn" onclick="loadLeads()" title="Refresh">↺ Refresh</button>
+          <button class="filt-btn" onclick="clearAllLeads()" style="color:var(--rose);border-color:rgba(192,112,104,0.35)">🗑 Clear All</button>
+        </div>
       </div>
       <div class="leads-table-wrap">
         <table class="leads-table">
@@ -624,10 +659,27 @@ async function loadLeads() {
 }
 
 async function deleteLead(docId) {
-  if (!confirm('Mark as processed and remove from list?')) return;
+  if (!confirm('Delete this lead permanently?\n\nIt will be removed from the list. This cannot be undone.')) return;
   try {
     await DB.collection('kasalko_vendor_leads').doc(docId).delete();
-    toast('✓ Lead removed');
+    _leadsCache = _leadsCache.filter(l => l._docId !== docId);
+    toast('🗑 Lead removed');
+    loadLeads();
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function clearAllLeads() {
+  const count = _leadsCache.length;
+  if (!count) { toast('No leads to clear'); return; }
+  if (!confirm(`Delete ALL ${count} lead${count!==1?'s':''}?\n\nEvery vendor lead will be permanently removed. This cannot be undone.`)) return;
+  try {
+    for (let i = 0; i < _leadsCache.length; i += 490) {
+      const batch = DB.batch();
+      _leadsCache.slice(i, i + 490).forEach(l => batch.delete(DB.collection('kasalko_vendor_leads').doc(l._docId)));
+      await batch.commit();
+    }
+    _leadsCache = [];
+    toast(`🗑 ${count} lead${count!==1?'s':''} deleted`);
     loadLeads();
   } catch(e) { toast('⚠️ ' + e.message); }
 }
@@ -987,6 +1039,7 @@ function renderPaymentRequests() {
           `<button class="filt-btn ${_payFilter===f?'on':''}" onclick="_payFilter='${f}';renderPaymentRequests()">${f.replace('_',' ')}</button>`
         ).join('')}
         <button class="filt-btn" onclick="loadPaymentRequests()">↺</button>
+        ${_payCache.length > 0 ? `<button class="filt-btn" onclick="clearAllPaymentRequests()" style="color:var(--rose);border-color:rgba(192,112,104,0.35)">🗑 Clear All</button>` : ''}
       </div>
     </div>
 
@@ -1079,6 +1132,9 @@ function renderPaymentRequestCard(r) {
         ${!isPending ? `<button class="act-btn act-on" onclick="completePaymentRequest('${r._docId}')">✅ Complete</button>` : ''}
         <button class="act-btn act-danger" onclick="cancelPaymentRequest('${r._docId}')">✗ Cancel</button>
       </div>` : ''}
+      <div style="margin-top:8px;text-align:right">
+        <button class="act-btn act-danger" onclick="deletePaymentRequest('${r._docId}')" style="font-size:11px;padding:4px 10px;opacity:0.7">🗑 Delete</button>
+      </div>
     </div>`;
 }
 
@@ -1272,6 +1328,34 @@ async function cancelPaymentRequest(docId) {
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 
+async function deletePaymentRequest(docId) {
+  const r = _payCache.find(r => r._docId === docId);
+  const label = r ? `${r.name || r.email || 'this request'} (${r.type?.replace('_',' ') || ''})` : 'this payment request';
+  if (!confirm(`Delete "${label}" permanently?\n\nThe record will be removed. This cannot be undone.`)) return;
+  try {
+    await DB.collection('kasalko_payment_requests').doc(docId).delete();
+    _payCache = _payCache.filter(r => r._docId !== docId);
+    renderPaymentRequests();
+    toast('🗑 Payment request deleted');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function clearAllPaymentRequests() {
+  const count = _payCache.length;
+  if (!count) { toast('No payment requests to clear'); return; }
+  if (!confirm(`Delete ALL ${count} payment request${count!==1?'s':''}?\n\nEvery request will be permanently removed. This cannot be undone.`)) return;
+  try {
+    for (let i = 0; i < _payCache.length; i += 490) {
+      const batch = DB.batch();
+      _payCache.slice(i, i + 490).forEach(r => batch.delete(DB.collection('kasalko_payment_requests').doc(r._docId)));
+      await batch.commit();
+    }
+    _payCache = [];
+    renderPaymentRequests();
+    toast(`🗑 ${count} payment request${count!==1?'s':''} deleted`);
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
 /* ══════════════════════════════════════════════════
    🛒  SALES TAB
 ══════════════════════════════════════════════════ */
@@ -1402,6 +1486,7 @@ function renderSalesTab() {
             `<button class="filt-btn ${_salesWithdrawFilter===f?'on':''}" onclick="_salesWithdrawFilter='${f}';renderSalesTab()">${f}</button>`
           ).join('')}
           <button class="filt-btn" onclick="loadSales()">↺</button>
+          ${_salesWithdrawCache.length > 0 ? `<button class="filt-btn" onclick="clearAllWithdrawRequests()" style="color:var(--rose);border-color:rgba(192,112,104,0.35)">🗑 Clear All</button>` : ''}
         </div>
       </div>
       ${withdrawList.length === 0
@@ -1476,6 +1561,7 @@ function renderWithdrawCard(w) {
         <button class="act-btn act-danger" onclick="cancelPayout('${w._docId}')" style="font-size:11px;padding:5px 10px">✗ Cancel</button>
       </div>` : '—'}
       ${w.proofImg ? `<div style="margin-top:5px"><img src="${w.proofImg}" style="height:32px;width:auto;object-fit:cover;border-radius:4px;border:1px solid rgba(184,145,106,0.2);cursor:pointer" onclick="window.open(this.src)" title="View receipt"></div>` : ''}
+      <div style="margin-top:5px"><button class="act-btn act-danger" onclick="deleteWithdrawRequest('${w._docId}','${esc(w.sellerEmail||'')}')" style="font-size:10.5px;padding:3px 8px;opacity:0.7">🗑</button></div>
     </td>
   </tr>`;
 }
@@ -1792,6 +1878,35 @@ async function cancelPayout(withdrawId) {
     _updateTabBadge('sales', _salesWithdrawCache.filter(w => w.status === 'pending').length);
     renderSalesTab();
     toast('✗ Payout cancelled — seller can re-request');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function deleteWithdrawRequest(docId, sellerEmail) {
+  const label = sellerEmail || 'this payout request';
+  if (!confirm(`Delete payout request from "${label}" permanently?\n\nThe record will be removed. This cannot be undone.`)) return;
+  try {
+    await DB.collection('kasalko_withdrawal_requests').doc(docId).delete();
+    _salesWithdrawCache = _salesWithdrawCache.filter(w => w._docId !== docId);
+    _updateTabBadge('sales', _salesWithdrawCache.filter(w => w.status === 'pending').length);
+    renderSalesTab();
+    toast('🗑 Payout request deleted');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function clearAllWithdrawRequests() {
+  const count = _salesWithdrawCache.length;
+  if (!count) { toast('No payout requests to clear'); return; }
+  if (!confirm(`Delete ALL ${count} payout request${count!==1?'s':''}?\n\nEvery withdrawal record will be permanently removed. This cannot be undone.`)) return;
+  try {
+    for (let i = 0; i < _salesWithdrawCache.length; i += 490) {
+      const batch = DB.batch();
+      _salesWithdrawCache.slice(i, i + 490).forEach(w => batch.delete(DB.collection('kasalko_withdrawal_requests').doc(w._docId)));
+      await batch.commit();
+    }
+    _salesWithdrawCache = [];
+    _updateTabBadge('sales', 0);
+    renderSalesTab();
+    toast(`🗑 ${count} payout request${count!==1?'s':''} deleted`);
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 </script>
