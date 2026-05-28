@@ -682,6 +682,7 @@ function renderTemplates() {
           `<button class="filt-btn ${_tplFilter===f?'on':''}" onclick="_tplFilter='${f}';renderTemplates()">${f}</button>`
         ).join('')}
         <button class="filt-btn" onclick="loadTemplates()" title="Refresh">↺</button>
+        ${_tplCache.length > 0 ? `<button class="filt-btn" onclick="clearAllTemplates()" style="color:var(--rose);border-color:rgba(192,112,104,0.35)" title="Delete ALL templates">🗑 Clear All</button>` : ''}
       </div>
     </div>
     ${_tplFilter === 'expired' && list.length > 0 ? `
@@ -785,6 +786,9 @@ function renderTemplateCard(t) {
           <a href="${renewEmailHref}" target="_blank" rel="noopener" class="act-btn" style="text-decoration:none">📧 Send Renewal Email</a>
         </div>
       </div>` : ''}
+      <div style="margin-top:8px;text-align:right">
+        <button class="act-btn act-danger" onclick="deleteTemplate('${t._docId}')" style="font-size:11px;padding:4px 10px;opacity:0.7" title="Permanently delete this template">🗑 Delete</button>
+      </div>
     </div>`;
 }
 
@@ -815,6 +819,34 @@ async function rejectTemplate(docId, isActive) {
     if (t) { t.status = 'rejected'; t.adminNote = reason || 'Does not meet quality requirements.'; t.hasPendingPayment = false; }
     renderTemplates();
     toast(isActive ? '❌ Template suspended' : '❌ Template rejected');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function deleteTemplate(docId) {
+  if (!confirm('Permanently delete this template? This cannot be undone.')) return;
+  try {
+    await DB.collection('kasalko_templates').doc(docId).delete();
+    _tplCache = _tplCache.filter(t => t._docId !== docId);
+    renderTemplates();
+    toast('🗑 Template deleted');
+  } catch(e) { toast('⚠️ ' + e.message); }
+}
+
+async function clearAllTemplates() {
+  const count = _tplCache.length;
+  if (!count) { toast('No templates to clear'); return; }
+  if (!confirm(`Permanently delete ALL ${count} template${count!==1?'s':''}? This cannot be undone.`)) return;
+  try {
+    // Firestore batch limit is 500; chunk if needed
+    const ids = _tplCache.map(t => t._docId);
+    for (let i = 0; i < ids.length; i += 490) {
+      const batch = DB.batch();
+      ids.slice(i, i + 490).forEach(id => batch.delete(DB.collection('kasalko_templates').doc(id)));
+      await batch.commit();
+    }
+    _tplCache = [];
+    renderTemplates();
+    toast(`🗑 ${count} template${count!==1?'s':''} deleted — ready for simulation`);
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 
