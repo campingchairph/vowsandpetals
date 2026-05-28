@@ -319,7 +319,7 @@ function _buildInviteBuilderHTML() {
     <div style="padding:16px;border-radius:18px;margin-bottom:12px" class="glass">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <span class="sec-title" style="margin-bottom:0">💌 Invitation Builder</span>
-        <button onclick="downloadInviteTemplate()" style="padding:5px 10px;border-radius:8px;background:rgba(245,230,200,0.65);border:1px solid rgba(201,169,110,0.28);font-size:11px;font-weight:700;color:var(--tan-dark);cursor:pointer">⬇ Template</button>
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:7px;background:rgba(220,215,210,0.45);border:1px solid rgba(180,170,160,0.3);font-size:10.5px;font-weight:700;color:var(--ink-4)">🔒 Coming Soon</span>
       </div>
 
       <!-- Theme picker -->
@@ -356,7 +356,7 @@ function _buildInviteBuilderHTML() {
         // ── PAGE 1 CONTENT ──
         const page1 = `
           ${(WED.customCardImage || WED._invitationImg)
-            ? `<img id="inv-page1-img" src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
+            ? `<img id="inv-page1-img" src="${WED.customCardImage || WED._invitationImg}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px;cursor:zoom-in" onclick="openPhotoZoom(this.src)">`
             : `<img id="inv-page1-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
                <div id="inv-page1-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(224,120,152,0.4);background:rgba(252,232,238,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard1()">
                  <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">💌</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate invitation card</div></div>
@@ -369,23 +369,18 @@ function _buildInviteBuilderHTML() {
                    oninput="saveWedHashtag(this.value)"
                    class="glass-input" style="flex:1;font-size:13px;padding:7px 10px">
           </div>
-          <button onclick="toggleInvUploadSpec()" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(252,232,238,0.65);border:1px solid rgba(224,120,152,0.25);font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center">
-            📎 ${WED.customCardImage ? 'Replace Custom Design' : 'Upload Custom Design'}
-          </button>
-          <div id="inv-upload-spec" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(255,248,238,0.9);border:1px solid rgba(201,169,110,0.3);font-size:11.5px;color:var(--ink-3)">
-            <div style="font-weight:700;color:var(--tan-dark);margin-bottom:6px">📐 Canvas Specifications</div>
-            <div style="line-height:1.7">Canvas size: <b>380 × 520 px</b><br>QR code zone: horizontally centered at <b>y = 408 px</b><br>QR size: <b>96 × 96 px</b> (+ 8px white padding around)</div>
-            <div style="margin-top:6px;color:var(--pink-deep);font-weight:600">⚠ Keep that area clear in your design — the QR is overlaid automatically when sharing to a guest.</div>
-            <label style="display:block;margin-top:10px;padding:8px;border-radius:8px;background:var(--pink-deep);color:white;font-size:12px;font-weight:700;cursor:pointer;text-align:center">
-              Choose File <input type="file" accept="image/*" style="display:none" onchange="uploadCustomCard(event)">
-            </label>
-            ${WED.customCardImage ? `<button onclick="clearCustomCard()" style="display:block;width:100%;margin-top:6px;padding:7px;border-radius:8px;background:transparent;border:1px solid rgba(224,120,152,0.4);color:var(--pink-deep);font-size:11.5px;cursor:pointer">✕ Remove Custom Design</button>` : ''}
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(220,215,210,0.3);border:1px dashed rgba(180,170,160,0.4)">
+            <span style="font-size:18px">🔒</span>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--ink-3)">Custom Designs</div>
+              <div style="font-size:11px;color:var(--ink-4);line-height:1.4">Upload your own card design — coming soon</div>
+            </div>
           </div>`;
 
         // ── PAGE 2 CONTENT ──
         const page2 = `
           ${WED._invitationImg2
-            ? `<img id="inv-page2-img" src="${WED._invitationImg2}" class="inv-card-img" style="border-radius:12px;margin-bottom:12px">`
+            ? `<img id="inv-page2-img" src="${WED._invitationImg2}" class="inv-card-img" style="border-radius:12px;margin-bottom:12px;cursor:zoom-in" onclick="openPhotoZoom(this.src)">`
             : `<img id="inv-page2-img" style="display:none;border-radius:12px;margin-bottom:12px" class="inv-card-img">
                <div id="inv-page2-placeholder" style="display:flex;align-items:center;justify-content:center;height:96px;border-radius:12px;border:1.5px dashed rgba(106,142,112,0.4);background:rgba(232,245,237,0.3);margin-bottom:12px">
                  <div style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:11px;color:var(--ink-3)">Fill in the details below to generate</div></div>
@@ -430,7 +425,7 @@ function _buildInviteBuilderHTML() {
         // ── PAGE 3 CONTENT ──
         const page3 = `
           ${WED._invitationImg3
-            ? `<img id="inv-page3-img" src="${WED._invitationImg3}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px">`
+            ? `<img id="inv-page3-img" src="${WED._invitationImg3}" class="inv-card-img" style="border-radius:12px;margin-bottom:10px;cursor:zoom-in" onclick="openPhotoZoom(this.src)">`
             : `<img id="inv-page3-img" style="display:none;border-radius:12px;margin-bottom:10px" class="inv-card-img">
                <div id="inv-page3-placeholder" style="display:flex;align-items:center;justify-content:center;height:140px;border-radius:12px;border:1.5px dashed rgba(124,77,168,0.35);background:rgba(245,238,255,0.3);margin-bottom:10px;cursor:pointer" onclick="refreshCard3()">
                  <div style="text-align:center"><div style="font-size:28px;margin-bottom:4px">🗓</div><div style="font-size:11.5px;color:var(--ink-3)">Tap to generate program card</div><div style="font-size:10.5px;color:var(--ink-4);margin-top:3px">Add events in the Schedule tab first</div></div>
@@ -629,21 +624,55 @@ function renderRightPanel() {
   if (!panel) return;
   const tab = _activeRightTab || 'invite';
   panel.innerHTML = `
-    <div style="display:flex;border-bottom:1px solid rgba(184,145,106,0.15);position:sticky;top:0;z-index:2;background:rgba(250,246,238,0.98);flex-shrink:0">
-      <button onclick="setRightTab('invite')" style="flex:1;padding:11px 8px;border:none;background:${tab==='invite'?'rgba(252,232,238,0.9)':'transparent'};font-size:12.5px;font-weight:${tab==='invite'?'700':'600'};color:${tab==='invite'?'var(--pink-deep)':'var(--ink-3)'};cursor:pointer;border-bottom:2.5px solid ${tab==='invite'?'var(--pink-deep)':'transparent'};transition:all 0.15s;font-family:var(--f)">💌 Invite</button>
-      <button onclick="setRightTab('notes')" style="flex:1;padding:11px 8px;border:none;background:${tab==='notes'?'rgba(232,245,237,0.9)':'transparent'};font-size:12.5px;font-weight:${tab==='notes'?'700':'600'};color:${tab==='notes'?'var(--green-deep)':'var(--ink-3)'};cursor:pointer;border-bottom:2.5px solid ${tab==='notes'?'var(--green-deep)':'transparent'};transition:all 0.15s;font-family:var(--f)">📝 Notes</button>
+    <div id="rp-resize-handle"></div>
+    <div class="rp-scroll-body">
+      <div style="display:flex;border-bottom:1px solid rgba(184,145,106,0.15);position:sticky;top:0;z-index:2;background:rgba(250,246,238,0.98);flex-shrink:0">
+        <button onclick="setRightTab('invite')" style="flex:1;padding:11px 8px;border:none;background:${tab==='invite'?'rgba(252,232,238,0.9)':'transparent'};font-size:12.5px;font-weight:${tab==='invite'?'700':'600'};color:${tab==='invite'?'var(--pink-deep)':'var(--ink-3)'};cursor:pointer;border-bottom:2.5px solid ${tab==='invite'?'var(--pink-deep)':'transparent'};transition:all 0.15s;font-family:var(--f)">💌 Invite</button>
+        <button onclick="setRightTab('notes')" style="flex:1;padding:11px 8px;border:none;background:${tab==='notes'?'rgba(232,245,237,0.9)':'transparent'};font-size:12.5px;font-weight:${tab==='notes'?'700':'600'};color:${tab==='notes'?'var(--green-deep)':'var(--ink-3)'};cursor:pointer;border-bottom:2.5px solid ${tab==='notes'?'var(--green-deep)':'transparent'};transition:all 0.15s;font-family:var(--f)">📝 Notes</button>
+      </div>
+      <div id="rp-invite-content" style="padding:12px;${tab==='invite'?'display:block':'display:none'}">
+        ${tab === 'invite' ? _buildInviteBuilderHTML() : ''}
+      </div>
+      <div id="rp-notes-content" style="padding:12px;${tab==='notes'?'display:block':'display:none'}"></div>
     </div>
-    <div id="rp-invite-content" style="padding:12px;${tab==='invite'?'display:block':'display:none'}">
-      ${tab === 'invite' ? _buildInviteBuilderHTML() : ''}
-    </div>
-    <div id="rp-notes-content" style="padding:12px;${tab==='notes'?'display:block':'display:none'}"></div>
   `;
   if (tab === 'notes') renderNotes();
+  _initRpResizeHandle();
 }
 
 function setRightTab(tab) {
   _activeRightTab = tab;
   renderRightPanel();
+}
+
+function _initRpResizeHandle() {
+  const panel  = document.getElementById('app-right-panel');
+  const handle = document.getElementById('rp-resize-handle');
+  if (!panel || !handle) return;
+  let startX, startW;
+  handle.addEventListener('mousedown', function(e) {
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ew-resize';
+    function onMove(ev) {
+      const dx = startX - ev.clientX;   // drag left = expand width
+      const newW = Math.min(Math.max(startW + dx, 450), 720);
+      panel.style.width = newW + 'px';
+    }
+    function onUp() {
+      localStorage.setItem('vp_right_panel_width', panel.offsetWidth);
+      handle.classList.remove('dragging');
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
 }
 
 function toggleBudgetCatSection() {
@@ -5064,7 +5093,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Start on overview
   wedTab('overview');
   // Initialize right panel on desktop
-  if (window.innerWidth >= 900) renderRightPanel();
+  if (window.innerWidth >= 900) {
+    renderRightPanel();
+    const _savedRpW = localStorage.getItem('vp_right_panel_width');
+    if (_savedRpW) { const _rpEl = document.getElementById('app-right-panel'); if (_rpEl) _rpEl.style.width = parseInt(_savedRpW) + 'px'; }
+  }
   // Landing page is always the home — always show on fresh page load
   // enterApp() is called by the user clicking a CTA on the landing page
 });

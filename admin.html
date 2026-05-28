@@ -146,6 +146,16 @@
     @media (min-width: 640px) {
       .admin-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
     }
+
+    /* ── SALES TABLES ── */
+    .admin-table-wrap { overflow-x: auto; border-radius: var(--r-md); border: 1px solid rgba(184,145,106,0.16); background: #fff; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .admin-table thead th { padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; background: rgba(184,145,106,0.06); border-bottom: 1px solid rgba(184,145,106,0.15); white-space: nowrap; }
+    .admin-table tbody tr { border-bottom: 1px solid rgba(184,145,106,0.09); transition: background 0.1s; }
+    .admin-table tbody tr:last-child { border-bottom: none; }
+    .admin-table tbody tr:hover { background: rgba(184,145,106,0.03); }
+    .admin-table tbody tr.dimmed { opacity: 0.55; }
+    .admin-table td { padding: 10px 12px; vertical-align: middle; }
   </style>
 </head>
 <body>
@@ -1365,7 +1375,12 @@ function renderSalesTab() {
       ${withdrawList.length === 0
         ? `<div class="empty">No payout requests${sq ? ` matching "<b>${esc(sq)}</b>"` : (_salesWithdrawFilter !== 'all' ? ` with status "${_salesWithdrawFilter}"` : '')}.
            <small>Sellers request payouts from their template listing card.</small></div>`
-        : `<div class="admin-list">${withdrawList.map(renderWithdrawCard).join('')}</div>`}
+        : `<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr>
+              <th>Seller</th><th>Template</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th>
+            </tr></thead>
+            <tbody>${withdrawList.map(renderWithdrawCard).join('')}</tbody>
+          </table></div>`}
     </div>
 
     <!-- ── TEMPLATE SALES OVERVIEW ── -->
@@ -1373,7 +1388,12 @@ function renderSalesTab() {
       <div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:10px">📦 Template Sales Overview</div>
       ${templateList.length === 0
         ? `<div class="empty">${sq ? `No templates matching "<b>${esc(sq)}</b>".` : 'No templates with sales yet.'}<small>${sq ? '' : 'Use 🧪 Simulate Sale in the Templates tab to get started.'}</small></div>`
-        : `<div class="admin-list">${templateList.map(renderSalesTemplateCard).join('')}</div>`}
+        : `<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr>
+              <th>Template</th><th>Code</th><th>Seller</th><th>Price</th><th>Sales</th><th>Revenue</th><th></th>
+            </tr></thead>
+            <tbody>${templateList.map(renderSalesTemplateCard).join('')}</tbody>
+          </table></div>`}
     </div>`;
 }
 
@@ -1390,51 +1410,42 @@ function renderWithdrawCard(w) {
   const isBulk         = !!w.isBulk;
 
   const reqDate = w.requestedAt
-    ? new Date(w.requestedAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' })
+    ? new Date(w.requestedAt.seconds * 1000).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' })
     : '—';
 
   const statusColor = isPending ? '#8C6640' : isReleased ? '#3a7a54' : '#c07068';
+  const statusBg    = isPending ? 'rgba(140,102,64,0.08)' : isReleased ? 'rgba(58,122,84,0.08)' : 'rgba(192,112,104,0.08)';
 
-  return `
-    <div class="admin-card${isCancelled ? ' dimmed' : ''}">
-      <div class="admin-card-top" style="align-items:flex-start">
-        <div class="admin-thumb-empty" style="font-size:24px">${isBulk ? '📦' : '💸'}</div>
-        <div class="admin-card-info">
-          <div class="admin-card-name">${esc(w.sellerEmail || '—')}</div>
-          <div class="admin-card-sub">
-            <b style="font-family:monospace">VP-${esc(w.templateCode || '—')}</b>
-            · ${isBulk ? `Bulk request (${purchaseCount} sale${purchaseCount!==1?'s':''})` : 'Single sale'}
-          </div>
-          <!-- earnings breakdown -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;text-align:center;padding:10px 12px;border-radius:var(--r-sm);background:rgba(184,145,106,0.05);border:1px solid rgba(184,145,106,0.12)">
-            <div>
-              <div style="font-size:15px;font-weight:800;color:var(--ink)">₱${grossSaleAmt.toLocaleString()}</div>
-              <div style="font-size:10px;color:var(--ink-4)">Gross Sale</div>
-            </div>
-            <div>
-              <div style="font-size:15px;font-weight:800;color:#3a7a54">₱${sellerAmount.toLocaleString()}</div>
-              <div style="font-size:10px;color:var(--ink-4)">Seller 70%</div>
-            </div>
-            <div>
-              <div style="font-size:15px;font-weight:800;color:var(--rose)">₱${platformFee.toLocaleString()}</div>
-              <div style="font-size:10px;color:var(--ink-4)">Platform 30%</div>
-            </div>
-          </div>
-          <div style="margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:11px;font-weight:700;color:${statusColor};border:1px solid ${statusColor};border-radius:6px;padding:1px 7px">${(w.status||'').toUpperCase()}</span>
-            <span style="font-size:10.5px;color:var(--ink-4)">${reqDate}</span>
-            ${w.proofRef ? `<span style="font-size:10.5px;font-weight:700;color:#3a7a54;font-family:monospace;border:1px solid rgba(90,171,122,0.3);border-radius:6px;padding:1px 7px">📎 Ref: ${esc(w.proofRef)}</span>` : ''}
-          </div>
-          ${w.proofNotes ? `<div style="margin-top:6px;padding:7px 10px;border-radius:var(--r-sm);background:rgba(90,171,122,0.06);border:1px solid rgba(90,171,122,0.15);font-size:11px;color:var(--ink-3);line-height:1.5"><b>📝 Notes:</b> ${esc(w.proofNotes)}</div>` : ''}
-          ${w.proofImg ? `<div style="margin-top:8px"><img src="${w.proofImg}" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:1px solid rgba(184,145,106,0.2);cursor:pointer;display:block" onclick="window.open(this.src)" title="Click to view full receipt"></div>` : ''}
-        </div>
+  return `<tr class="${isCancelled ? 'dimmed' : ''}">
+    <td>
+      <div style="font-size:12.5px;font-weight:700;color:var(--ink)">${isBulk ? '📦' : '💸'} ${esc(w.sellerEmail || '—')}</div>
+      ${w.proofNotes ? `<div style="font-size:10.5px;color:var(--ink-4);margin-top:2px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${esc(w.proofNotes)}</div>` : ''}
+    </td>
+    <td>
+      <span class="badge badge-code">VP-${esc(w.templateCode || '—')}</span>
+      <div style="font-size:10.5px;color:var(--ink-4);margin-top:3px">${isBulk ? `Bulk · ${purchaseCount} sale${purchaseCount!==1?'s':''}` : 'Single sale'}</div>
+    </td>
+    <td>
+      <div style="font-size:13px;font-weight:800;color:var(--ink)">₱${grossSaleAmt.toLocaleString()}</div>
+      <div style="display:flex;gap:6px;margin-top:2px;font-size:10.5px;white-space:nowrap">
+        <span style="color:#3a7a54;font-weight:700">S: ₱${sellerAmount.toLocaleString()}</span>
+        <span style="color:var(--rose)">P: ₱${platformFee.toLocaleString()}</span>
       </div>
+    </td>
+    <td>
+      <span style="display:inline-block;font-size:10.5px;font-weight:700;color:${statusColor};background:${statusBg};border:1px solid ${statusColor}55;border-radius:6px;padding:2px 8px;white-space:nowrap">${(w.status||'').toUpperCase()}</span>
+      ${w.proofRef ? `<div style="font-size:10px;color:#3a7a54;font-family:monospace;margin-top:3px">📎 ${esc(w.proofRef)}</div>` : ''}
+    </td>
+    <td style="font-size:11.5px;color:var(--ink-3);white-space:nowrap">${reqDate}</td>
+    <td>
       ${isPending ? `
-      <div class="action-row" style="margin-top:10px">
-        <button class="act-btn act-on" onclick="openReleaseModal('${w._docId}')">✅ Release ₱${sellerAmount.toLocaleString()}</button>
-        <button class="act-btn act-danger" onclick="cancelPayout('${w._docId}')">✗ Cancel</button>
-      </div>` : ''}
-    </div>`;
+      <div style="display:flex;gap:5px;white-space:nowrap">
+        <button class="act-btn act-on" onclick="openReleaseModal('${w._docId}')" style="font-size:11px;padding:5px 10px">✅ Release</button>
+        <button class="act-btn act-danger" onclick="cancelPayout('${w._docId}')" style="font-size:11px;padding:5px 10px">✗ Cancel</button>
+      </div>` : '—'}
+      ${w.proofImg ? `<div style="margin-top:5px"><img src="${w.proofImg}" style="height:32px;width:auto;object-fit:cover;border-radius:4px;border:1px solid rgba(184,145,106,0.2);cursor:pointer" onclick="window.open(this.src)" title="View receipt"></div>` : ''}
+    </td>
+  </tr>`;
 }
 
 function renderSalesTemplateCard(t) {
@@ -1444,38 +1455,28 @@ function renderSalesTemplateCard(t) {
   const platformEarned = Math.round(sellerEarned / 0.70 * 0.30);
   const grossRevenue   = sellerEarned + platformEarned;
 
-  return `
-    <div class="admin-card">
-      <div style="display:flex;align-items:flex-start;gap:10px">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-            <div class="admin-card-name" style="margin-bottom:0">${esc(t.title || 'Untitled Template')}</div>
-            <span class="badge badge-code">VP-${t._docId.toUpperCase()}</span>
-          </div>
-          <div class="admin-card-sub">${esc(t.sellerName || 'Unknown seller')} · ₱${Number(t.price || 0).toLocaleString()} list price</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;text-align:center">
-            <div style="padding:8px 6px;border-radius:var(--r-sm);background:rgba(184,145,106,0.06);border:1px solid rgba(184,145,106,0.12)">
-              <div style="font-size:18px;font-weight:800;color:var(--ink)">${salesCount}</div>
-              <div style="font-size:10px;color:var(--ink-4)">Sales</div>
-            </div>
-            <div style="padding:8px 6px;border-radius:var(--r-sm);background:rgba(90,171,122,0.07);border:1px solid rgba(90,171,122,0.15)">
-              <div style="font-size:14px;font-weight:800;color:#3a7a54">₱${sellerEarned.toLocaleString()}</div>
-              <div style="font-size:10px;color:var(--ink-4)">Seller (70%)</div>
-            </div>
-            <div style="padding:8px 6px;border-radius:var(--r-sm);background:rgba(192,112,104,0.07);border:1px solid rgba(192,112,104,0.15)">
-              <div style="font-size:14px;font-weight:800;color:var(--rose)">₱${platformEarned.toLocaleString()}</div>
-              <div style="font-size:10px;color:var(--ink-4)">Platform (30%)</div>
-            </div>
-          </div>
-        </div>
+  return `<tr>
+    <td>
+      <div style="font-size:12.5px;font-weight:700;color:var(--ink);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title || 'Untitled Template')}</div>
+    </td>
+    <td><span class="badge badge-code">VP-${t._docId.toUpperCase()}</span></td>
+    <td style="font-size:12px;color:var(--ink-3);white-space:nowrap">${esc(t.sellerName || 'Unknown')}</td>
+    <td style="font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap">₱${Number(t.price || 0).toLocaleString()}</td>
+    <td style="font-size:15px;font-weight:800;color:var(--ink);text-align:center">${salesCount}</td>
+    <td>
+      <div style="font-size:13px;font-weight:800;color:var(--ink)">₱${grossRevenue.toLocaleString()}</div>
+      <div style="display:flex;gap:6px;margin-top:2px;font-size:10.5px;white-space:nowrap">
+        <span style="color:#3a7a54;font-weight:700">S: ₱${sellerEarned.toLocaleString()}</span>
+        <span style="color:var(--rose)">P: ₱${platformEarned.toLocaleString()}</span>
       </div>
-      <div style="margin-top:10px">
-        <button class="act-btn" onclick="_toggleSalePurchases('${t._docId}')" style="font-size:11.5px">
-          ${isExpanded ? '▲ Hide purchases' : `▼ View ${salesCount} purchase${salesCount!==1?'s':''}`}
-        </button>
-      </div>
-      ${isExpanded ? `<div id="sale-purchases-${t._docId}" style="margin-top:10px"><div class="loading" style="padding:20px"><div class="spinner spinner-sm"></div>Loading…</div></div>` : ''}
-    </div>`;
+    </td>
+    <td>
+      <button class="act-btn" onclick="_toggleSalePurchases('${t._docId}')" style="font-size:11px;padding:5px 10px;white-space:nowrap">
+        ${isExpanded ? '▲ Hide' : `▼ ${salesCount} sale${salesCount!==1?'s':''}`}
+      </button>
+    </td>
+  </tr>
+  ${isExpanded ? `<tr><td colspan="7" style="padding:0"><div id="sale-purchases-${t._docId}" style="padding:12px 14px;background:rgba(184,145,106,0.03)"><div class="loading" style="padding:20px;border-radius:var(--r-md)"><div class="spinner spinner-sm"></div>Loading…</div></div></td></tr>` : ''}`;
 }
 
 function _toggleSalePurchases(code) {

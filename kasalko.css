@@ -1515,21 +1515,39 @@ textarea.glass-input {
   /* ── Right panel (Invite Builder + Notes) ── */
   .app-right-panel {
     display: flex;
-    flex-direction: column;
-    width: 320px;
+    flex-direction: row;
+    width: 450px;
     flex-shrink: 0;
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
     border-left: 1px solid rgba(184,145,106,0.15);
     background: rgba(250,246,238,0.98);
     z-index: 90;
+  }
+  #rp-resize-handle {
+    width: 5px;
+    flex-shrink: 0;
+    cursor: ew-resize;
+    background: transparent;
+    transition: background 0.15s;
+    align-self: stretch;
+  }
+  #rp-resize-handle:hover, #rp-resize-handle.dragging {
+    background: rgba(184,145,106,0.3);
+  }
+  .rp-scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    height: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     scrollbar-width: thin;
     scrollbar-color: rgba(184,145,106,0.3) transparent;
   }
-  .app-right-panel::-webkit-scrollbar { width: 4px; }
-  .app-right-panel::-webkit-scrollbar-thumb { background: rgba(184,145,106,0.3); border-radius: 2px; }
+  .rp-scroll-body::-webkit-scrollbar { width: 4px; }
+  .rp-scroll-body::-webkit-scrollbar-thumb { background: rgba(184,145,106,0.3); border-radius: 2px; }
 
   /* Hide Notes tab from left nav — it lives in the right panel */
   #tab-notes { display: none; }
