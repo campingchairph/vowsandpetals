@@ -485,18 +485,26 @@ body {
 .lp-footer a { color: var(--gold); text-decoration: none; }
 .lp-footer a:hover { text-decoration: underline; }
 
-/* ── RESPONSIVE: desktop 2-col ─────────────────── */
+/* ── RESPONSIVE: tablet & desktop ─────────────── */
 @media (min-width: 760px) {
-  .lp-hero { flex-direction: row; align-items: stretch; text-align: left; min-height: calc(100vh - 58px); }
-  .lp-hero-text { flex: 0 0 46%; padding: 72px 48px 72px 52px; align-items: flex-start; }
-  .lp-hero-mosaic { display: grid; flex: 1; grid-template-columns: 1fr 1fr; padding: 12px 12px 12px 0; min-height: unset; }
-  .lp-mosaic-main { border-radius: 22px; }
-  .lp-mosaic-sm   { border-radius: 22px; }
-  .lp-floral { display: none; }
-  .lp-carousel-stage, .lp-carousel-dots { display: none; }
-  .lp-ctas { flex-direction: row; flex-wrap: wrap; width: auto; max-width: none; margin-bottom: 24px; }
-  .lp-sub { font-size: 15px; max-width: 420px; margin-bottom: 36px; line-height: 1.75; }
-  .lp-eyebrow::after { display: none; }
+  /* Hero stays centered — scaled up */
+  .lp-hero-mosaic { display: none; }
+  .lp-hero-text { padding: 64px 48px 48px; max-width: 640px; margin: 0 auto; }
+  .lp-sub { font-size: 15px; max-width: 380px; margin-bottom: 32px; line-height: 1.75; }
+  .lp-ctas { flex-direction: row; justify-content: center; width: auto; max-width: none; gap: 12px; margin-bottom: 40px; }
+
+  /* Bigger florals */
+  .lp-floral { width: 150px; height: 640px; top: 40px; }
+  .lp-floral-left  { left: 0; }
+  .lp-floral-right { right: 0; }
+
+  /* Bigger carousel cards */
+  .lp-carousel-stage { height: 310px; perspective: 1100px; margin-bottom: 16px; }
+  .lp-card { width: 230px; height: 296px; }
+  .lp-card.lp-prev { transform: translateX(-185px) rotateY(44deg) scale(0.8); }
+  .lp-card.lp-next { transform: translateX(185px) rotateY(-44deg) scale(0.8); }
+
+  /* Other landing sections */
   .lp-feat-grid { grid-template-columns: repeat(3, 1fr); }
   .lp-why { flex-direction: row; align-items: center; gap: 60px; padding: 80px 60px; max-width: 1080px; margin: 0 auto; }
   .lp-why-arch { width: 240px; height: 320px; flex-shrink: 0; }
