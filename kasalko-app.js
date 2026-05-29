@@ -1401,7 +1401,7 @@ function showRSVPCard(guestId, opts = {}) {
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
   const ck  = encodeURIComponent(_rsvpCoupleKey());
-  let rsvpUrl = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
+  let rsvpUrl = `https://www.vows-and-petals.com/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
   if (guest) rsvpUrl += `&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}`;
 
   function _syncPreview() {
@@ -1560,7 +1560,7 @@ function _generateRSVPQR() {
   const dt  = encodeURIComponent(WED.date       || '');
   const vn  = encodeURIComponent(WED.venue      || '');
   const ck  = encodeURIComponent(_rsvpCoupleKey());
-  let rsvpUrl = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
+  let rsvpUrl = `https://www.vows-and-petals.com/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}`;
   if (_rsvpGuestId !== null) {
     const guest = WED.guests.find(g => g.id === _rsvpGuestId);
     if (guest) {
@@ -1604,7 +1604,7 @@ async function shareGuestInvite(guestId) {
   const ck  = encodeURIComponent(_rsvpCoupleKey());
   const seatLabel = _formatSeatLabel(chair);
   const seatParam = seatLabel ? `&seat=${encodeURIComponent(seatLabel)}` : '';
-  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
+  const url = `https://www.vows-and-petals.com/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
 
   showToast('💌 Generating invitation…');
 
@@ -2015,7 +2015,7 @@ async function copyGuestLink(guestId) {
   const ck = encodeURIComponent(_rsvpCoupleKey());
   const seatLabel = _formatSeatLabel(chair);
   const seatParam = seatLabel ? `&seat=${encodeURIComponent(seatLabel)}` : '';
-  const url = `https://campingchairph.github.io/vowsandpetals/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
+  const url = `https://www.vows-and-petals.com/rsvp.html?p1=${p1}&p2=${p2}&date=${dt}&venue=${vn}&coupleKey=${ck}&guestId=${encodeURIComponent(guest.id)}&guestName=${encodeURIComponent(guest.name)}${seatParam}`;
   try {
     await navigator.clipboard.writeText(url);
     showToast('🔗 RSVP link copied for ' + guest.name);
@@ -2470,7 +2470,7 @@ function _renderSuppliersMain(el) {
         <div style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:2px">Are you a wedding supplier?</div>
         <div style="font-size:11px;color:var(--ink-3);line-height:1.5">Get your business listed in our directory — free, no setup needed.</div>
       </div>
-      <a href="https://campingchairph.github.io/vowsandpetals/supplier.html" target="_blank" rel="noopener"
+      <a href="https://www.vows-and-petals.com/supplier.html" target="_blank" rel="noopener"
         style="flex-shrink:0;padding:8px 13px;border-radius:var(--r-md);background:var(--tan);color:var(--ivory);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;font-family:var(--f)">
         Get Listed →</a>
     </div>
@@ -2669,7 +2669,7 @@ function _renderSuppliersCategory(el, cat, catLabel) {
           <div style="font-size:36px;margin-bottom:12px">${getSupplierEmoji(cat)}</div>
           <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">No suppliers listed yet in this category</div>
           <div style="font-size:12px;color:var(--ink-4);line-height:1.6;margin-bottom:16px">Are you a ${catLabel.toLowerCase()} supplier? List your business for free.</div>
-          <a href="https://campingchairph.github.io/vowsandpetals/" target="_blank" rel="noopener" style="display:inline-block;padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">🤝 Get Listed Free</a>
+          <a href="https://www.vows-and-petals.com/" target="_blank" rel="noopener" style="display:inline-block;padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,var(--tan),var(--tan-dark));color:white;font-size:12px;font-weight:700;text-decoration:none">🤝 Get Listed Free</a>
         </div>`;
     } else {
       listEl.innerHTML = suppliers.map(s => _supplierCard(s)).join('');
