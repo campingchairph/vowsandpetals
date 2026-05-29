@@ -823,7 +823,6 @@ function renderTemplateCard(t) {
       <div class="action-row" style="margin-top:10px">
         ${isPending ? `<button class="act-btn act-on" onclick="approveTemplate('${t._docId}')">✅ Approve &amp; Publish</button>` : ''}
         <button class="act-btn act-danger" onclick="rejectTemplate('${t._docId}',${isActive})">${isActive ? '❌ Suspend' : '❌ Reject'}</button>
-        ${isActive ? `<button class="act-btn" onclick="simulatePurchase('${t._docId}',${t.price||0},'${esc(t.sellerUid||'')}','${esc(t.sellerEmail||'')}')" title="Test the purchase flow" style="background:rgba(101,85,196,0.08);border-color:rgba(101,85,196,0.25);color:#6555c4">🧪 Simulate Sale</button>` : ''}
       </div>` : ''}
 
       ${isExpired ? `
@@ -896,58 +895,10 @@ async function clearAllTemplates() {
     }
     _tplCache = [];
     renderTemplates();
-    toast(`🗑 ${count} template${count!==1?'s':''} deleted — ready for simulation`);
+    toast(`🗑 ${count} template${count!==1?'s':''} deleted`);
   } catch(e) { toast('⚠️ ' + e.message); }
 }
 
-async function simulatePurchase(docId, price, sellerUid, sellerEmail) {
-  if (!confirm(`Simulate a ₱${Number(price).toLocaleString()} sale for VP-${docId}?\n\nThis credits the seller's earnings immediately. Use only for testing.`)) return;
-  const SELLER_CUT       = 0.70;
-  const sellerEarnings   = Math.round(price * SELLER_CUT);
-  const platformEarnings = price - sellerEarnings;
-  const refNum           = 'ADMIN-TEST-' + Date.now().toString(36).toUpperCase();
-  try {
-    // ── Step 1 (critical): increment template totals ──────────────────
-    // Done separately so a missing Firestore rule on other collections
-    // cannot block this write from completing.
-    await DB.collection('kasalko_templates').doc(docId).update({
-      salesCount:  firebase.firestore.FieldValue.increment(1),
-      totalEarned: firebase.firestore.FieldValue.increment(sellerEarnings),
-    });
-
-    // ── Step 2 (fire-and-forget): purchase record seller can see ──────
-    DB.collection('kasalko_templates').doc(docId).collection('purchases').add({
-      buyerEmail:  _user?.email || 'admin@test.com',
-      buyerUid:    _user?.uid   || 'admin',
-      price, sellerEarnings,
-      status:      'verified',
-      refNumber:   refNum,
-      isTest:      true,
-      used:        true,
-      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
-      verifiedAt:  firebase.firestore.FieldValue.serverTimestamp(),
-    }).catch(() => {});
-
-    // ── Step 3 (fire-and-forget): global sales ledger ─────────────────
-    DB.collection('kasalko_template_sales').add({
-      templateCode: docId, sellerUid, sellerEmail,
-      buyerEmail:   _user?.email || 'admin@test.com',
-      buyerUid:     _user?.uid   || 'admin',
-      price, sellerEarnings, platformEarnings,
-      isTest:       true,
-      purchasedAt:  firebase.firestore.FieldValue.serverTimestamp(),
-    }).catch(() => {});
-
-    // Update local admin cache and re-render
-    const t = _tplCache.find(t => t._docId === docId);
-    if (t) {
-      t.salesCount  = (t.salesCount  || 0) + 1;
-      t.totalEarned = (t.totalEarned || 0) + sellerEarnings;
-    }
-    renderTemplates();
-    toast(`🧪 Simulated! Seller +₱${sellerEarnings.toLocaleString()} · Platform +₱${platformEarnings.toLocaleString()} · Ref: ${refNum}`);
-  } catch(e) { toast('⚠️ Simulation failed: ' + e.message); }
-}
 
 /* ══════════════════════════════════════════════════
    💳  PAYMENT REQUESTS TAB
@@ -1635,9 +1586,7 @@ function _renderSalePurchases(code) {
       : '—';
 
     // Withdrawal status badge
-    const wBadge = p.isTest
-      ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(101,85,196,0.1);color:#6555c4;border:1px solid rgba(101,85,196,0.2)">🧪 Test</span>`
-      : wStatus === 'released'
+    const wBadge = wStatus === 'released'
       ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(90,171,122,0.12);color:#3a7a54;border:1px solid rgba(90,171,122,0.25)">✅ Released</span>`
       : wStatus === 'requested'
       ? `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(184,145,106,0.13);color:var(--gold-dk);border:1px solid rgba(184,145,106,0.3)">⏳ Withdraw Requested</span>`
@@ -1646,7 +1595,7 @@ function _renderSalePurchases(code) {
       : `<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(184,145,106,0.08);color:var(--ink-3);border:1px solid rgba(184,145,106,0.15)">💸 Awaiting Withdraw</span>`;
 
     return `
-      <div style="padding:9px 10px;border-radius:8px;background:${p.isTest?'rgba(101,85,196,0.04)':'rgba(255,252,247,0.85)'};border:1px solid rgba(184,145,106,0.12);margin-bottom:5px">
+      <div style="padding:9px 10px;border-radius:8px;background:rgba(255,252,247,0.85);border:1px solid rgba(184,145,106,0.12);margin-bottom:5px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;flex-wrap:wrap">
           <span style="font-size:11.5px;font-weight:700;color:var(--ink)">${date}</span>
           ${wBadge}
