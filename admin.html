@@ -186,8 +186,7 @@
   <div class="auth-box">
     <div style="font-size:36px;margin-bottom:12px">🚫</div>
     <h2>Access Denied</h2>
-    <p>Your account is not on the admin whitelist. Copy your UID below and add it to <code style="font-size:12px;background:rgba(44,24,16,0.06);padding:1px 5px;border-radius:4px">ADMIN_UIDS</code> at the top of <code style="font-size:12px;background:rgba(44,24,16,0.06);padding:1px 5px;border-radius:4px">admin.html</code>, then push and revisit.</p>
-    <pre id="uid-display">—</pre>
+    <p>You don't have permission to view this page.</p>
     <button onclick="AUTH.signOut()" style="margin-top:8px;padding:8px 16px;border-radius:8px;border:1px solid rgba(192,112,104,0.28);background:transparent;color:var(--rose);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">Sign Out</button>
   </div>
 </div>
@@ -356,7 +355,6 @@ AUTH.onAuthStateChanged(user => {
   _user = user;
   if (!user) { show('s-auth'); return; }
   if (!ADMIN_UIDS.includes(user.uid)) {
-    document.getElementById('uid-display').textContent = user.uid;
     show('s-blocked'); return;
   }
   document.getElementById('admin-email').textContent = user.email;
