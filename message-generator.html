@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vows & Petals — Message Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<style>
+  :root {
+    --rose:       #C2185B;
+    --rose-deep:  #880E4F;
+    --rose-light: #FCE4EC;
+    --rose-mid:   #F48FB1;
+    --blush:      #FFF0F5;
+    --cream:      #FDFAF7;
+    --ink:        #2A1A1F;
+    --muted:      #8A7070;
+    --border:     #EDD5DE;
+    --white:      #FFFFFF;
+    --green:      #2E7D32;
+    --green-bg:   #E8F5E9;
+    --shadow:     0 2px 16px rgba(194,24,91,0.07);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── AUTH SCREENS ── */
+  .adm-screen { display: none; }
+  .adm-screen.on { display: block; }
+
+  .auth-box {
+    max-width: 340px;
+    margin: 80px auto 0;
+    padding: 36px 28px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .auth-box h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .auth-box p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 18px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .google-btn:hover { border-color: var(--rose); box-shadow: 0 0 0 3px rgba(194,24,91,0.08); }
+  .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* ── COMPACT HEADER ── */
+  .header {
+    background: var(--rose-deep);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-petal { font-size: 18px; flex-shrink: 0; }
+  .header-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    color: var(--white);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .header-text p {
+    font-size: 10px;
+    color: var(--rose-mid);
+    margin-top: 1px;
+  }
+  .header-signout {
+    margin-left: auto;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .header-signout:hover { background: rgba(255,255,255,0.2); }
+
+  /* ── LAYOUT ── */
+  .main {
+    padding: 10px 12px 24px;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  /* ── NOTICE ── */
+  .notice {
+    background: #FFFBEB;
+    border: 1px solid #F6D860;
+    border-radius: 8px;
+    padding: 7px 11px;
+    font-size: 11px;
+    color: #856404;
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+
+  /* ── FORM ROW ── */
+  .form-row {
+    margin-bottom: 10px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--blush);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="text"]:focus,
+  select:focus {
+    border-color: var(--rose);
+    box-shadow: 0 0 0 3px rgba(194,24,91,0.08);
+    background: var(--white);
+  }
+  input[type="text"]::placeholder { color: #C4A5AF; }
+
+  /* custom select arrow */
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--rose);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  select { padding-right: 36px; cursor: pointer; }
+  select option { font-size: 14px; }
+
+  /* ── GENERATE BTN ── */
+  .gen-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--rose);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(194,24,91,0.28);
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 10px;
+  }
+  .gen-btn:hover { background: var(--rose-deep); }
+  .gen-btn:active { transform: scale(0.98); }
+
+  /* ── RESULTS ── */
+  .results { display: none; }
+  .results.visible { display: block; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  /* ── SUBJECT LIST ── */
+  .subject-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .subject-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    background: var(--blush);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .subject-item:active { background: #FFF5F8; }
+  .subject-item.copied { border-color: var(--green); background: var(--green-bg); }
+  .subject-text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .copy-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--rose-light);
+    color: var(--rose);
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
+    transition: all 0.15s;
+  }
+  .subject-item.copied .copy-pill { background: var(--green-bg); color: var(--green); }
+
+  /* ── MESSAGE ── */
+  .msg-textarea {
+    width: 100%;
+    min-height: 280px;
+    padding: 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--blush);
+    resize: vertical;
+    outline: none;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+  }
+  .msg-textarea:focus { border-color: var(--rose); background: var(--white); }
+
+  .copy-msg-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--rose-deep);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 7px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .copy-msg-btn:hover { background: var(--rose); }
+  .copy-msg-btn.copied { background: var(--green); }
+
+  .reset-btn {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reset-btn:active { border-color: var(--rose); color: var(--rose); }
+
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div id="s-loading" class="adm-screen on">
+  <div class="auth-box">
+    <div style="font-size:32px;margin-bottom:12px">🌸</div>
+    <p style="margin-bottom:0">Loading…</p>
+  </div>
+</div>
+
+<!-- ── LOGIN ── -->
+<div id="s-auth" class="adm-screen">
+  <div class="auth-box">
+    <div style="font-size:36px;margin-bottom:12px">🌸</div>
+    <h2>Admin Login</h2>
+    <p>Sign in with the Google account registered as admin for Vows & Petals.</p>
+    <button class="google-btn" onclick="googleSignIn()">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ── BLOCKED ── -->
+<div id="s-blocked" class="adm-screen">
+  <div class="auth-box">
+    <div style="font-size:36px;margin-bottom:12px">🚫</div>
+    <h2>Access Denied</h2>
+    <p>You don't have permission to view this page.</p>
+    <button onclick="AUTH.signOut()" style="margin-top:8px;padding:8px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--rose);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Sign Out</button>
+  </div>
+</div>
+
+<!-- ── MAIN TOOL ── -->
+<div id="s-admin" class="adm-screen">
+
+  <div class="header">
+    <span class="header-petal">🌸</span>
+    <div class="header-text">
+      <h1>Vows & Petals — Message Generator</h1>
+      <p>Generate the perfect outreach message instantly</p>
+    </div>
+    <button class="header-signout" onclick="AUTH.signOut()">Sign out</button>
+  </div>
+
+  <div class="main">
+
+    <div class="notice">⚠️ App is <strong>LIVE</strong>. Never say "we're building" or "coming soon".</div>
+
+    <!-- NAME INPUT -->
+    <div class="form-row">
+      <label for="businessName">Supplier / Business Name</label>
+      <input type="text" id="businessName" placeholder="e.g. Bloom Studios PH" />
+    </div>
+
+    <!-- CATEGORY DROPDOWN -->
+    <div class="form-row">
+      <label for="catSelect">Category</label>
+      <div class="select-wrap">
+        <select id="catSelect">
+          <option value="">— Select a category —</option>
+          <option value="universal">🌸 Universal (use when unsure)</option>
+          <optgroup label="── Venue & Food ──">
+            <option value="venue">🏛️ Venue</option>
+            <option value="catering">🍽️ Catering</option>
+            <option value="mobilebar">🍹 Mobile Bar / Coffee Cart / Food Cart</option>
+          </optgroup>
+          <optgroup label="── Photo & Video ──">
+            <option value="photography">📸 Photography</option>
+            <option value="videography">🎥 Videography</option>
+            <option value="photobooth">🖼️ Photo Booth / 360 Booth</option>
+            <option value="content">🎬 Content Creators</option>
+          </optgroup>
+          <optgroup label="── Beauty & Fashion ──">
+            <option value="hmua">💄 Hair & Makeup (HMUA)</option>
+            <option value="gown">👗 Bridal Gown / Fashion</option>
+          </optgroup>
+          <optgroup label="── Decor & Florals ──">
+            <option value="florals">💐 Styling & Florals</option>
+            <option value="cake">🎂 Cake & Desserts</option>
+            <option value="invitations">📄 Invitations & Printing</option>
+            <option value="souvenirs">🎁 Giveaways & Souvenirs</option>
+          </optgroup>
+          <optgroup label="── Entertainment ──">
+            <option value="entertainment">🎵 Band / DJ / Entertainment</option>
+            <option value="emcee">🎤 Wedding Host / Emcee</option>
+            <option value="lights">💡 Lights & Sounds</option>
+          </optgroup>
+          <optgroup label="── Services ──">
+            <option value="coordinator">📋 Wedding Coordinator</option>
+            <option value="transport">🚗 Bridal Cars / Transportation</option>
+            <option value="rentals">🪑 Rentals</option>
+            <option value="ceremony">⛪ Church / Ceremony Services</option>
+          </optgroup>
+          <optgroup label="── Quick Messages ──">
+            <option value="shortdm">💬 Short DM / Facebook Comment</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <!-- GENERATE -->
+    <button class="gen-btn" onclick="generate()">Generate Message ✨</button>
+
+    <!-- RESULTS -->
+    <div class="results" id="results">
+
+      <div class="section-label">Subject lines — tap to copy</div>
+      <div class="subject-list" id="subjectList"></div>
+
+      <div class="divider"></div>
+
+      <div class="section-label">Full message</div>
+      <textarea class="msg-textarea" id="msgOutput" readonly></textarea>
+      <button class="copy-msg-btn" onclick="copyMsg()" id="copyMsgBtn">📋 Copy full message</button>
+      <button class="reset-btn" onclick="resetForm()">← Start over</button>
+
+    </div>
+  </div>
+
+</div><!-- end s-admin -->
+
+<script>
+/* ── FIREBASE AUTH ── */
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs',
+  authDomain:        'weddingthings.firebaseapp.com',
+  projectId:         'weddingthings',
+  storageBucket:     'weddingthings.firebasestorage.app',
+  messagingSenderId: '732042029649',
+  appId:             '1:732042029649:web:21bbe63214e8b36770e670',
+};
+const ADMIN_UIDS = ['FJphv5mq3GSowFJy2iCqIEtCDZA3'];
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const AUTH = firebase.auth();
+
+function show(id) {
+  ['s-loading','s-auth','s-blocked','s-admin'].forEach(s =>
+    document.getElementById(s).classList.toggle('on', s === id)
+  );
+}
+
+AUTH.onAuthStateChanged(user => {
+  if (!user) { show('s-auth'); return; }
+  if (!ADMIN_UIDS.includes(user.uid)) { show('s-blocked'); return; }
+  show('s-admin');
+});
+
+function googleSignIn() {
+  AUTH.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(e => { if (e.code !== 'auth/popup-closed-by-user') alert('Sign-in error: ' + e.message); });
+}
+
+/* ── MESSAGE GENERATOR ── */
+const FOOTER = `✅ Registration is completely free
+✅ Create your supplier profile and showcase your services
+✅ Get discovered by couples looking for wedding suppliers across the Philippines
+
+Website:
+🌐 https://www.vows-and-petals.com/
+
+Supplier Registration:
+📝 https://www.vows-and-petals.com/supplier.html
+
+We'd be honored to have you join our growing community of wedding professionals.
+
+Thank you, and we hope to welcome you to Vows & Petals!
+
+Warm regards,
+The Vows & Petals Team`;
+
+function buildFull(opener, catPara, name) {
+  return `Hi ${name},\n\n${opener}\n\n${catPara}\n\nWe'd love to invite ${name} to be one of our featured suppliers on Vows & Petals.\n\n${FOOTER}`;
+}
+
+const T = {
+  universal: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Free supplier listing for ${n} — Vows & Petals`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were genuinely impressed by what you bring to couples and their wedding celebrations.`,
+      `We have a live platform — Vows & Petals — dedicated to helping Filipino couples discover trusted wedding suppliers more easily, while helping businesses like yours connect with couples actively planning their weddings.`,
+      n)
+  },
+  venue: {
+    subjects: (n) => [
+      `${n} — free venue listing on Vows & Petals 🌸`,
+      `Feature ${n} and reach more couples planning their wedding`,
+      `Free listing for ${n} — Vows & Petals supplier directory`,
+    ],
+    message: (n) => buildFull(
+      `We recently came across ${n} and were impressed by your venue space and the events you've hosted.`,
+      `Beautiful venues are at the heart of every unforgettable wedding celebration. We'd love to feature your venue on Vows & Petals and help couples discover the perfect setting for their special day.`,
+      n)
+  },
+  catering: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Reach more couples with a free listing — Vows & Petals`,
+      `Feature ${n} on our wedding supplier platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were impressed by your menu offerings and the events you've catered.`,
+      `Great food is one of the most memorable parts of any wedding. We'd love to showcase your catering services and help couples find exceptional dining experiences for their guests.`,
+      n)
+  },
+  coordinator: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Connect with more couples — free listing for ${n}`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were impressed by the weddings you've coordinated and the glowing feedback from your clients.`,
+      `Wedding coordinators are the backbone of a smooth and stress-free celebration. We'd be delighted to feature your services and connect you with couples who need a trusted professional to guide their big day.`,
+      n)
+  },
+  photography: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature your photography on Vows & Petals`,
+      `Help more couples find ${n} — free supplier listing`,
+    ],
+    message: (n) => buildFull(
+      `We came across your page and were genuinely moved by how beautifully you capture wedding moments.`,
+      `Your work preserves memories that couples will cherish for a lifetime. We'd love to help more couples discover your photography through our platform.`,
+      n)
+  },
+  videography: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature your films on Vows & Petals`,
+      `Help more couples find ${n} — free supplier listing`,
+    ],
+    message: (n) => buildFull(
+      `We came across your films and were genuinely impressed by the way you tell each couple's story.`,
+      `Your work preserves moments that couples will relive for the rest of their lives. We'd love to help more couples discover your videography services through our platform.`,
+      n)
+  },
+  hmua: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your artistry on Vows & Petals — it's free`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your work and were blown away by the transformations and bridal looks you've created.`,
+      `Every bride deserves to look and feel her absolute best on her wedding day. We'd love to showcase your artistry and help couples find talented HMUA professionals they can trust.`,
+      n)
+  },
+  emcee: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Connect with more couples — free listing for ${n}`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and heard great things about the energy and professionalism you bring to wedding receptions.`,
+      `A great host keeps the celebration engaging, organized, and memorable from start to finish. We'd love to feature your hosting services and connect you with couples looking for an experienced emcee.`,
+      n)
+  },
+  florals: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your floral designs on Vows & Petals`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your work and were truly inspired by the floral designs and setups you've created.`,
+      `Beautiful styling and floral arrangements bring a couple's wedding vision to life. We'd be honored to showcase your creative work and help couples find inspiration through your designs.`,
+      n)
+  },
+  entertainment: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Reach more couples planning their wedding — free listing`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were impressed by the atmosphere and energy you bring to wedding receptions.`,
+      `Music and entertainment set the tone that makes weddings truly unforgettable. We'd love to feature your services and connect you with couples searching for the perfect entertainment partner.`,
+      n)
+  },
+  lights: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Connect with more couples — free listing for ${n}`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were impressed by the production quality and setups you deliver for events.`,
+      `Behind every successful wedding is a reliable technical team that makes everything look and sound perfect. We'd love to help couples discover your lights, sounds, and production services.`,
+      n)
+  },
+  gown: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your bridal collection on Vows & Petals`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your collection and were captivated by the craftsmanship and elegance of your bridal designs.`,
+      `Every bride deserves to feel beautiful and confident on her wedding day. We'd love to showcase your bridal fashion services and connect you with couples planning their special day.`,
+      n)
+  },
+  cake: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your creations on Vows & Petals — it's free`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your creations and were amazed by the artistry and detail you put into every wedding cake and dessert spread.`,
+      `Wedding cakes and desserts are often the sweetest centerpiece of the celebration. We'd be excited to feature your work and help couples discover your delicious offerings.`,
+      n)
+  },
+  invitations: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your invitation designs on Vows & Petals`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your designs and were impressed by the creativity and attention to detail in your invitation collections.`,
+      `Wedding invitations create the very first impression of a couple's celebration. We'd love to showcase your designs and help couples find talented invitation specialists like you.`,
+      n)
+  },
+  transport: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Reach more couples planning their wedding — free listing`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were impressed by your fleet and the seamless transportation experiences you provide for events.`,
+      `Reliable and elegant transportation adds comfort and style to every wedding day. We'd love to feature your services and connect you with couples who want everything to go perfectly — right down to the ride.`,
+      n)
+  },
+  photobooth: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Reach more couples planning their wedding — free listing`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and loved the fun and memorable experiences you create for wedding guests.`,
+      `Interactive experiences make celebrations more lively and give guests memories to take home. We'd love to showcase your booth services and help couples discover unique ways to entertain their guests.`,
+      n)
+  },
+  souvenirs: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your products on Vows & Petals — it's free`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your products and were charmed by the thoughtfulness and quality of your wedding souvenirs and giveaways.`,
+      `Personalized keepsakes make a celebration even more meaningful for guests. We'd love to feature your products and help couples find the perfect wedding favors.`,
+      n)
+  },
+  mobilebar: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Reach more couples planning their wedding — free listing`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and loved the unique and festive experience you bring to wedding receptions.`,
+      `Unique food and beverage setups are becoming a favorite highlight among modern couples. We'd love to showcase your offerings and connect you with couples looking for something special on their wedding day.`,
+      n)
+  },
+  rentals: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Connect with more couples — free listing for ${n}`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were impressed by the range and quality of event items you offer for weddings.`,
+      `From tables and chairs to event essentials, rental suppliers are key to bringing a wedding vision to life. We'd love to feature your services and make it easier for couples to find trusted rental providers.`,
+      n)
+  },
+  content: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `Feature your content work on Vows & Petals — it's free`,
+      `We'd love to showcase ${n} on our wedding platform`,
+    ],
+    message: (n) => buildFull(
+      `We came across your content and loved how authentically and creatively you capture behind-the-scenes wedding moments.`,
+      `Modern couples love having social-media-ready wedding content that tells their story in a fresh and genuine way. We'd love to showcase your services and connect you with couples seeking modern coverage.`,
+      n)
+  },
+  ceremony: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Connect with more couples — free listing for ${n}`,
+    ],
+    message: (n) => buildFull(
+      `We came across ${n} and were moved by the meaningful and reverent ceremonies you help create.`,
+      `Ceremony suppliers play a vital role in making wedding moments sacred and unforgettable. We'd be honored to include your services on our platform and help couples find the right partners for their ceremony.`,
+      n)
+  },
+  shortdm: {
+    subjects: (n) => [
+      `${n} — free listing on Vows & Petals 🌸`,
+      `We'd love to feature ${n} on Vows & Petals`,
+      `Join Vows & Petals — free for ${n}`,
+    ],
+    message: (n) => `Hi ${n}! 👋\n\nWe'd love to invite ${n} to join Vows & Petals — a live platform that helps Filipino couples discover trusted wedding suppliers while helping businesses like yours gain more visibility.\n\nRegistration is completely free, and you can set up your supplier profile in just a few minutes.\n\n🌐 https://www.vows-and-petals.com/\n📝 https://www.vows-and-petals.com/supplier.html\n\nWe'd be honored to have you as part of our supplier community. Thank you! 💐`
+  }
+};
+
+function generate() {
+  const name = document.getElementById('businessName').value.trim();
+  const cat  = document.getElementById('catSelect').value;
+
+  if (!name) { alert('Please enter the business name.'); return; }
+  if (!cat)  { alert('Please choose a category.'); return; }
+
+  const tpl = T[cat];
+  const subjects = tpl.subjects(name);
+  const msg = tpl.message(name);
+
+  const list = document.getElementById('subjectList');
+  list.innerHTML = '';
+  subjects.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'subject-item';
+    item.innerHTML = `<span class="subject-text">${s}</span><span class="copy-pill">Copy</span>`;
+    item.onclick = function() {
+      navigator.clipboard.writeText(s).then(() => {
+        item.classList.add('copied');
+        item.querySelector('.copy-pill').textContent = '✓';
+        setTimeout(() => { item.classList.remove('copied'); item.querySelector('.copy-pill').textContent = 'Copy'; }, 2000);
+      });
+    };
+    list.appendChild(item);
+  });
+
+  document.getElementById('msgOutput').value = msg;
+
+  const results = document.getElementById('results');
+  results.classList.add('visible');
+  const copyBtn = document.getElementById('copyMsgBtn');
+  copyBtn.textContent = '📋 Copy full message';
+  copyBtn.classList.remove('copied');
+
+  setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+}
+
+function copyMsg() {
+  const text = document.getElementById('msgOutput').value;
+  const btn = document.getElementById('copyMsgBtn');
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Copy full message'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+function resetForm() {
+  document.getElementById('businessName').value = '';
+  document.getElementById('catSelect').value = '';
+  document.getElementById('results').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('businessName').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+</script>
+</body>
+</html>
