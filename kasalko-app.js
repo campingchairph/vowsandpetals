@@ -2258,37 +2258,60 @@ window.clearCustomCard = function() {
    SUPPLIERS
 ═══════════════════════════════════════════════ */
 const SUGGESTED_SUPPLIERS = [
-  { cat:'venue',          emoji:'🏛️', label:'Venue',                tip:'Book 12+ months out — venues fill fast',          link:'https://kasal.com/venues' },
-  { cat:'catering',       emoji:'🍽️', label:'Catering',             tip:'Request a tasting before signing anything',        link:'https://kasal.com/caterers' },
-  { cat:'photography',    emoji:'📸', label:'Photography',           tip:'Ask for full-day + 2nd shooter + album',           link:'https://kasal.com/photography' },
-  { cat:'videography',    emoji:'🎥', label:'Videography',           tip:'SDE (same-day edit) is the Filipino must-have',    link:'https://kasal.com/videography' },
-  { cat:'florals',        emoji:'💐', label:'Flowers & Florals',     tip:'Seasonal blooms save 20–30% on your budget',       link:'https://kasal.com/florists' },
-  { cat:'attire',         emoji:'👗', label:'Attire & Accessories',  tip:'Schedule fittings at least 3 months before',      link:'https://kasal.com/attire' },
-  { cat:'music',          emoji:'🎵', label:'Music & Entertainment', tip:'Hear them live at a gig before booking',           link:'https://kasal.com/entertainment' },
-  { cat:'coordination',   emoji:'📋', label:'Coordination & Planning',tip:'A good coordinator is the best investment',      link:'https://kasal.com/coordinators' },
-  { cat:'cake',           emoji:'🎂', label:'Cake & Desserts',       tip:'Order tasting boxes from your shortlist',          link:'https://kasal.com/cakes' },
-  { cat:'invites',        emoji:'📄', label:'Invitations & Printing',tip:'Stationery sets the entire wedding tone',          link:'https://kasal.com/invitations' },
-  { cat:'hair',           emoji:'💄', label:'Hair & Makeup',         tip:'Book an HMUA who specializes in your look',        link:'https://kasal.com/hairmakeup' },
-  { cat:'photo-booth',    emoji:'🖼️', label:'Photo Booth',           tip:'Fun keepsake for guests — worth every peso',       link:'https://kasal.com/photobooth' },
-  { cat:'transportation', emoji:'🚗', label:'Transportation',        tip:'Book early — cars go fast for popular dates',      link:'https://kasal.com' },
-  { cat:'lights',         emoji:'💡', label:'Lights & Sounds',       tip:'Lights transform a venue — visit for a demo',     link:'https://kasal.com' },
-  { cat:'jewelry',        emoji:'💍', label:'Jewelry',               tip:'Commission custom pieces at least 4 months out',  link:'https://kasal.com' },
+  { cat:'venue',            emoji:'🏛️', label:'Venue',                                tip:'Book 12+ months out — venues fill fast',             link:'https://kasal.com/venues' },
+  { cat:'catering',         emoji:'🍽️', label:'Catering',                             tip:'Request a tasting before signing anything',           link:'https://kasal.com/caterers' },
+  { cat:'coordination',     emoji:'📋', label:'Coordination / Planning',               tip:'A good coordinator is the best investment',           link:'https://kasal.com/coordinators' },
+  { cat:'photo-video',      emoji:'📸', label:'Photo & Video',                         tip:'Ask for full-day + SDE + 2nd shooter package',        link:'https://kasal.com/photography' },
+  { cat:'hair-makeup',      emoji:'💄', label:'Hair & Makeup (HMUA)',                  tip:'Book an HMUA who specializes in your look',           link:'https://kasal.com/hairmakeup' },
+  { cat:'host-emcee',       emoji:'🎤', label:'Host / Emcee / MC',                     tip:'A great host keeps the energy alive all night',       link:'https://kasal.com' },
+  { cat:'styling-florals',  emoji:'💐', label:'Styling & Florals',                     tip:'Seasonal blooms save 20–30% on your budget',          link:'https://kasal.com/florists' },
+  { cat:'entertainment',    emoji:'🎵', label:'Entertainment (Band, DJ, Singer)',       tip:'Hear them live at a gig before booking',              link:'https://kasal.com/entertainment' },
+  { cat:'lights-sounds',    emoji:'💡', label:'Lights & Sounds / Technical',           tip:'Lights transform a venue — visit for a demo first',   link:'https://kasal.com' },
+  { cat:'bridal-wear',      emoji:'👗', label:'Bridal Wear & Fashion (Gown, Suit, Barong)', tip:'Schedule fittings at least 3 months before',    link:'https://kasal.com/attire' },
+  { cat:'invitations',      emoji:'📄', label:'Invitations & Printing',                tip:'Stationery sets the entire wedding tone',             link:'https://kasal.com/invitations' },
+  { cat:'cake',             emoji:'🎂', label:'Cake & Desserts',                       tip:'Order tasting boxes from your shortlist',             link:'https://kasal.com/cakes' },
+  { cat:'transportation',   emoji:'🚗', label:'Transportation',                        tip:'Book early — cars go fast for popular dates',         link:'https://kasal.com' },
+  { cat:'photo-booth',      emoji:'🖼️', label:'Photo Booth & Interactive Booths',      tip:'Fun keepsake for guests — worth every peso',          link:'https://kasal.com/photobooth' },
+  { cat:'giveaways',        emoji:'🎁', label:'Giveaways & Souvenirs',                 tip:'Order at least 2 months early — lead times vary',     link:'https://kasal.com' },
+  { cat:'mobile-bar',       emoji:'🍹', label:'Mobile Bar / Coffee Cart / Food Carts', tip:'Great icebreaker during cocktail hour',               link:'https://kasal.com' },
+  { cat:'rentals',          emoji:'🪑', label:'Rentals (Tables, Chairs, Tents)',        tip:'Bundle rentals from one supplier to save on delivery',link:'https://kasal.com' },
+  { cat:'church',           emoji:'⛪', label:'Church / Ceremony Services',             tip:'Secure your parish booking as early as possible',     link:'https://kasal.com' },
+  { cat:'content-creators', emoji:'🎬', label:'Content Creators (Reels, TikTok)',      tip:'Book early — SDE and same-day content goes viral',    link:'https://kasal.com' },
 ];
 
 const VENDOR_EMOJI = {
-  venue:'🏛️', catering:'🍽️', photography:'📸', videography:'🎥',
-  florals:'💐', attire:'👗', music:'🎵', coordination:'📋',
-  cake:'🎂', invites:'📄', hair:'💄', 'photo-booth':'🖼️',
-  transportation:'🚗', lights:'💡', jewelry:'💍', others:'✨', other:'📦',
+  // current keys
+  venue:'🏛️', catering:'🍽️', coordination:'📋', 'photo-video':'📸',
+  'hair-makeup':'💄', 'host-emcee':'🎤', 'styling-florals':'💐', entertainment:'🎵',
+  'lights-sounds':'💡', 'bridal-wear':'👗', invitations:'📄', cake:'🎂',
+  transportation:'🚗', 'photo-booth':'🖼️', giveaways:'🎁', 'mobile-bar':'🍹',
+  rentals:'🪑', church:'⛪', 'content-creators':'🎬', other:'📦', others:'📦',
+  // legacy keys (for existing Firestore data)
+  photography:'📸', videography:'📸', florals:'💐', flowers:'💐',
+  attire:'👗', music:'🎵', hair:'💄', makeup:'💄', lights:'💡',
+  invites:'📄', jewelry:'💍',
 };
 const VENDOR_CAT_LABEL = {
-  venue:'Venue', catering:'Catering', photography:'Photography', videography:'Videography',
-  florals:'Flowers & Florals', attire:'Attire & Accessories', music:'Music & Entertainment',
-  coordination:'Coordination & Planning', cake:'Cake & Desserts', invites:'Invitations & Printing',
-  hair:'Hair & Makeup', 'photo-booth':'Photo Booth', transportation:'Transportation',
-  lights:'Lights & Sounds', jewelry:'Jewelry', others:'Others',
-  // legacy keys
-  flowers:'Flowers & Florals', makeup:'Hair & Makeup', invitations:'Invitations & Printing',
+  // current keys
+  venue:'Venue', catering:'Catering', coordination:'Coordination / Planning',
+  'photo-video':'Photo & Video', 'hair-makeup':'Hair & Makeup (HMUA)',
+  'host-emcee':'Host / Emcee / MC', 'styling-florals':'Styling & Florals',
+  entertainment:'Entertainment (Band, DJ, Singer, Musicians)',
+  'lights-sounds':'Lights & Sounds / Technical',
+  'bridal-wear':'Bridal Wear & Fashion (Gown, Suit, Barong)',
+  invitations:'Invitations & Printing', cake:'Cake & Desserts',
+  transportation:'Transportation', 'photo-booth':'Photo Booth & Interactive Booths',
+  giveaways:'Giveaways & Souvenirs', 'mobile-bar':'Mobile Bar / Coffee Cart / Food Carts',
+  rentals:'Rentals (Tables, Chairs, Tents, Furniture)',
+  church:'Church / Ceremony Services',
+  'content-creators':'Content Creators (Wedding Reels, TikTok, Same-Day Content)',
+  other:'Others', others:'Others',
+  // legacy keys (for existing Firestore data)
+  photography:'Photo & Video', videography:'Photo & Video',
+  florals:'Styling & Florals', flowers:'Styling & Florals',
+  attire:'Bridal Wear & Fashion', music:'Entertainment',
+  hair:'Hair & Makeup (HMUA)', makeup:'Hair & Makeup (HMUA)',
+  lights:'Lights & Sounds / Technical', invites:'Invitations & Printing', jewelry:'Jewelry',
 };
 function getSupplierEmoji(cat) { return VENDOR_EMOJI[cat] || '🤝'; }
 
@@ -2315,11 +2338,15 @@ function setSupplierView(view) {
   if (el) el.scrollTop = 0;
 }
 
-// Legacy category key aliases (old supplier.html used different keys)
+// Category key aliases — maps current key to all Firestore values to query
 const CAT_ALIASES = {
-  invites:  ['invites', 'invitations'],
-  florals:  ['florals', 'flowers'],
-  hair:     ['hair', 'makeup'],
+  'photo-video':      ['photo-video', 'photography', 'videography'],
+  'styling-florals':  ['styling-florals', 'florals', 'flowers'],
+  'hair-makeup':      ['hair-makeup', 'hair', 'makeup'],
+  'lights-sounds':    ['lights-sounds', 'lights'],
+  'bridal-wear':      ['bridal-wear', 'attire'],
+  entertainment:      ['entertainment', 'music'],
+  invitations:        ['invitations', 'invites'],
 };
 
 async function _loadMarketplaceCat(cat) {

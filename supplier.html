@@ -263,21 +263,25 @@
       <div class="field"><label>Category <span class="req">*</span></label>
         <select id="f-category">
           <option value="" disabled selected>Select your service…</option>
-          <option value="photography">Photography 📸</option>
-          <option value="videography">Videography 🎥</option>
-          <option value="catering">Catering 🍽️</option>
           <option value="venue">Venue 🏛️</option>
-          <option value="florals">Flowers &amp; Florals 💐</option>
+          <option value="catering">Catering 🍽️</option>
+          <option value="coordination">Coordination / Planning 📋</option>
+          <option value="photo-video">Photo &amp; Video 📸</option>
+          <option value="hair-makeup">Hair &amp; Makeup (HMUA) 💄</option>
+          <option value="host-emcee">Host / Emcee / MC 🎤</option>
+          <option value="styling-florals">Styling &amp; Florals 💐</option>
+          <option value="entertainment">Entertainment (Band, DJ, Singer, Musicians) 🎵</option>
+          <option value="lights-sounds">Lights &amp; Sounds / Technical 💡</option>
+          <option value="bridal-wear">Bridal Wear &amp; Fashion (Gown, Suit, Barong) 👗</option>
+          <option value="invitations">Invitations &amp; Printing 📄</option>
           <option value="cake">Cake &amp; Desserts 🎂</option>
-          <option value="hair">Hair &amp; Makeup 💄</option>
-          <option value="attire">Attire &amp; Accessories 👗</option>
-          <option value="music">Music &amp; Entertainment 🎵</option>
-          <option value="coordination">Coordination &amp; Planning 📋</option>
-          <option value="invites">Invitations &amp; Printing 📄</option>
-          <option value="photo-booth">Photo Booth 🖼️</option>
           <option value="transportation">Transportation 🚗</option>
-          <option value="lights">Lights &amp; Sounds 💡</option>
-          <option value="jewelry">Jewelry 💍</option>
+          <option value="photo-booth">Photo Booth &amp; Interactive Booths 🖼️</option>
+          <option value="giveaways">Giveaways &amp; Souvenirs 🎁</option>
+          <option value="mobile-bar">Mobile Bar / Coffee Cart / Food Carts 🍹</option>
+          <option value="rentals">Rentals (Tables, Chairs, Tents, Furniture) 🪑</option>
+          <option value="church">Church / Ceremony Services ⛪</option>
+          <option value="content-creators">Content Creators (Wedding Reels, TikTok, Same-Day Content) 🎬</option>
           <option value="others">Others ✨</option>
         </select>
       </div>
@@ -521,18 +525,35 @@ try {
 
 /* ── CATEGORY DATA ── */
 const CAT_EMOJI = {
-  photography:'📸', videography:'🎥', catering:'🍽️', venue:'🏛️',
-  florals:'💐', cake:'🎂', hair:'💄', attire:'👗', music:'🎵',
-  coordination:'📋', invites:'📄', 'photo-booth':'🖼️',
-  transportation:'🚗', lights:'💡', jewelry:'💍', others:'✨',
+  venue:'🏛️', catering:'🍽️', coordination:'📋', 'photo-video':'📸',
+  'hair-makeup':'💄', 'host-emcee':'🎤', 'styling-florals':'💐', entertainment:'🎵',
+  'lights-sounds':'💡', 'bridal-wear':'👗', invitations:'📄', cake:'🎂',
+  transportation:'🚗', 'photo-booth':'🖼️', giveaways:'🎁', 'mobile-bar':'🍹',
+  rentals:'🪑', church:'⛪', 'content-creators':'🎬', others:'✨', other:'📦',
+  // legacy
+  photography:'📸', videography:'📸', florals:'💐', flowers:'💐',
+  attire:'👗', music:'🎵', hair:'💄', lights:'💡', invites:'📄', jewelry:'💍',
 };
 const CAT_LABEL = {
-  photography:'Photography', videography:'Videography', catering:'Catering',
-  venue:'Venue', florals:'Flowers & Florals', cake:'Cake & Desserts',
-  hair:'Hair & Makeup', attire:'Attire & Accessories', music:'Music & Entertainment',
-  coordination:'Coordination & Planning', invites:'Invitations & Printing',
-  'photo-booth':'Photo Booth',
-  transportation:'Transportation', lights:'Lights & Sounds', jewelry:'Jewelry', others:'Others',
+  venue:'Venue', catering:'Catering', coordination:'Coordination / Planning',
+  'photo-video':'Photo & Video', 'hair-makeup':'Hair & Makeup (HMUA)',
+  'host-emcee':'Host / Emcee / MC', 'styling-florals':'Styling & Florals',
+  entertainment:'Entertainment (Band, DJ, Singer, Musicians)',
+  'lights-sounds':'Lights & Sounds / Technical',
+  'bridal-wear':'Bridal Wear & Fashion (Gown, Suit, Barong)',
+  invitations:'Invitations & Printing', cake:'Cake & Desserts',
+  transportation:'Transportation', 'photo-booth':'Photo Booth & Interactive Booths',
+  giveaways:'Giveaways & Souvenirs', 'mobile-bar':'Mobile Bar / Coffee Cart / Food Carts',
+  rentals:'Rentals (Tables, Chairs, Tents, Furniture)',
+  church:'Church / Ceremony Services',
+  'content-creators':'Content Creators (Wedding Reels, TikTok, Same-Day Content)',
+  others:'Others', other:'Others',
+  // legacy
+  photography:'Photo & Video', videography:'Photo & Video',
+  florals:'Styling & Florals', flowers:'Styling & Florals',
+  attire:'Bridal Wear & Fashion', music:'Entertainment',
+  hair:'Hair & Makeup (HMUA)', lights:'Lights & Sounds / Technical',
+  invites:'Invitations & Printing', jewelry:'Jewelry',
 };
 
 /* ── AUTH STATE ── */
