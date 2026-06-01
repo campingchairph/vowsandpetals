@@ -383,8 +383,8 @@
     <div class="form-section">
       <div class="form-section-title">Pricing</div>
       <div class="field-row">
-        <div class="field"><label>Price From (₱)</label><input type="number" id="f-price-from" placeholder="e.g. 15000" min="0"></div>
-        <div class="field"><label>Price To (₱)</label><input type="number" id="f-price-to" placeholder="e.g. 50000" min="0"></div>
+        <div class="field"><label>Price From (₱)</label><input type="text" id="f-price-from" placeholder="e.g. 15,000" inputmode="numeric" oninput="formatPesoInput(this)"></div>
+        <div class="field"><label>Price To (₱)</label><input type="text" id="f-price-to" placeholder="e.g. 50,000" inputmode="numeric" oninput="formatPesoInput(this)"></div>
       </div>
       <div class="field-hint">Leave blank if pricing varies or is upon request.</div>
     </div>
@@ -415,7 +415,7 @@
         <input type="file" id="cover-input" accept="image/*" style="display:none" onchange="pickCover(this)">
       </div>
       <div class="field">
-        <label>Gallery <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;color:var(--ink-4)">— up to 6 photos · ⭐ Pro only</span></label>
+        <label>Gallery <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;color:var(--ink-4)">— up to 20 photos · free for all</span></label>
         <div class="gallery-grid" id="gallery-grid"></div>
         <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="pickGallery(this)">
         <div class="field-hint" style="margin-top:8px">Upload up to 20 photos — shown to all couples browsing your profile.</div>
@@ -503,6 +503,11 @@ let _isEditing   = false;
 let _coverUrl     = null;   // string URL or null
 let _savedGallery = [];     // [url]
 let _uploading    = 0;      // tracks in-progress Cloudinary uploads
+
+function formatPesoInput(el) {
+  const raw = el.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+  el.value = raw ? Number(raw).toLocaleString() : '';
+}
 
 function _setUploading(delta) {
   _uploading = Math.max(0, _uploading + delta);
@@ -784,8 +789,8 @@ function _populateForm(p) {
   set('f-fb',          p?.fb          || '');
   set('f-ig',          p?.ig          || '');
   set('f-website',     p?.website     || '');
-  set('f-price-from',  p?.price_from  || '');
-  set('f-price-to',    p?.price_to    || '');
+  set('f-price-from',  p?.price_from  ? Number(p.price_from).toLocaleString() : '');
+  set('f-price-to',    p?.price_to    ? Number(p.price_to).toLocaleString()   : '');
   if (p?.category) {
     const sel = document.getElementById('f-category');
     if (sel) sel.value = p.category;
@@ -832,8 +837,8 @@ async function saveProfile() {
       category:    catVal,
       location:    (document.getElementById('f-location')?.value    || '').trim(),
       description: (document.getElementById('f-description')?.value || '').trim(),
-      price_from:  Number(document.getElementById('f-price-from')?.value || 0) || null,
-      price_to:    Number(document.getElementById('f-price-to')?.value   || 0) || null,
+      price_from:  Number((document.getElementById('f-price-from')?.value || '').replace(/,/g,'')) || null,
+      price_to:    Number((document.getElementById('f-price-to')?.value   || '').replace(/,/g,'')) || null,
       phone:       (document.getElementById('f-phone')?.value   || '').trim(),
       fb:          (document.getElementById('f-fb')?.value      || '').trim(),
       ig:          (document.getElementById('f-ig')?.value      || '').trim(),
