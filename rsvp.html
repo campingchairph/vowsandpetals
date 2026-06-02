@@ -672,6 +672,16 @@ function showError(msg) {
 function hideError() {
   document.getElementById('error-banner').style.display = 'none';
 }
+
+// ── Visit tracker ──
+(function() {
+  if (sessionStorage.getItem('vp_visit_logged')) return;
+  sessionStorage.setItem('vp_visit_logged', '1');
+  setTimeout(function() {
+    if (!DB) return;
+    DB.collection('kasalko_visits').add({ page:'rsvp', ts: firebase.firestore.FieldValue.serverTimestamp(), uid:null, anon:true }).catch(()=>{});
+  }, 800);
+})();
 </script>
 </body>
 </html>

@@ -206,6 +206,7 @@
   </header>
 
   <nav class="adm-tabs">
+    <button id="tab-btn-dashboard" class="adm-tab" onclick="aTab('dashboard')">📊 Dashboard</button>
     <button id="tab-btn-suppliers" class="adm-tab" onclick="aTab('suppliers')">🏪 Suppliers<span class="tab-badge" id="badge-suppliers"></span></button>
     <button id="tab-btn-leads"     class="adm-tab" onclick="aTab('leads')">📋 Leads<span class="tab-badge" id="badge-leads"></span></button>
     <button id="tab-btn-templates" class="adm-tab" onclick="aTab('templates')">💰 Templates<span class="tab-badge" id="badge-templates"></span></button>
@@ -214,7 +215,8 @@
   </nav>
 
   <div class="adm-wrap">
-    <div id="p-suppliers"></div>
+    <div id="p-dashboard" style="display:none"></div>
+    <div id="p-suppliers" style="display:none"></div>
     <div id="p-leads"     style="display:none"></div>
     <div id="p-templates" style="display:none"></div>
     <div id="p-payments"  style="display:none"></div>
@@ -359,7 +361,7 @@ AUTH.onAuthStateChanged(user => {
   }
   document.getElementById('admin-email').textContent = user.email;
   show('s-admin');
-  aTab('suppliers');
+  aTab('dashboard');
   _loadTabBadges(); // load notification counts for all tabs
 });
 
@@ -391,10 +393,11 @@ async function _loadTabBadges() {
 
 /* ── TABS ───────────────────────────────────────── */
 function aTab(tab) {
-  ['suppliers','leads','templates','payments','sales'].forEach(t => {
+  ['dashboard','suppliers','leads','templates','payments','sales'].forEach(t => {
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
     document.getElementById('p-' + t).style.display = t === tab ? 'block' : 'none';
   });
+  if (tab === 'dashboard') loadDashboard();
   if (tab === 'suppliers') loadSuppliers();
   if (tab === 'leads')     loadLeads();
   if (tab === 'templates') loadTemplates();
@@ -414,6 +417,113 @@ function toast(msg) {
 /* ── ESCAPE HTML ────────────────────────────────── */
 function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════════
+   📊  DASHBOARD TAB
+══════════════════════════════════════════════════ */
+async function loadDashboard() {
+  const el = document.getElementById('p-dashboard');
+  el.innerHTML = `<div style="padding:24px 20px;color:var(--ink-4);font-size:13px">Loading dashboard…</div>`;
+
+  try {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayTs = firebase.firestore.Timestamp.fromDate(today);
+
+    // Parallel queries
+    const [suppSnap, leadsSnap, tplSnap, usersSnap, visitsAllSnap, visitsTodaySnap] = await Promise.all([
+      DB.collection('kasalko_marketplace').get(),
+      DB.collection('kasalko_vendor_leads').get(),
+      DB.collection('kasalko_templates').where('status','==','active').get(),
+      DB.collection('users').get(),
+      DB.collection('kasalko_visits').get(),
+      DB.collection('kasalko_visits').where('ts','>=',todayTs).get(),
+    ]);
+
+    const suppTotal    = suppSnap.size;
+    const suppActive   = suppSnap.docs.filter(d => d.data().status === 'active' || d.data().verified).length;
+    const suppPending  = suppSnap.docs.filter(d => d.data().status === 'pending' || (!d.data().status && !d.data().verified)).length;
+    const leadsTotal   = leadsSnap.size;
+    const tplTotal     = tplSnap.size;
+    const usersTotal   = usersSnap.size;
+    const visitsAll    = visitsAllSnap.size;
+    const visitsToday  = visitsTodaySnap.size;
+
+    // Visits by page breakdown (today)
+    const byPage = {};
+    visitsTodaySnap.docs.forEach(d => {
+      const p = d.data().page || 'app';
+      byPage[p] = (byPage[p] || 0) + 1;
+    });
+
+    // Recent visits list (last 10)
+    const recentVisits = visitsAllSnap.docs
+      .filter(d => d.data().ts)
+      .sort((a,b) => b.data().ts.seconds - a.data().ts.seconds)
+      .slice(0, 10);
+
+    const statCard = (emoji, label, value, sub='', color='var(--ink)') =>
+      `<div style="background:rgba(255,252,247,0.9);border:1px solid rgba(184,145,106,0.18);border-radius:14px;padding:16px 18px">
+        <div style="font-size:22px;margin-bottom:6px">${emoji}</div>
+        <div style="font-size:28px;font-weight:800;color:${color};font-family:var(--f);letter-spacing:-0.5px;line-height:1">${value}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--ink-2);margin-top:4px">${label}</div>
+        ${sub ? `<div style="font-size:10.5px;color:var(--ink-4);margin-top:2px">${sub}</div>` : ''}
+      </div>`;
+
+    const pageBadge = (page, count) => {
+      const labels = { app:'🏠 App', rsvp:'💌 RSVP', supplier:'🏪 Supplier', landing:'🌐 Landing' };
+      return `<span style="padding:3px 9px;border-radius:20px;background:rgba(184,145,106,0.12);border:1px solid rgba(184,145,106,0.2);font-size:11px;font-weight:600;color:var(--ink-3)">${labels[page]||page} ${count}</span>`;
+    };
+
+    const recentRows = recentVisits.map(d => {
+      const v = d.data();
+      const dt = v.ts ? new Date(v.ts.seconds*1000) : null;
+      const timeStr = dt ? dt.toLocaleDateString('en-PH',{month:'short',day:'numeric'}) + ' · ' + dt.toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'}) : '—';
+      const pageLabels = { app:'🏠 App', rsvp:'💌 RSVP', supplier:'🏪 Supplier', landing:'🌐 Landing' };
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(184,145,106,0.09);font-size:11.5px">
+        <span style="color:var(--ink-3)">${pageLabels[v.page||'app']||v.page||'App'}</span>
+        <span style="color:var(--ink-4)">${v.uid ? '👤 User' : '👻 Guest'}</span>
+        <span style="color:var(--ink-4)">${timeStr}</span>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div style="padding:24px 20px;max-width:900px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div style="font-size:18px;font-weight:800;color:var(--ink)">📊 Dashboard</div>
+          <button onclick="loadDashboard()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(184,145,106,0.28);background:transparent;font-size:12px;font-weight:600;color:var(--ink-3);cursor:pointer">↻ Refresh</button>
+        </div>
+
+        <!-- Stats grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+          ${statCard('🏪','Suppliers',suppTotal,`${suppActive} active · ${suppPending} pending`)}
+          ${statCard('👥','App Users',usersTotal,'Couples with saved data')}
+          ${statCard('📋','Leads',leadsTotal,'Supplier enquiries')}
+          ${statCard('💰','Live Templates',tplTotal,'Active in marketplace')}
+          ${statCard('📈','Visits Today',visitsToday,'Excluding admin','var(--green-deep)')}
+          ${statCard('🌐','Total Visits',visitsAll,'All time · excl. admin')}
+        </div>
+
+        <!-- Today by page -->
+        ${visitsToday > 0 ? `
+        <div style="background:rgba(255,252,247,0.9);border:1px solid rgba(184,145,106,0.18);border-radius:14px;padding:16px 18px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:10px">Today's visits by page</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${Object.entries(byPage).map(([p,c]) => pageBadge(p,c)).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Recent visits -->
+        <div style="background:rgba(255,252,247,0.9);border:1px solid rgba(184,145,106,0.18);border-radius:14px;padding:16px 18px">
+          <div style="font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:4px">Recent visits</div>
+          <div style="font-size:10.5px;color:var(--ink-4);margin-bottom:10px">Last 10 · admin visits excluded</div>
+          ${recentRows || '<div style="font-size:12px;color:var(--ink-4);padding:8px 0">No visits recorded yet.</div>'}
+        </div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div style="padding:24px;color:var(--rose);font-size:13px">⚠️ ${e.message}</div>`;
+  }
 }
 
 /* ══════════════════════════════════════════════════

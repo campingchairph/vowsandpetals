@@ -1343,6 +1343,19 @@ async function requestProPlan(plan) {
     toast('⚠️ Error submitting request: ' + e.message);
   }
 }
+
+// ── Visit tracker ──
+(function() {
+  if (sessionStorage.getItem('vp_visit_logged')) return;
+  sessionStorage.setItem('vp_visit_logged', '1');
+  const ADMIN_UIDS = ['FJphv5mq3GSowFJy2iCqIEtCDZA3'];
+  function _logV(uid) {
+    if (uid && ADMIN_UIDS.includes(uid)) return;
+    if (!DB) return;
+    DB.collection('kasalko_visits').add({ page:'supplier', ts: firebase.firestore.FieldValue.serverTimestamp(), uid: uid||null, anon:!uid }).catch(()=>{});
+  }
+  AUTH?.onAuthStateChanged(u => _logV(u?.uid));
+})();
 </script>
 </body>
 </html>

@@ -1044,6 +1044,33 @@ function shareInvitation() {
 <!-- Firebase Config & Cloud Sync (loads after app JS so WED is defined) -->
 <script src="firebase-config.js"></script>
 
+<!-- ── Visit tracker (runs once per session, excludes admin) ── -->
+<script>
+(function() {
+  if (sessionStorage.getItem('vp_visit_logged')) return;
+  sessionStorage.setItem('vp_visit_logged', '1');
+  const ADMIN_UIDS = ['FJphv5mq3GSowFJy2iCqIEtCDZA3'];
+  function _logVisit(uid) {
+    if (uid && ADMIN_UIDS.includes(uid)) return;
+    if (typeof DB === 'undefined' || !DB) return;
+    DB.collection('kasalko_visits').add({
+      page: document.referrer.includes('rsvp') ? 'rsvp' : 'app',
+      ts:   firebase.firestore.FieldValue.serverTimestamp(),
+      uid:  uid || null,
+      anon: !uid,
+    }).catch(() => {});
+  }
+  // Wait for auth to resolve before logging
+  function _waitAndLog() {
+    if (typeof firebase === 'undefined' || !firebase.apps?.length) { setTimeout(_waitAndLog, 800); return; }
+    firebase.auth().onAuthStateChanged(function(user) {
+      _logVisit(user ? user.uid : null);
+    });
+  }
+  setTimeout(_waitAndLog, 600);
+})();
+</script>
+
 <!-- ── Landing page carousel ── -->
 <script>
 (function() {

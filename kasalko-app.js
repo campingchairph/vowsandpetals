@@ -4911,6 +4911,7 @@ function resizeLongTable(dw, dh) {
   if (!sel) return;
   sel.w = Math.max(40, sel.w + dw);
   sel.h = Math.max(18, sel.h + dh);
+  _redistributeChairs(sel.id); // keep chairs evenly spread at new size
   saveState();
   drawCanvas();
   renderCanvasActions(); // refresh the size readout
