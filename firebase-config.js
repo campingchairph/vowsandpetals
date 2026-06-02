@@ -55,6 +55,13 @@ if (AUTH) {
         return;
       }
       localStorage.setItem('kasalko_uid', user.uid);
+      // Track registered user (one doc per UID — creates on first sign-in, updates lastSeen after)
+      DB.collection('kasalko_registered_users').doc(user.uid).set({
+        email:       user.email       || null,
+        displayName: user.displayName || null,
+        provider:    (user.providerData?.[0]?.providerId) || 'unknown',
+        lastSeen:    firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }).catch(() => {});
       cloudLoadWedding();
       if (window._pendingEnter && typeof enterApp === 'function') {
         window._pendingEnter = false;

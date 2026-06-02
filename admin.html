@@ -432,10 +432,11 @@ async function loadDashboard() {
     const todayTs = firebase.firestore.Timestamp.fromDate(today);
 
     // Parallel queries
-    const [suppSnap, leadsSnap, tplSnap, usersSnap, visitsAllSnap, visitsTodaySnap] = await Promise.all([
+    const [suppSnap, leadsSnap, tplSnap, regSnap, planSnap, visitsAllSnap, visitsTodaySnap] = await Promise.all([
       DB.collection('kasalko_marketplace').get(),
       DB.collection('kasalko_vendor_leads').get(),
       DB.collection('kasalko_templates').where('status','==','active').get(),
+      DB.collection('kasalko_registered_users').get(),
       DB.collection('users').get(),
       DB.collection('kasalko_visits').get(),
       DB.collection('kasalko_visits').where('ts','>=',todayTs).get(),
@@ -446,7 +447,8 @@ async function loadDashboard() {
     const suppPending  = suppSnap.docs.filter(d => d.data().status === 'pending' || (!d.data().status && !d.data().verified)).length;
     const leadsTotal   = leadsSnap.size;
     const tplTotal     = tplSnap.size;
-    const usersTotal   = usersSnap.size;
+    const regUsers     = regSnap.size;
+    const planUsers    = planSnap.size;
     const visitsAll    = visitsAllSnap.size;
     const visitsToday  = visitsTodaySnap.size;
 
@@ -498,7 +500,8 @@ async function loadDashboard() {
         <!-- Stats grid -->
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px">
           ${statCard('🏪','Suppliers',suppTotal,`${suppActive} active · ${suppPending} pending`)}
-          ${statCard('👥','App Users',usersTotal,'Couples with saved data')}
+          ${statCard('👤','Registered Users',regUsers,'Signed up (Google / email)')}
+          ${statCard('💍','Active Planners',planUsers,'Couples with saved data')}
           ${statCard('📋','Leads',leadsTotal,'Supplier enquiries')}
           ${statCard('💰','Live Templates',tplTotal,'Active in marketplace')}
           ${statCard('📈','Visits Today',visitsToday,'Excluding admin','var(--green-deep)')}
