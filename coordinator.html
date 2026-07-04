@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Coordinator Planner — Vows & Petals</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --navy:   #0d1b2e;
+  --navy-2: #152640;
+  --navy-3: #1e3a5a;
+  --gold:   #d4a853;
+  --gold-lt:#e8c87a;
+  --gold-dk:#b8882a;
+  --text:   #e8e2d8;
+  --text-2: #b0a898;
+  --text-3: #7a7068;
+  --r-sm:   8px;
+  --r-md:   14px;
+  --r-lg:   20px;
+  --r-xl:   28px;
+  --f:      'Inter', sans-serif;
+  --f2:     'Cormorant Garamond', serif;
+}
+
+body{font-family:var(--f);background:var(--navy);color:var(--text);min-height:100vh;line-height:1.5}
+
+/* ─── Screens ─── */
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* ─── Header ─── */
+.coord-header{
+  background:rgba(13,27,46,0.97);
+  border-bottom:1px solid rgba(212,168,83,0.18);
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(14px);
+}
+.coord-logo{display:flex;align-items:center;gap:10px}
+.coord-logo-icon{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dk));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.coord-logo-text{font-family:var(--f2);font-size:18px;color:var(--gold);font-weight:600}
+.coord-logo-sub{font-size:10px;color:var(--text-2);letter-spacing:.08em;text-transform:uppercase;margin-left:2px}
+
+/* ─── Buttons ─── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 20px;border-radius:var(--r-md);
+  font-family:var(--f);font-size:14px;font-weight:500;
+  border:none;cursor:pointer;transition:all .2s;text-decoration:none;
+}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dk));color:var(--navy)}
+.btn-gold:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid rgba(212,168,83,.4);color:var(--gold)}
+.btn-outline:hover{background:rgba(212,168,83,.1)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text-2);border:1px solid rgba(255,255,255,.08)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.btn-danger{background:rgba(224,80,80,.12);color:#ff8888;border:1px solid rgba(224,80,80,.25)}
+.btn-danger:hover{background:rgba(224,80,80,.22)}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:var(--r-sm)}
+.btn-lg{padding:14px 28px;font-size:16px}
+
+/* ─── Card ─── */
+.card{background:rgba(21,38,64,.8);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-lg);padding:20px}
+.card-gold{background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.22)}
+
+/* ─── Form ─── */
+.field-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+label{font-size:12px;font-weight:500;color:var(--text-2);letter-spacing:.04em;text-transform:uppercase}
+input,textarea,select{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r-sm);padding:10px 14px;color:var(--text);
+  font-family:var(--f);font-size:14px;transition:border-color .2s;outline:none;
+}
+input:focus,textarea:focus,select:focus{border-color:rgba(212,168,83,.5)}
+input::placeholder,textarea::placeholder{color:var(--text-3)}
+select option{background:var(--navy-2);color:var(--text)}
+textarea{resize:vertical;min-height:80px}
+
+/* ─── Decorators ─── */
+.gold-divider{
+  display:flex;align-items:center;gap:12px;margin:20px 0;
+  color:var(--gold);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+}
+.gold-divider::before,.gold-divider::after{content:'';flex:1;border-top:1px solid rgba(212,168,83,.25)}
+.section-title{font-family:var(--f2);font-size:22px;font-weight:600;color:var(--gold-lt);margin-bottom:4px}
+.section-sub{font-size:13px;color:var(--text-2)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
+.badge-gold{background:rgba(212,168,83,.15);color:var(--gold);border:1px solid rgba(212,168,83,.3)}
+
+/* ══════════════════════════════════════════
+   SCREEN: ONBOARDING
+══════════════════════════════════════════ */
+#s-onboarding{align-items:center;justify-content:center;padding:40px 20px}
+.ob-wrap{width:100%;max-width:480px}
+.ob-logo{text-align:center;margin-bottom:36px}
+.ob-icon{
+  width:72px;height:72px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dk));
+  border-radius:18px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:32px;margin-bottom:16px;
+}
+.ob-title{font-family:var(--f2);font-size:32px;color:var(--gold-lt);margin-bottom:6px}
+.ob-sub{font-size:14px;color:var(--text-2)}
+
+/* ══════════════════════════════════════════
+   SCREEN: DASHBOARD
+══════════════════════════════════════════ */
+#s-dashboard{flex-direction:column}
+.dash-body{flex:1;padding:24px 20px;max-width:720px;width:100%;margin:0 auto}
+
+.coord-badge-card{
+  background:linear-gradient(135deg,var(--navy-3) 0%,var(--navy-2) 100%);
+  border:1px solid rgba(212,168,83,.28);border-radius:var(--r-xl);
+  padding:24px;display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;
+  position:relative;overflow:hidden;
+}
+.coord-badge-card::before{
+  content:'';position:absolute;top:0;right:0;
+  width:200px;height:200px;
+  background:radial-gradient(circle,rgba(212,168,83,.08) 0%,transparent 70%);
+}
+.coord-avatar{
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dk));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--f2);font-size:24px;color:var(--navy);font-weight:700;flex-shrink:0;
+}
+.coord-badge-info{flex:1}
+.coord-badge-name{font-family:var(--f2);font-size:22px;color:var(--gold-lt);margin-bottom:2px}
+.coord-badge-spec{font-size:13px;color:var(--text-2);margin-bottom:8px}
+.coord-badge-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--text-3)}
+.coord-badge-meta span{display:flex;align-items:center;gap:4px}
+
+.plans-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+
+.plan-card{
+  background:rgba(21,38,64,.7);border:1px solid rgba(255,255,255,.06);
+  border-radius:var(--r-lg);padding:18px 20px;
+  display:flex;align-items:center;gap:14px;margin-bottom:10px;
+  cursor:pointer;transition:all .2s;
+}
+.plan-card:hover{border-color:rgba(212,168,83,.3);background:rgba(21,38,64,.9);transform:translateX(2px)}
+.plan-card-icon{
+  width:44px;height:44px;border-radius:var(--r-md);
+  background:rgba(212,168,83,.1);border:1px solid rgba(212,168,83,.2);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.plan-card-info{flex:1;min-width:0}
+.plan-card-couple{font-family:var(--f2);font-size:17px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan-card-meta{font-size:12px;color:var(--text-2);margin-top:2px}
+.plan-card-actions{display:flex;gap:6px;flex-shrink:0}
+
+.upgrade-banner{
+  background:linear-gradient(135deg,rgba(212,168,83,.1),rgba(184,136,42,.15));
+  border:1px solid rgba(212,168,83,.4);border-radius:var(--r-lg);
+  padding:24px;text-align:center;margin-bottom:10px;
+}
+.upgrade-banner-icon{font-size:32px;margin-bottom:10px}
+.upgrade-banner h3{font-family:var(--f2);font-size:20px;color:var(--gold-lt);margin-bottom:6px}
+.upgrade-banner p{font-size:13px;color:var(--text-2);margin-bottom:16px}
+
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-2)}
+.empty-state-icon{font-size:48px;margin-bottom:16px;opacity:.5}
+.empty-state h3{font-family:var(--f2);font-size:20px;color:var(--text);margin-bottom:6px}
+.empty-state p{font-size:13px}
+
+/* ══════════════════════════════════════════
+   SCREEN: PLAN DETAIL
+══════════════════════════════════════════ */
+#s-detail{flex-direction:column}
+.detail-sub-header{
+  background:rgba(13,27,46,.9);border-bottom:1px solid rgba(255,255,255,.06);
+  padding:10px 20px;display:flex;align-items:center;gap:10px;
+}
+.detail-sub-header .couple-name{font-family:var(--f2);font-size:17px;color:var(--gold-lt);flex:1}
+
+.detail-tabs{
+  display:flex;gap:4px;padding:12px 20px 0;
+  background:rgba(13,27,46,.6);border-bottom:1px solid rgba(255,255,255,.06);
+  overflow-x:auto;
+}
+.detail-tab{
+  padding:8px 16px;border-radius:var(--r-sm) var(--r-sm) 0 0;
+  font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;
+  background:transparent;border:none;white-space:nowrap;transition:all .2s;
+  border-bottom:2px solid transparent;
+}
+.detail-tab:hover{color:var(--gold)}
+.detail-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+.detail-body{flex:1;padding:24px 20px;max-width:720px;width:100%;margin:0 auto;overflow-y:auto}
+.detail-panel{display:none}
+.detail-panel.active{display:block}
+
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.info-tile{background:rgba(21,38,64,.6);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-md);padding:14px 16px}
+.info-tile-label{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.info-tile-value{font-size:15px;color:var(--text);font-weight:500}
+.info-tile-value.big{font-family:var(--f2);font-size:22px;color:var(--gold-lt)}
+
+.timeline-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.timeline-item:last-child{border-bottom:none}
+.tl-time{width:64px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--gold);padding-top:1px}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:6px;flex-shrink:0}
+.tl-content{flex:1}
+.tl-label{font-size:14px;color:var(--text)}
+.tl-note{font-size:12px;color:var(--text-2);margin-top:2px}
+
+.vendor-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.vendor-item:last-child{border-bottom:none}
+.vendor-icon{width:36px;height:36px;border-radius:var(--r-sm);background:rgba(212,168,83,.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.vendor-info{flex:1;min-width:0}
+.vendor-name{font-size:14px;color:var(--text);font-weight:500}
+.vendor-cat{font-size:12px;color:var(--text-3)}
+.vendor-contact{font-size:12px;color:var(--text-2)}
+
+.inclusion-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px;color:var(--text)}
+.inclusion-item:last-child{border-bottom:none}
+.inclusion-check{width:20px;height:20px;border-radius:50%;background:rgba(212,168,83,.15);border:1px solid rgba(212,168,83,.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0}
+
+.add-item-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.add-item-row input,.add-item-row select{flex:1;min-width:120px}
+
+/* ══════════════════════════════════════════
+   SCREEN: PRESENTATION
+══════════════════════════════════════════ */
+#s-presentation{background:#060e1a;align-items:center;justify-content:center;position:relative}
+
+.pres-slide{
+  width:100%;max-width:820px;min-height:60vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 40px;text-align:center;
+}
+.anim-forward{animation:slideIn .35s ease}
+.anim-back{animation:slideBack .35s ease}
+
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+
+.pres-eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:20px;opacity:.8}
+.pres-couple{font-family:var(--f2);font-size:clamp(38px,8vw,72px);color:var(--gold-lt);line-height:1.1;margin-bottom:20px}
+.pres-and{font-family:var(--f2);font-size:.6em;color:var(--text-2);display:block}
+.pres-date{font-size:clamp(14px,2vw,18px);color:var(--text-2)}
+.pres-venue{font-family:var(--f2);font-size:clamp(24px,4vw,42px);color:var(--gold-lt);margin-bottom:10px}
+.pres-pkg{font-size:15px;color:var(--text-2)}
+.pres-section-title{font-family:var(--f2);font-size:36px;color:var(--gold-lt);margin-bottom:28px}
+.pres-ornament{color:var(--gold);font-size:20px;opacity:.4;margin:16px 0;letter-spacing:12px}
+
+.pres-list{list-style:none;text-align:left;width:100%;max-width:520px}
+.pres-list li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(212,168,83,.1);font-size:16px;color:var(--text)}
+.pres-list li:last-child{border-bottom:none}
+.pres-list-check{width:22px;height:22px;border-radius:50%;background:rgba(212,168,83,.15);border:1px solid rgba(212,168,83,.4);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:11px;flex-shrink:0}
+
+.pres-timeline{width:100%;max-width:520px}
+.pres-tl-item{display:flex;gap:16px;padding:12px 0;border-bottom:1px solid rgba(212,168,83,.1);text-align:left}
+.pres-tl-item:last-child{border-bottom:none}
+.pres-tl-time{width:70px;font-size:14px;font-weight:600;color:var(--gold);flex-shrink:0;padding-top:1px}
+.pres-tl-label{font-size:15px;color:var(--text);flex:1}
+
+.pres-vendors{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:560px;text-align:left}
+.pres-vendor-card{background:rgba(255,255,255,.04);border:1px solid rgba(212,168,83,.15);border-radius:var(--r-md);padding:12px 14px}
+.pres-vendor-cat{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.pres-vendor-name{font-size:14px;color:var(--text);font-weight:500}
+
+.pres-closing-name{font-family:var(--f2);font-size:clamp(28px,5vw,52px);color:var(--gold-lt);margin-bottom:8px}
+.pres-closing-spec{font-size:16px;color:var(--text-2);margin-bottom:20px}
+.pres-closing-contact{font-size:15px;color:var(--text)}
+
+.pres-nav{
+  position:fixed;bottom:0;left:0;right:0;padding:20px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to top,rgba(6,14,26,.95),transparent);
+}
+.pres-dots{display:flex;gap:6px;align-items:center}
+.pres-dot{width:6px;height:6px;border-radius:50%;background:rgba(212,168,83,.25);transition:all .3s;cursor:pointer}
+.pres-dot.active{width:20px;border-radius:3px;background:var(--gold)}
+
+.pres-controls{position:fixed;top:20px;right:20px;display:flex;gap:8px;z-index:10}
+
+/* ─── Modal ─── */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(6,14,26,.88);
+  z-index:500;display:flex;align-items:center;justify-content:center;
+  padding:24px;backdrop-filter:blur(6px);
+}
+.modal-backdrop.hidden{display:none}
+.modal-box{background:var(--navy-2);border:1px solid rgba(212,168,83,.22);border-radius:var(--r-xl);width:100%;max-width:480px;padding:28px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--f2);font-size:22px;color:var(--gold-lt);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text-2);margin-bottom:22px}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+
+/* ─── Toast ─── */
+#toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:rgba(212,168,83,.95);color:var(--navy);
+  padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;
+  z-index:999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;
+}
+#toast.show{opacity:1}
+
+/* ─── Responsive ─── */
+@media(max-width:480px){
+  .overview-grid{grid-template-columns:1fr}
+  .pres-vendors{grid-template-columns:1fr}
+  .coord-badge-card{flex-direction:column}
+  .modal-box{padding:20px}
+}
+@media(min-width:900px){
+  .dash-body,.detail-body{padding:28px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     SCREEN: ONBOARDING
+══════════════════════════════════ -->
+<div id="s-onboarding" class="screen">
+  <div class="ob-wrap" style="margin:0 auto;width:100%;max-width:480px;padding:40px 20px">
+    <div class="ob-logo" style="text-align:center;margin-bottom:36px">
+      <div class="ob-icon" style="display:inline-flex">🎀</div>
+      <div class="ob-title">Coordinator Planner</div>
+      <div class="ob-sub" style="margin-top:6px">by Vows & Petals — Manage clients with ease</div>
+    </div>
+
+    <div class="card">
+      <div class="gold-divider">Your Profile</div>
+
+      <div class="field-group">
+        <label>Full Name *</label>
+        <input type="text" id="ob-name" placeholder="Your name" maxlength="60">
+      </div>
+      <div class="field-group">
+        <label>Specialty</label>
+        <select id="ob-spec">
+          <option value="">Select specialty…</option>
+          <option>Full-Service Coordinator</option>
+          <option>Day-of Coordinator</option>
+          <option>Partial Planning</option>
+          <option>Destination Weddings</option>
+          <option>Intimate Weddings</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Contact (phone or email)</label>
+        <input type="text" id="ob-contact" placeholder="09xx xxx xxxx">
+      </div>
+      <div class="field-group">
+        <label>Years of Experience</label>
+        <input type="number" id="ob-years" placeholder="e.g. 5" min="0" max="50">
+      </div>
+      <div class="field-group">
+        <label>Bio (optional)</label>
+        <textarea id="ob-bio" placeholder="A short intro about you and your service…"></textarea>
+      </div>
+
+      <button class="btn btn-gold btn-lg" style="width:100%" onclick="saveProfile()">Get Started →</button>
+    </div>
+
+    <p style="text-align:center;font-size:12px;color:var(--text-3);margin-top:16px">
+      Your data is stored locally on your device. Nothing is uploaded.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: DASHBOARD
+══════════════════════════════════ -->
+<div id="s-dashboard" class="screen">
+  <div class="coord-header">
+    <div class="coord-logo">
+      <div class="coord-logo-icon">🎀</div>
+      <div>
+        <div class="coord-logo-text">Coordinator</div>
+        <div class="coord-logo-sub">Vows & Petals</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="https://www.vows-and-petals.com/" class="btn btn-ghost btn-sm">🌸 Planner</a>
+      <button class="btn btn-ghost btn-sm" onclick="editProfile()">Edit Profile</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <div class="coord-badge-card" id="coord-badge"></div>
+
+    <div class="plans-header">
+      <div>
+        <div class="section-title">Wedding Plans</div>
+        <div class="section-sub" id="plans-count-label"></div>
+      </div>
+      <button class="btn btn-gold" onclick="openNewPlan()">+ New Plan</button>
+    </div>
+
+    <div id="plans-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: PLAN DETAIL
+══════════════════════════════════ -->
+<div id="s-detail" class="screen">
+  <div class="coord-header">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('dashboard');renderDashboard()">← Back</button>
+    <div class="coord-logo" style="position:absolute;left:50%;transform:translateX(-50%)">
+      <div class="coord-logo-icon" style="width:24px;height:24px;font-size:12px">🎀</div>
+      <div class="coord-logo-text" style="font-size:15px">Coordinator</div>
+    </div>
+    <button class="btn btn-gold btn-sm" onclick="openPresentation()">▶ Present</button>
+  </div>
+
+  <div class="detail-sub-header">
+    <span class="couple-name" id="detail-couple-name"></span>
+    <button class="btn btn-ghost btn-sm" onclick="openEditPlan()">Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="deletePlan()">Delete</button>
+  </div>
+
+  <div class="detail-tabs">
+    <button class="detail-tab active" onclick="detailTab('overview',this)">📋 Overview</button>
+    <button class="detail-tab" onclick="detailTab('timeline',this)">⏰ Timeline</button>
+    <button class="detail-tab" onclick="detailTab('vendors',this)">🤝 Vendors</button>
+    <button class="detail-tab" onclick="detailTab('inclusions',this)">✅ Inclusions</button>
+  </div>
+
+  <div class="detail-body">
+    <div class="detail-panel active" id="dp-overview">
+      <div class="overview-grid" id="detail-overview-grid"></div>
+      <div id="detail-notes-section"></div>
+    </div>
+
+    <div class="detail-panel" id="dp-timeline">
+      <div id="timeline-list"></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:16px 0">
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Add Timeline Item</div>
+      <div class="add-item-row">
+        <input type="time" id="tl-time" style="max-width:120px;flex:none">
+        <input type="text" id="tl-label" placeholder="Event (e.g. Ceremony Start)" style="flex:2">
+        <input type="text" id="tl-note" placeholder="Note (optional)" style="flex:1">
+        <button class="btn btn-outline btn-sm" onclick="addTimelineItem()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="detail-panel" id="dp-vendors">
+      <div id="vendors-list"></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:16px 0">
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Add Vendor</div>
+      <div class="add-item-row">
+        <input type="text" id="v-name" placeholder="Vendor / business name" style="flex:2">
+        <input type="text" id="v-cat" placeholder="Category (e.g. Florist)" style="flex:1">
+        <input type="text" id="v-contact" placeholder="Contact" style="flex:1">
+        <button class="btn btn-outline btn-sm" onclick="addVendor()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="detail-panel" id="dp-inclusions">
+      <div id="inclusions-list"></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:16px 0">
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:.05em">Add Inclusion</div>
+      <div class="add-item-row">
+        <input type="text" id="inc-text" placeholder="e.g. 8-hour coverage, Bridal car, 200 pax venue" style="flex:3">
+        <button class="btn btn-outline btn-sm" onclick="addInclusion()">+ Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN: PRESENTATION
+══════════════════════════════════ -->
+<div id="s-presentation" class="screen">
+  <div class="pres-controls">
+    <button class="btn btn-ghost btn-sm" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    <button class="btn btn-ghost btn-sm" onclick="exitPresentation()">✕ Exit</button>
+  </div>
+
+  <div id="pres-slide-wrap"></div>
+
+  <div class="pres-nav">
+    <button class="btn btn-ghost" onclick="prevSlide()">← Prev</button>
+    <div class="pres-dots" id="pres-dots"></div>
+    <button class="btn btn-ghost" onclick="nextSlide()">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL: New / Edit Plan
+══════════════════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-plan">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-plan-title">New Wedding Plan</div>
+    <div class="modal-sub">Fill in the couple's details</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field-group"><label>Partner 1 *</label><input type="text" id="mp-p1" placeholder="e.g. Maria"></div>
+      <div class="field-group"><label>Partner 2 *</label><input type="text" id="mp-p2" placeholder="e.g. Jose"></div>
+    </div>
+    <div class="field-group"><label>Wedding Date</label><input type="date" id="mp-date"></div>
+    <div class="field-group"><label>Venue</label><input type="text" id="mp-venue" placeholder="e.g. The Grand Ballroom, Makati"></div>
+    <div class="field-group"><label>Package Name</label><input type="text" id="mp-pkg" placeholder="e.g. Gold Premium Package"></div>
+    <div class="field-group"><label>Budget (₱)</label><input type="text" id="mp-budget" inputmode="numeric" placeholder="e.g. 500,000" oninput="fmtBudget(this)"></div>
+    <div class="field-group"><label>Notes</label><textarea id="mp-notes" placeholder="Special requests, reminders…" style="min-height:64px"></textarea></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-plan')">Cancel</button>
+      <button class="btn btn-gold" onclick="savePlan()">Save Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL: Edit Profile
+══════════════════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-profile">
+  <div class="modal-box">
+    <div class="modal-title">Edit Profile</div>
+    <div class="modal-sub">Update your coordinator info</div>
+
+    <div class="field-group"><label>Full Name *</label><input type="text" id="ep-name" maxlength="60"></div>
+    <div class="field-group">
+      <label>Specialty</label>
+      <select id="ep-spec">
+        <option value="">Select specialty…</option>
+        <option>Full-Service Coordinator</option>
+        <option>Day-of Coordinator</option>
+        <option>Partial Planning</option>
+        <option>Destination Weddings</option>
+        <option>Intimate Weddings</option>
+      </select>
+    </div>
+    <div class="field-group"><label>Contact</label><input type="text" id="ep-contact"></div>
+    <div class="field-group"><label>Years of Experience</label><input type="number" id="ep-years" min="0" max="50"></div>
+    <div class="field-group"><label>Bio</label><textarea id="ep-bio"></textarea></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-profile')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveProfileEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const FREE_PLAN_LIMIT = 3;
+const LS_PROFILE = 'at_coord_profile';
+const LS_PLANS   = 'at_coord_plans';
+
+let PROFILE    = null;
+let PLANS      = [];
+let CURRENT_ID = null;
+let EDIT_ID    = null;
+let SLIDES     = [];
+let SLIDE_IDX  = 0;
+
+function loadData() {
+  try { PROFILE = JSON.parse(localStorage.getItem(LS_PROFILE)); } catch(e) {}
+  try { PLANS   = JSON.parse(localStorage.getItem(LS_PLANS)) || []; } catch(e) {}
+}
+
+function persist() {
+  localStorage.setItem(LS_PROFILE, JSON.stringify(PROFILE));
+  localStorage.setItem(LS_PLANS,   JSON.stringify(PLANS));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function currentPlan() {
+  return PLANS.find(p => p.id === CURRENT_ID) || null;
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════
+   SCREENS
+══════════════════════════════════════════ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('s-' + name);
+  if (el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ══════════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════════ */
+function saveProfile() {
+  const name = document.getElementById('ob-name').value.trim();
+  if (!name) { toast('Please enter your name'); return; }
+  PROFILE = {
+    name,
+    specialty : document.getElementById('ob-spec').value,
+    contact   : document.getElementById('ob-contact').value.trim(),
+    years     : parseInt(document.getElementById('ob-years').value) || 0,
+    bio       : document.getElementById('ob-bio').value.trim(),
+  };
+  persist();
+  showScreen('dashboard');
+  renderDashboard();
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
+function renderDashboard() {
+  renderBadge();
+  renderPlansList();
+}
+
+function renderBadge() {
+  const p = PROFILE;
+  const initials = p.name.trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+  const yearLabel = p.years ? `${p.years} yr${p.years !== 1 ? 's' : ''} experience` : '';
+  document.getElementById('coord-badge').innerHTML = `
+    <div class="coord-avatar">${initials}</div>
+    <div class="coord-badge-info">
+      <div class="coord-badge-name">${esc(p.name)}</div>
+      <div class="coord-badge-spec">${esc(p.specialty || 'Wedding Coordinator')}</div>
+      <div class="coord-badge-meta">
+        ${p.contact ? `<span>📞 ${esc(p.contact)}</span>` : ''}
+        ${yearLabel  ? `<span>⭐ ${yearLabel}</span>` : ''}
+      </div>
+      ${p.bio ? `<div style="margin-top:10px;font-size:13px;color:var(--text-2);line-height:1.55">${esc(p.bio)}</div>` : ''}
+    </div>
+    <div style="flex-shrink:0;position:relative;z-index:1">
+      <span class="badge badge-gold">Coordinator</span>
+    </div>
+  `;
+}
+
+function renderPlansList() {
+  const count = PLANS.length;
+  document.getElementById('plans-count-label').textContent =
+    `${count} of ${FREE_PLAN_LIMIT} used on Free Plan`;
+
+  const list = document.getElementById('plans-list');
+
+  if (count === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">💍</div>
+        <h3>No plans yet</h3>
+        <p>Create your first wedding plan to get started.</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = PLANS.map(plan => {
+    const dateStr = plan.date
+      ? new Date(plan.date + 'T00:00:00').toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})
+      : 'Date TBD';
+    const daysLeft = plan.date
+      ? Math.ceil((new Date(plan.date + 'T00:00:00') - Date.now()) / 86400000)
+      : null;
+    const cdStr = daysLeft !== null
+      ? (daysLeft > 0 ? ` · in ${daysLeft}d` : daysLeft === 0 ? ' · 🎉 Today!' : ` · ${Math.abs(daysLeft)}d ago`)
+      : '';
+
+    return `
+      <div class="plan-card" onclick="openDetail('${plan.id}')">
+        <div class="plan-card-icon">💍</div>
+        <div class="plan-card-info">
+          <div class="plan-card-couple">${esc(plan.p1)} &amp; ${esc(plan.p2)}</div>
+          <div class="plan-card-meta">${dateStr}${cdStr}${plan.venue ? ' · ' + esc(plan.venue) : ''}</div>
+        </div>
+        <div class="plan-card-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" onclick="openDetail('${plan.id}')">Open</button>
+          <button class="btn btn-gold btn-sm" onclick="openPresentationById('${plan.id}')">▶</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   PLAN MODAL
+══════════════════════════════════════════ */
+function openNewPlan() {
+  if (PLANS.length >= FREE_PLAN_LIMIT) {
+    showUpgradeBanner();
+    return;
+  }
+  EDIT_ID = null;
+  document.getElementById('modal-plan-title').textContent = 'New Wedding Plan';
+  ['mp-p1','mp-p2','mp-date','mp-venue','mp-pkg','mp-budget','mp-notes']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  openModal('modal-plan');
+}
+
+function openEditPlan() {
+  const plan = currentPlan();
+  if (!plan) return;
+  EDIT_ID = plan.id;
+  document.getElementById('modal-plan-title').textContent = 'Edit Plan';
+  document.getElementById('mp-p1').value     = plan.p1 || '';
+  document.getElementById('mp-p2').value     = plan.p2 || '';
+  document.getElementById('mp-date').value   = plan.date || '';
+  document.getElementById('mp-venue').value  = plan.venue || '';
+  document.getElementById('mp-pkg').value    = plan.pkg || '';
+  document.getElementById('mp-budget').value = plan.budget ? Number(plan.budget).toLocaleString() : '';
+  document.getElementById('mp-notes').value  = plan.notes || '';
+  openModal('modal-plan');
+}
+
+function savePlan() {
+  const p1 = document.getElementById('mp-p1').value.trim();
+  const p2 = document.getElementById('mp-p2').value.trim();
+  if (!p1 || !p2) { toast('Both partner names are required'); return; }
+  const budget = Number(document.getElementById('mp-budget').value.replace(/,/g,'')) || 0;
+
+  if (EDIT_ID) {
+    const idx = PLANS.findIndex(p => p.id === EDIT_ID);
+    if (idx >= 0) Object.assign(PLANS[idx], {
+      p1, p2,
+      date  : document.getElementById('mp-date').value,
+      venue : document.getElementById('mp-venue').value.trim(),
+      pkg   : document.getElementById('mp-pkg').value.trim(),
+      budget,
+      notes : document.getElementById('mp-notes').value.trim(),
+    });
+    persist();
+    closeModal('modal-plan');
+    renderDetailOverview();
+    document.getElementById('detail-couple-name').textContent = `${p1} & ${p2}`;
+    toast('Plan updated');
+  } else {
+    const newPlan = {
+      id: uid(), p1, p2,
+      date       : document.getElementById('mp-date').value,
+      venue      : document.getElementById('mp-venue').value.trim(),
+      pkg        : document.getElementById('mp-pkg').value.trim(),
+      budget, notes : document.getElementById('mp-notes').value.trim(),
+      timeline: [], vendors: [], inclusions: [],
+    };
+    PLANS.push(newPlan);
+    persist();
+    closeModal('modal-plan');
+    CURRENT_ID = newPlan.id;
+    showScreen('detail');
+    renderDetail();
+    toast('Plan created');
+  }
+}
+
+function deletePlan() {
+  const plan = currentPlan();
+  if (!plan) return;
+  if (!confirm(`Delete the plan for ${plan.p1} & ${plan.p2}? This cannot be undone.`)) return;
+  PLANS = PLANS.filter(p => p.id !== CURRENT_ID);
+  persist();
+  CURRENT_ID = null;
+  showScreen('dashboard');
+  renderDashboard();
+  toast('Plan deleted');
+}
+
+function showUpgradeBanner() {
+  const list = document.getElementById('plans-list');
+  if (document.getElementById('upgrade-banner')) return;
+  list.insertAdjacentHTML('afterbegin', `
+    <div class="upgrade-banner" id="upgrade-banner">
+      <div class="upgrade-banner-icon">🔓</div>
+      <h3>Free Plan Limit Reached</h3>
+      <p>You've used all ${FREE_PLAN_LIMIT} free wedding plans. Upgrade to Pro to manage unlimited clients.</p>
+      <button class="btn btn-gold" onclick="document.getElementById('upgrade-banner').remove()">Got it</button>
+    </div>`);
+}
+
+/* ══════════════════════════════════════════
+   PLAN DETAIL
+══════════════════════════════════════════ */
+function openDetail(id) {
+  CURRENT_ID = id;
+  showScreen('detail');
+  renderDetail();
+  document.querySelectorAll('.detail-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('.detail-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+}
+
+function renderDetail() {
+  const plan = currentPlan();
+  if (!plan) return;
+  document.getElementById('detail-couple-name').textContent = `${plan.p1} & ${plan.p2}`;
+  renderDetailOverview();
+  renderTimeline();
+  renderVendors();
+  renderInclusions();
+}
+
+function renderDetailOverview() {
+  const plan = currentPlan();
+  if (!plan) return;
+  const dateStr = plan.date
+    ? new Date(plan.date + 'T00:00:00').toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})
+    : '—';
+  const budgetStr = plan.budget ? '₱' + Number(plan.budget).toLocaleString() : '—';
+
+  document.getElementById('detail-overview-grid').innerHTML = `
+    <div class="info-tile"><div class="info-tile-label">Partner 1</div><div class="info-tile-value">${esc(plan.p1)}</div></div>
+    <div class="info-tile"><div class="info-tile-label">Partner 2</div><div class="info-tile-value">${esc(plan.p2)}</div></div>
+    <div class="info-tile"><div class="info-tile-label">Wedding Date</div><div class="info-tile-value">${dateStr}</div></div>
+    <div class="info-tile"><div class="info-tile-label">Budget</div><div class="info-tile-value big">${budgetStr}</div></div>
+    <div class="info-tile" style="grid-column:1/-1"><div class="info-tile-label">Venue</div><div class="info-tile-value">${esc(plan.venue || '—')}</div></div>
+    <div class="info-tile" style="grid-column:1/-1"><div class="info-tile-label">Package</div><div class="info-tile-value">${esc(plan.pkg || '—')}</div></div>
+  `;
+  document.getElementById('detail-notes-section').innerHTML = plan.notes ? `
+    <div class="card" style="margin-top:14px">
+      <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Notes</div>
+      <div style="font-size:14px;color:var(--text-2);line-height:1.6;white-space:pre-wrap">${esc(plan.notes)}</div>
+    </div>` : '';
+}
+
+function detailTab(name, btn) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('dp-' + name).classList.add('active');
+}
+
+/* ── Timeline ── */
+function renderTimeline() {
+  const plan = currentPlan();
+  if (!plan) return;
+  const items = plan.timeline || [];
+  document.getElementById('timeline-list').innerHTML = items.length === 0
+    ? `<div style="padding:24px 0;color:var(--text-3);font-size:14px;text-align:center">No timeline items yet. Add one below.</div>`
+    : items.map((item, i) => `
+        <div class="timeline-item">
+          <div class="tl-time">${esc(item.time || '')}</div>
+          <div class="tl-dot"></div>
+          <div class="tl-content">
+            <div class="tl-label">${esc(item.label)}</div>
+            ${item.note ? `<div class="tl-note">${esc(item.note)}</div>` : ''}
+          </div>
+          <button class="btn btn-ghost btn-sm" style="flex-shrink:0;padding:4px 10px" onclick="removeTimelineItem(${i})">✕</button>
+        </div>`).join('');
+}
+
+function addTimelineItem() {
+  const time  = document.getElementById('tl-time').value;
+  const label = document.getElementById('tl-label').value.trim();
+  const note  = document.getElementById('tl-note').value.trim();
+  if (!label) { toast('Enter an event name'); return; }
+  const plan = currentPlan();
+  if (!plan) return;
+  plan.timeline = plan.timeline || [];
+  plan.timeline.push({ time, label, note });
+  plan.timeline.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  persist();
+  document.getElementById('tl-time').value = '';
+  document.getElementById('tl-label').value = '';
+  document.getElementById('tl-note').value = '';
+  renderTimeline();
+}
+
+function removeTimelineItem(i) {
+  const plan = currentPlan();
+  if (!plan) return;
+  plan.timeline.splice(i, 1);
+  persist();
+  renderTimeline();
+}
+
+/* ── Vendors ── */
+function renderVendors() {
+  const plan = currentPlan();
+  if (!plan) return;
+  const items = plan.vendors || [];
+  document.getElementById('vendors-list').innerHTML = items.length === 0
+    ? `<div style="padding:24px 0;color:var(--text-3);font-size:14px;text-align:center">No vendors added yet.</div>`
+    : items.map((v, i) => `
+        <div class="vendor-item">
+          <div class="vendor-icon">🤝</div>
+          <div class="vendor-info">
+            <div class="vendor-name">${esc(v.name)}</div>
+            <div class="vendor-cat">${esc(v.cat || '')}</div>
+            ${v.contact ? `<div class="vendor-contact">📞 ${esc(v.contact)}</div>` : ''}
+          </div>
+          <button class="btn btn-ghost btn-sm" style="flex-shrink:0;padding:4px 10px" onclick="removeVendor(${i})">✕</button>
+        </div>`).join('');
+}
+
+function addVendor() {
+  const name    = document.getElementById('v-name').value.trim();
+  const cat     = document.getElementById('v-cat').value.trim();
+  const contact = document.getElementById('v-contact').value.trim();
+  if (!name) { toast('Enter a vendor name'); return; }
+  const plan = currentPlan();
+  if (!plan) return;
+  plan.vendors = plan.vendors || [];
+  plan.vendors.push({ name, cat, contact });
+  persist();
+  ['v-name','v-cat','v-contact'].forEach(id => { document.getElementById(id).value = ''; });
+  renderVendors();
+}
+
+function removeVendor(i) {
+  const plan = currentPlan();
+  if (!plan) return;
+  plan.vendors.splice(i, 1);
+  persist();
+  renderVendors();
+}
+
+/* ── Inclusions ── */
+function renderInclusions() {
+  const plan = currentPlan();
+  if (!plan) return;
+  const items = plan.inclusions || [];
+  document.getElementById('inclusions-list').innerHTML = items.length === 0
+    ? `<div style="padding:24px 0;color:var(--text-3);font-size:14px;text-align:center">No inclusions added yet.</div>`
+    : items.map((inc, i) => `
+        <div class="inclusion-item">
+          <div class="inclusion-check">✓</div>
+          <span style="flex:1">${esc(inc)}</span>
+          <button class="btn btn-ghost btn-sm" style="flex-shrink:0;padding:4px 10px" onclick="removeInclusion(${i})">✕</button>
+        </div>`).join('');
+}
+
+function addInclusion() {
+  const text = document.getElementById('inc-text').value.trim();
+  if (!text) { toast('Enter an inclusion item'); return; }
+  const plan = currentPlan();
+  if (!plan) return;
+  plan.inclusions = plan.inclusions || [];
+  plan.inclusions.push(text);
+  persist();
+  document.getElementById('inc-text').value = '';
+  renderInclusions();
+}
+
+function removeInclusion(i) {
+  const plan = currentPlan();
+  if (!plan) return;
+  plan.inclusions.splice(i, 1);
+  persist();
+  renderInclusions();
+}
+
+/* ══════════════════════════════════════════
+   PRESENTATION
+══════════════════════════════════════════ */
+function openPresentation() { openPresentationById(CURRENT_ID); }
+
+function openPresentationById(id) {
+  CURRENT_ID = id;
+  const plan = currentPlan();
+  if (!plan) return;
+  SLIDES    = buildSlides(plan);
+  SLIDE_IDX = 0;
+  showScreen('presentation');
+  renderSlide(1);
+  renderDots();
+}
+
+function buildSlides(plan) {
+  const slides = [];
+
+  slides.push({ type:'title', p1:plan.p1, p2:plan.p2, date:plan.date });
+
+  if (plan.venue || plan.pkg || plan.budget)
+    slides.push({ type:'info', venue:plan.venue, pkg:plan.pkg, budget:plan.budget });
+
+  if (plan.inclusions && plan.inclusions.length)
+    slides.push({ type:'inclusions', items:plan.inclusions });
+
+  if (plan.timeline && plan.timeline.length) {
+    const tl = plan.timeline;
+    for (let i = 0; i < tl.length; i += 6)
+      slides.push({ type:'timeline', items:tl.slice(i,i+6), part: i>0 ? Math.ceil(i/6)+1 : null });
+  }
+
+  if (plan.vendors && plan.vendors.length) {
+    const vs = plan.vendors;
+    for (let i = 0; i < vs.length; i += 6)
+      slides.push({ type:'vendors', items:vs.slice(i,i+6), part: i>0 ? Math.ceil(i/6)+1 : null });
+  }
+
+  slides.push({ type:'closing', profile:PROFILE });
+  return slides;
+}
+
+function renderSlide(direction) {
+  const slide = SLIDES[SLIDE_IDX];
+  if (!slide) return;
+  const cls = direction < 0 ? 'anim-back' : 'anim-forward';
+  document.getElementById('pres-slide-wrap').innerHTML =
+    `<div class="pres-slide ${cls}">${renderSlideHTML(slide)}</div>`;
+}
+
+function renderSlideHTML(slide) {
+  switch(slide.type) {
+    case 'title': {
+      const dateStr = slide.date
+        ? new Date(slide.date+'T00:00:00').toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+        : '';
+      return `
+        <div class="pres-eyebrow">Wedding Presentation</div>
+        <div class="pres-couple">${esc(slide.p1)}<span class="pres-and">&amp;</span>${esc(slide.p2)}</div>
+        <div class="pres-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+        ${dateStr ? `<div class="pres-date">${dateStr}</div>` : ''}`;
+    }
+    case 'info': {
+      const b = slide.budget ? '₱' + Number(slide.budget).toLocaleString() : '';
+      return `
+        <div class="pres-eyebrow">Wedding Details</div>
+        ${slide.venue ? `<div class="pres-venue">${esc(slide.venue)}</div>` : ''}
+        ${slide.pkg   ? `<div class="pres-pkg">📦 ${esc(slide.pkg)}</div>` : ''}
+        <div class="pres-ornament">✦</div>
+        ${b ? `<div style="font-size:20px;color:var(--gold);margin-top:8px">${b} total budget</div>` : ''}`;
+    }
+    case 'inclusions': return `
+      <div class="pres-eyebrow">Package Inclusions</div>
+      <div class="pres-section-title">What's Included</div>
+      <ul class="pres-list">${slide.items.map(inc =>
+        `<li><div class="pres-list-check">✓</div>${esc(inc)}</li>`).join('')}</ul>`;
+
+    case 'timeline': return `
+      <div class="pres-eyebrow">Program Flow${slide.part ? ' (cont.)' : ''}</div>
+      <div class="pres-section-title">Timeline</div>
+      <div class="pres-timeline">${slide.items.map(item => `
+        <div class="pres-tl-item">
+          <div class="pres-tl-time">${esc(item.time||'')}</div>
+          <div class="pres-tl-label">
+            ${esc(item.label)}
+            ${item.note ? `<div style="font-size:13px;color:var(--text-2);margin-top:2px">${esc(item.note)}</div>` : ''}
+          </div>
+        </div>`).join('')}</div>`;
+
+    case 'vendors': return `
+      <div class="pres-eyebrow">Supplier Team${slide.part ? ' (cont.)' : ''}</div>
+      <div class="pres-section-title">Vendors</div>
+      <div class="pres-vendors">${slide.items.map(v => `
+        <div class="pres-vendor-card">
+          <div class="pres-vendor-cat">${esc(v.cat||'Vendor')}</div>
+          <div class="pres-vendor-name">${esc(v.name)}</div>
+          ${v.contact ? `<div style="font-size:12px;color:var(--text-2);margin-top:3px">${esc(v.contact)}</div>` : ''}
+        </div>`).join('')}</div>`;
+
+    case 'closing': {
+      const p = slide.profile || {};
+      return `
+        <div class="pres-eyebrow">Coordinated by</div>
+        <div class="pres-closing-name">${esc(p.name||'Your Coordinator')}</div>
+        <div class="pres-closing-spec">${esc(p.specialty||'Wedding Coordinator')}</div>
+        <div class="pres-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+        ${p.contact ? `<div class="pres-closing-contact">📞 ${esc(p.contact)}</div>` : ''}
+        <div style="margin-top:28px;font-size:13px;color:var(--text-3)">Powered by Vows &amp; Petals</div>`;
+    }
+    default: return '';
+  }
+}
+
+function renderDots() {
+  document.getElementById('pres-dots').innerHTML = SLIDES.map((_, i) => `
+    <div class="pres-dot ${i===SLIDE_IDX?'active':''}" onclick="goSlide(${i})"></div>`).join('');
+}
+
+function nextSlide() {
+  if (SLIDE_IDX < SLIDES.length-1) { SLIDE_IDX++; renderSlide(1);  renderDots(); }
+}
+function prevSlide() {
+  if (SLIDE_IDX > 0)                { SLIDE_IDX--; renderSlide(-1); renderDots(); }
+}
+function goSlide(i) {
+  const dir = i > SLIDE_IDX ? 1 : -1;
+  SLIDE_IDX = i;
+  renderSlide(dir);
+  renderDots();
+}
+
+function exitPresentation() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  if (CURRENT_ID) { showScreen('detail'); }
+  else { showScreen('dashboard'); renderDashboard(); }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen().catch(()=>{});
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('s-presentation').classList.contains('active')) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft')                   { e.preventDefault(); prevSlide(); }
+  if (e.key === 'Escape')                       exitPresentation();
+});
+
+/* ══════════════════════════════════════════
+   PROFILE EDIT
+══════════════════════════════════════════ */
+function editProfile() {
+  const p = PROFILE;
+  document.getElementById('ep-name').value    = p.name || '';
+  document.getElementById('ep-spec').value    = p.specialty || '';
+  document.getElementById('ep-contact').value = p.contact || '';
+  document.getElementById('ep-years').value   = p.years || '';
+  document.getElementById('ep-bio').value     = p.bio || '';
+  openModal('modal-profile');
+}
+
+function saveProfileEdit() {
+  const name = document.getElementById('ep-name').value.trim();
+  if (!name) { toast('Name is required'); return; }
+  PROFILE.name      = name;
+  PROFILE.specialty = document.getElementById('ep-spec').value;
+  PROFILE.contact   = document.getElementById('ep-contact').value.trim();
+  PROFILE.years     = parseInt(document.getElementById('ep-years').value) || 0;
+  PROFILE.bio       = document.getElementById('ep-bio').value.trim();
+  persist();
+  closeModal('modal-profile');
+  renderBadge();
+  toast('Profile updated');
+}
+
+/* ══════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════ */
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+let _toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function fmtBudget(input) {
+  const raw = input.value.replace(/\D/g,'');
+  if (raw) input.value = Number(raw).toLocaleString();
+}
+
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd) bd.classList.add('hidden'); });
+});
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+loadData();
+if (!PROFILE) {
+  showScreen('onboarding');
+} else {
+  showScreen('dashboard');
+  renderDashboard();
+}
+</script>
+</body>
+</html>

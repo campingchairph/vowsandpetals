@@ -553,6 +553,16 @@ function renderOverview() {
       </div>
     </div>
 
+    <!-- ── COORDINATOR LINK ── -->
+    <a href="coordinator.html" style="display:flex;align-items:center;gap:14px;margin-top:12px;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0d1b2e,#1e3a5a);border:1px solid rgba(212,168,83,0.3);text-decoration:none;transition:filter .2s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#d4a853,#b8882a);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎀</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#e8c87a;margin-bottom:2px">Coordinator Planner</div>
+        <div style="font-size:12px;color:#b0a898;line-height:1.4">Manage client plans &amp; present them in a meeting-style slideshow.</div>
+      </div>
+      <div style="font-size:18px;color:#d4a853;flex-shrink:0">→</div>
+    </a>
+
     <!-- ── DANGER ZONE ── -->
     <div style="margin-top:24px;padding:14px 16px;border-radius:14px;border:1px solid rgba(180,60,60,0.15);background:rgba(255,235,235,0.3)">
       <div style="font-size:10px;font-weight:700;color:#b43c3c;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">⚠️ Danger Zone</div>
