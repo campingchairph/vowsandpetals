@@ -1261,7 +1261,7 @@ const PANEL_HTML=[
     <div style="overflow-x:auto">
     <table class="guest-table">
       <thead><tr>
-        <th>#</th><th>Name</th><th>Contact</th><th>RSVP</th><th>Priority</th><th>Meal</th><th>Entourage / Seat</th><th></th>
+        <th>#</th><th>Full Name</th><th>Contact</th><th>RSVP</th><th>Seating Priority</th><th>Meal</th><th>Entourage / Seat</th><th></th>
       </tr></thead>
       <tbody>
       ${guests.map((g,i)=>{
@@ -1519,9 +1519,38 @@ function saveEditGuest(id){
    GUEST EXCEL EXPORT / IMPORT
 ══════════════════════════════════════════════ */
 function downloadGuestTemplate(){
+  if(!window.XLSX){alert('Excel library not loaded yet, please try again.');return}
+  const chairs=sFurn().filter(f=>f.type==='chair'||f.type==='freechair');
+  const hasFloorPlan=chairs.length>0;
+  if(!hasFloorPlan){
+    // Show informational popup — let them proceed but warn
+    const ov=document.createElement('div');
+    ov.className='overlay-bg';ov.id='fp-warn-ov';
+    ov.innerHTML=`<div class="modal-box" style="max-width:440px;text-align:center">
+      <div style="font-size:36px;margin-bottom:12px">📋</div>
+      <h3 style="margin-bottom:8px;color:var(--gold)">Floor Plan Not Set Up Yet</h3>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:16px">
+        Seat numbers in the Excel template are <strong>automatically filled from your floor plan.</strong>
+        Since you haven't added any tables or seats yet, the template will include <strong>50 blank rows</strong> with no seat assignments.
+      </p>
+      <p style="font-size:12px;color:var(--ink3);margin-bottom:20px">
+        Tip: Set up your floor plan first (Floor Plan tab), then download the template — your clients will see the actual seat labels (e.g. <em>"Round Table 1 · Chair 3"</em>).
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-outline" onclick="document.getElementById('fp-warn-ov').remove()">Cancel — set up floor plan</button>
+        <button class="btn btn-gold" onclick="document.getElementById('fp-warn-ov').remove();_doDownloadTemplate()">Download anyway</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    return;
+  }
+  _doDownloadTemplate();
+}
+
+function _doDownloadTemplate(){
   const chairs=sFurn().filter(f=>f.type==='chair'||f.type==='freechair');
   const rows=[
-    ['Seat #','Full Name','Entourage Role','Seating Priority','Meal Preference','Phone Number','Email Address','Dietary Restrictions / Allergies','RSVP Status','Special Notes / Requests']
+    ['Seat #','Full Name','Entourage Role','Seating Priority','Meal Preference','Phone Number','Email','Dietary Restrictions','RSVP','Notes']
   ];
   const count=Math.max(chairs.length,50);
   for(let i=1;i<=count;i++){
@@ -1530,24 +1559,20 @@ function downloadGuestTemplate(){
     const seatLabel=par?par.label+' – '+chair.label.split('/').pop():chair?.label||i;
     rows.push([typeof seatLabel==='string'?seatLabel:i,'','','','','','','','pending','']);
   }
-  // Style hints in row 2 via comments would need XLSX Pro — just use plain data
-  if(!window.XLSX){alert('Excel library not loaded yet, please try again.');return}
   const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.aoa_to_sheet(rows);
-  // Column widths
-  ws['!cols']=[{wch:18},{wch:24},{wch:28},{wch:14},{wch:16},{wch:16},{wch:24},{wch:30},{wch:12},{wch:32}];
+  ws['!cols']=[{wch:22},{wch:24},{wch:26},{wch:16},{wch:16},{wch:16},{wch:22},{wch:26},{wch:12},{wch:28}];
   XLSX.utils.book_append_sheet(wb,ws,'Guest List');
-  // Instructions sheet
   const inst=XLSX.utils.aoa_to_sheet([
     ['INSTRUCTIONS'],
     [''],
     ['1. Fill in the "Guest List" sheet — one guest per row.'],
-    ['2. Seat # is pre-filled. Do not change it (used for seat assignment).'],
-    ['3. RSVP Status: use "pending", "attending", or "declined".'],
+    ['2. Seat # is pre-filled from the floor plan. Do not change it.'],
+    ['3. RSVP: use "pending", "attending", or "declined".'],
     ['4. Seating Priority: use "VIP", "Priority", or "General".'],
     ['5. Meal Preference: Standard, Vegetarian, Vegan, Halal, Kosher, Gluten-Free, Kids Meal.'],
     ['6. Save the file and send to your client.'],
-    ['7. Client fills in names and details, sends back.'],
+    ['7. Client fills in names and details, sends it back.'],
     ['8. Go to Guest List tab → Import Excel → select the filled file.'],
   ]);
   XLSX.utils.book_append_sheet(wb,inst,'Instructions');
@@ -2020,13 +2045,16 @@ function buildSlides(){
   SLIDES.push({type:'title',p1,p2,date:wdate,venue:iv.receptionVenue||iv.ceremonyVenue||''});
   SLIDES.push({type:'overview',iv});
   SLIDES.push({type:'moodboard',iv});
-  SLIDES.push({type:'budget',plan,totalBudget:iv.totalBudget});
+  SLIDES.push({type:'budget',plan,iv,totalBudget:iv.totalBudget});
   const vl=plan.vendors.filter(v=>v.name);
   if(vl.length)for(let i=0;i<vl.length;i+=6)SLIDES.push({type:'vendors',vendors:vl.slice(i,i+6),page:Math.floor(i/6)+1,total:Math.ceil(vl.length/6)});
   const tl=plan.timeline.filter(t=>t.event);
   if(tl.length)for(let i=0;i<tl.length;i+=8)SLIDES.push({type:'timeline',events:tl.slice(i,i+8),page:Math.floor(i/8)+1,total:Math.ceil(tl.length/8)});
   if(Object.values(plan.floorPlan).some(v=>v&&v.trim()))SLIDES.push({type:'floorplan',fp:plan.floorPlan});
   SLIDES.push({type:'checklist',checklist:plan.checklist});
+  // Special requirements slide — only if any special field filled
+  const specFields=['surprisePerf','culturalTrads','dietaryRestrictions','accessibility','otherRequests','includeTrads','avoidTrads'];
+  if(specFields.some(k=>iv[k]&&String(iv[k]).trim()))SLIDES.push({type:'special',iv});
   if(Object.values(plan.risks).some(v=>v&&v.trim()))SLIDES.push({type:'risks',risks:plan.risks});
   SLIDES.push({type:'qa'});
   SLIDES.push({type:'closing',profile:PROFILE});
@@ -2054,31 +2082,43 @@ function slideHTML(s){
       const iv=s.iv;
       return`<div class="slide-h2">Wedding Overview</div>
         <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
-          <div>${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}${kv('Theme',iv.theme)}
+          <div>
+            ${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}${kv('Theme',iv.theme)}
             ${kv('Ceremony Type',iv.ceremonyType+(iv.indoorOutdoor?' ('+iv.indoorOutdoor+')':''))}
-            ${kv('Ceremony Venue',iv.ceremonyVenue)}${kv('Reception Venue',iv.receptionVenue)}${kv('Ceremony Time',iv.ceremonyTime)}</div>
-          <div>${kv('Guests',iv.guestCount)}${kv('Adults / Children',(iv.adults||0)+' / '+(iv.children||0))}
-            ${kv('Wedding Party',iv.partySize)}${kv('Food',iv.food)}
-            ${kv('Entertainment',iv.entertainment)}${kv('Seating',iv.seatingStyle)}
-            ${iv.mustHaves?`<div class="slide-kv" style="margin-top:12px"><span class="k">Must-Haves</span><span class="v" style="font-style:italic">${iv.mustHaves}</span></div>`:''}</div>
+            ${kv('Ceremony Venue',iv.ceremonyVenue)}${kv('Reception Venue',iv.receptionVenue)}
+            ${kv('Ceremony Time',iv.ceremonyTime)}
+            ${iv.priorities?`<div class="slide-kv" style="margin-top:8px"><span class="k">Priorities</span><span class="v" style="font-style:italic">${iv.priorities}</span></div>`:''}
+          </div>
+          <div>
+            ${kv('Total Guests',iv.guestCount)}${kv('Adults / Children',(iv.adults||0)+' / '+(iv.children||0))}
+            ${kv('VIP Guests',iv.vipGuests)}${kv('Immediate Family',iv.familySize)}
+            ${kv('Wedding Party Size',iv.partySize)}
+            ${kv('Food',iv.food)}${kv('Entertainment',iv.entertainment)}${kv('Seating',iv.seatingStyle)}
+            ${iv.mustHaves?`<div class="slide-kv" style="margin-top:8px"><span class="k">Must-Haves</span><span class="v" style="font-style:italic">${iv.mustHaves}</span></div>`:''}
+          </div>
         </div>`;
     }
     case 'moodboard':{
       const iv=s.iv;
-      const cols=(iv.colorPalette||iv.favoriteColors||'').split(/[,;]+/).map(c=>c.trim()).filter(Boolean);
+      const paletteText=iv.colorPalette||iv.favoriteColors||'';
+      const cols=paletteText.split(/[,;]+/).map(c=>c.trim()).filter(Boolean);
       const swatches=cols.map(n=>{const hex=COLOR_MAP[n.toLowerCase()]||'#888';return`<div class="swatch" style="background:${hex}" title="${n}"><span>${n}</span></div>`;}).join('');
       return`<div class="slide-h2">Mood Board</div>
         <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
-          <div>${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}
+          <div>
+            ${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}
             ${iv.floralInspiration?`<div class="slide-kv"><span class="k">Florals</span><span class="v">${iv.floralInspiration}</span></div>`:''}
             ${iv.sampleWeddings?`<div class="slide-kv"><span class="k">References</span><span class="v">${iv.sampleWeddings}</span></div>`:''}
-            ${iv.mustHaves?`<div style="margin-top:16px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
-              <span style="font-size:11px;font-weight:700;color:var(--gold)">MUST-HAVES: </span>
+            ${iv.pinterest?`<div class="slide-kv"><span class="k">Pinterest</span><span class="v" style="word-break:break-all;font-size:12px">${iv.pinterest}</span></div>`:''}
+            ${iv.instagram?`<div class="slide-kv"><span class="k">Instagram</span><span class="v" style="word-break:break-all;font-size:12px">${iv.instagram}</span></div>`:''}
+            ${iv.mustHaves?`<div style="margin-top:12px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
+              <span style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.5px">MUST-HAVES </span>
               <span style="font-size:13px;color:var(--ink2)">${iv.mustHaves}</span></div>`:''}
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:12px">COLOR PALETTE</div>
-            ${swatches?`<div class="color-swatches">${swatches}</div>`:'<p style="color:var(--ink3)">No colors set.</p>'}
+            <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:4px">COLOR PALETTE</div>
+            ${paletteText?`<div style="font-size:12px;color:var(--ink3);margin-bottom:10px;font-style:italic">${paletteText}</div>`:''}
+            ${swatches?`<div class="color-swatches">${swatches}</div>`:'<p style="color:var(--ink3);font-size:13px">No colors specified yet.</p>'}
           </div>
         </div>`;
     }
@@ -2095,10 +2135,11 @@ function slideHTML(s){
               <span class="bs-amt">₱${fmt(val)}</span></div>`;
           }).join('')||'<p style="color:var(--ink3)">No budget allocated yet.</p>'}
         </div>
-        <div style="display:flex;gap:24px;margin-top:20px;padding:14px 20px;background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
-          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">INTERVIEW BUDGET</div><div style="font-size:20px;font-weight:700">₱${fmt(alloc)}</div></div>`:''}
-          <div><div style="font-size:10px;color:var(--gold);font-weight:700">TOTAL ALLOCATED</div><div style="font-size:20px;font-weight:700">₱${fmt(allocated)}</div></div>
-          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">REMAINING</div><div style="font-size:20px;font-weight:700;color:${alloc-allocated<0?'#ff8080':'#80e080'}">₱${fmt(alloc-allocated)}</div></div>`:''}
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:20px;padding:14px 20px;background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
+          ${s.iv?.idealBudget?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">IDEAL BUDGET</div><div style="font-size:18px;font-weight:700">₱${fmt(s.iv.idealBudget)}</div></div>`:''}
+          ${s.iv?.maxBudget?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">MAX BUDGET</div><div style="font-size:18px;font-weight:700;color:#ff9090">₱${fmt(s.iv.maxBudget)}</div></div>`:''}
+          <div><div style="font-size:10px;color:var(--gold);font-weight:700">TOTAL ALLOCATED</div><div style="font-size:18px;font-weight:700">₱${fmt(allocated)}</div></div>
+          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">REMAINING</div><div style="font-size:18px;font-weight:700;color:${alloc-allocated<0?'#ff8080':'#80e080'}">₱${fmt(alloc-allocated)}</div></div>`:''}
         </div>`;
     }
     case 'vendors':
@@ -2149,6 +2190,23 @@ function slideHTML(s){
       return`<div class="slide-h2">Contingency Plan</div>
         <div class="risk-slide-grid">
           ${items.map(([k,l])=>`<div class="risk-item"><h5>⚠️ ${l}</h5><p>${r[k]}</p></div>`).join('')}
+        </div>`;
+    }
+    case 'special':{
+      const iv=s.iv;
+      return`<div class="slide-h2">Special Requirements</div>
+        <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:880px">
+          <div>
+            ${iv.includeTrads?`<div class="slide-kv"><span class="k">Traditions to Include</span><span class="v">${iv.includeTrads}</span></div>`:''}
+            ${iv.avoidTrads?`<div class="slide-kv"><span class="k">Traditions to Avoid</span><span class="v">${iv.avoidTrads}</span></div>`:''}
+            ${iv.culturalTrads?`<div class="slide-kv"><span class="k">Cultural / Religious</span><span class="v">${iv.culturalTrads}</span></div>`:''}
+            ${iv.surprisePerf?`<div class="slide-kv"><span class="k">Surprise Performance</span><span class="v">${iv.surprisePerf}</span></div>`:''}
+          </div>
+          <div>
+            ${iv.dietaryRestrictions?`<div class="slide-kv"><span class="k">Dietary Restrictions</span><span class="v">${iv.dietaryRestrictions}</span></div>`:''}
+            ${iv.accessibility?`<div class="slide-kv"><span class="k">Accessibility Needs</span><span class="v">${iv.accessibility}</span></div>`:''}
+            ${iv.otherRequests?`<div class="slide-kv"><span class="k">Other Requests</span><span class="v" style="font-style:italic">${iv.otherRequests}</span></div>`:''}
+          </div>
         </div>`;
     }
     case 'qa':
