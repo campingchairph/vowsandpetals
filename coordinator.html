@@ -79,13 +79,34 @@ select.inp option{background:#1a2d45}
 .plan-card .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .dash-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px}
 .dash-header h2{font-family:var(--f2);font-size:26px;color:var(--gold2)}
-.supplier-cta-card{background:linear-gradient(135deg,rgba(13,27,46,.8),rgba(26,45,69,.8));border:1px solid rgba(212,168,83,.3);border-radius:var(--r2);padding:20px 24px;margin:0 20px 20px;display:flex;align-items:center;gap:20px}
-.supplier-cta-icon{font-size:36px;flex-shrink:0}
-.supplier-cta-text h4{font-size:14px;font-weight:700;color:var(--gold2);margin-bottom:4px}
-.supplier-cta-text p{font-size:12px;color:var(--ink3);line-height:1.5;max-width:480px}
-.supplier-cta-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+/* ── SUPPLIER AD CARD ── */
+.supplier-ad-card{position:relative;overflow:hidden;background:linear-gradient(125deg,#071524 0%,#0f2340 45%,#071e38 100%);border:1px solid rgba(212,168,83,.45);border-radius:var(--r2);margin:0 20px 20px;padding:28px 28px 28px 32px}
+.supplier-ad-orbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.supplier-ad-orb1{position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,83,.35),transparent 70%);top:-80px;right:60px;filter:blur(30px)}
+.supplier-ad-orb2{position:absolute;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(60,120,240,.25),transparent 70%);bottom:-50px;left:20px;filter:blur(28px)}
+.supplier-ad-inner{position:relative;z-index:1;display:flex;align-items:center;gap:32px}
+.supplier-ad-left{flex:1;min-width:0}
+.supplier-ad-eyebrow{font-size:10px;font-weight:900;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.supplier-ad-eyebrow::before{content:'';display:inline-block;width:18px;height:1.5px;background:var(--gold);border-radius:2px}
+.supplier-ad-h{font-family:var(--f2);font-size:clamp(18px,3.5vw,30px);font-style:italic;font-weight:600;color:#fff;margin-bottom:10px;line-height:1.2;letter-spacing:-.3px}
+.supplier-ad-p{font-size:12.5px;color:rgba(255,255,255,.58);line-height:1.65;max-width:460px}
+.supplier-ad-p strong{color:var(--gold2);font-weight:700}
+.supplier-ad-right{display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0}
+.supplier-ad-badge{background:linear-gradient(135deg,var(--gold) 0%,#f0d080 50%,var(--gold3) 100%);color:#0d1b2e;font-size:10px;font-weight:900;letter-spacing:2.5px;padding:5px 16px;border-radius:999px;text-transform:uppercase;box-shadow:0 2px 14px rgba(212,168,83,.4)}
+.supplier-ad-divider{width:1px;height:80px;background:linear-gradient(to bottom,transparent,rgba(212,168,83,.3),transparent);flex-shrink:0}
+@media(max-width:640px){.supplier-ad-inner{flex-direction:column;gap:20px}.supplier-ad-divider{display:none}.supplier-ad-right{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;width:100%}}
 .empty-state{text-align:center;color:var(--ink3);padding:60px 20px}
 .empty-state .icon{font-size:48px;margin-bottom:12px}
+
+/* ── FORM GROUPS ── */
+.form-group-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:18px 18px 6px;margin-bottom:18px}
+.form-group-title{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.form-group-title .gi{font-size:15px}
+.phone-wrap{display:flex;border-radius:var(--r);overflow:hidden;border:1px solid rgba(255,255,255,.12);transition:border-color .15s;background:rgba(255,255,255,.06)}
+.phone-wrap:focus-within{border-color:var(--gold)}
+.phone-prefix{display:flex;align-items:center;padding:0 10px;font-size:13px;font-weight:600;color:var(--gold2);background:rgba(212,168,83,.1);border-right:1px solid rgba(255,255,255,.1);white-space:nowrap;flex-shrink:0}
+.phone-inp{flex:1;padding:10px 14px;background:transparent;border:none;color:var(--ink);font-family:var(--f);font-size:14px;outline:none;min-width:0}
+.phone-inp::placeholder{color:var(--ink3)}
 
 /* ── INTERVIEW WIZARD ── */
 .interview-wrap{display:flex;flex-direction:column;flex:1;min-height:0}
@@ -273,15 +294,20 @@ select.inp option{background:#1a2d45}
     <h2>My Client Plans</h2>
     <button class="btn btn-gold" onclick="newPlanFromDash()">+ New Plan</button>
   </div>
-  <!-- Supplier referral -->
-  <div class="supplier-cta-card">
-    <div class="supplier-cta-icon">🤝</div>
-    <div class="supplier-cta-text" style="flex:1">
-      <h4>Invite your suppliers to Vows & Petals — it's free for them</h4>
-      <p>Your clients trust your vendor recommendations. When your suppliers have a profile here, couples find them faster, bookings happen smoother, and you manage less back-and-forth. It takes 2 minutes to register.</p>
-      <div class="supplier-cta-actions">
-        <button class="btn btn-gold btn-sm" onclick="copySupplierLink()">📋 Copy Supplier Signup Link</button>
-        <button class="btn btn-outline btn-sm" onclick="shareSupplierWhatsApp()">💬 Share via WhatsApp</button>
+  <!-- Supplier referral ad -->
+  <div class="supplier-ad-card">
+    <div class="supplier-ad-orbs"><div class="supplier-ad-orb1"></div><div class="supplier-ad-orb2"></div></div>
+    <div class="supplier-ad-inner">
+      <div class="supplier-ad-left">
+        <div class="supplier-ad-eyebrow">Grow your network</div>
+        <h3 class="supplier-ad-h">Your best suppliers deserve<br>to be found.</h3>
+        <p class="supplier-ad-p">Recommend them here — when your vendors are listed on Vows &amp; Petals, your couples book faster, inquire less, and trust you more. <strong>100% free for suppliers.</strong> Takes 2 minutes.</p>
+      </div>
+      <div class="supplier-ad-divider"></div>
+      <div class="supplier-ad-right">
+        <div class="supplier-ad-badge">✦ Free</div>
+        <button class="btn btn-gold" style="white-space:nowrap" onclick="copySupplierLink()">📋 Copy Invite Link</button>
+        <button class="btn btn-outline btn-sm" style="white-space:nowrap" onclick="shareSupplierWhatsApp()">💬 WhatsApp</button>
       </div>
     </div>
   </div>
@@ -729,88 +755,179 @@ function inp(id,ph=''){return`<input class="inp" id="${id}" placeholder="${ph}">
 function ta(id,ph='',rows=2){return`<textarea class="inp textarea" id="${id}" placeholder="${ph}" rows="${rows}"></textarea>`}
 function sel(id,opts){return`<select class="inp" id="${id}">${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`}
 
+function phoneField(id,ph='917 123 4567'){
+  return`<div class="phone-wrap"><span class="phone-prefix">🇵🇭 +63</span><input class="phone-inp" id="${id}" type="tel" placeholder="${ph}" inputmode="numeric"></div>`;
+}
+
 const STEP_HTML=[
-  ()=>`<h2 class="step-title">Couple Information</h2><p class="step-sub">Basic contact details.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Partner 1 Name</label>${inp('iv-p1Name','Full name')}</div>
-      <div class="form-row"><label>Partner 1 Contact</label>${inp('iv-p1Contact','Phone or email')}</div>
-      <div class="form-row"><label>Partner 2 Name</label>${inp('iv-p2Name','Full name')}</div>
-      <div class="form-row"><label>Partner 2 Contact</label>${inp('iv-p2Contact','Phone or email')}</div>
-      <div class="form-row"><label>Wedding Date</label><input class="inp" id="iv-weddingDate" type="date"></div>
-      <div class="form-row"><label>Preferred Dates (if flexible)</label>${inp('iv-preferredDates','e.g. March–May 2026')}</div>
-      <div class="form-row"><label>Engagement Date</label><input class="inp" id="iv-engagementDate" type="date"></div>
-      <div class="form-row"><label>Preferred Communication</label>${sel('iv-commMethod',['','WhatsApp','Email','Phone Call','In-Person','Viber'])}</div>
-    </div>`,
-  ()=>`<h2 class="step-title">Wedding Vision</h2><p class="step-sub">The couple's dream and style.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Wedding Style</label>${inp('iv-style','e.g. Rustic, Modern, Bohemian, Classic')}</div>
-      <div class="form-row"><label>Desired Atmosphere</label>${inp('iv-atmosphere','e.g. Intimate, Grand, Romantic')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Top Priorities</label>${ta('iv-priorities','What matters most?')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Must-Haves</label>${ta('iv-mustHaves','Non-negotiables')}</div>
-      <div class="form-row"><label>Traditions to Include</label>${inp('iv-includeTrads','Cultural or religious traditions')}</div>
-      <div class="form-row"><label>Things to Avoid</label>${inp('iv-avoidTrads','Anything they don\'t want')}</div>
-    </div>`,
-  ()=>`<h2 class="step-title">Budget</h2><p class="step-sub">Financial scope and flexibility.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Total Budget (₱)</label><input class="inp" id="iv-totalBudget" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Ideal Budget (₱)</label><input class="inp" id="iv-idealBudget" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Maximum Budget (₱)</label><input class="inp" id="iv-maxBudget" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Willing to spend more on?</label>${inp('iv-spendMore','e.g. Photography, Flowers')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Where to save money?</label>${inp('iv-saveMoney','e.g. Decorations, Cake')}</div>
-    </div>`,
-  ()=>`<h2 class="step-title">Guest Information</h2><p class="step-sub">Headcount and special guests.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Total Guests</label><input class="inp" id="iv-guestCount" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Adults</label><input class="inp" id="iv-adults" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Children</label><input class="inp" id="iv-children" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Immediate Family Size</label><input class="inp" id="iv-familySize" type="number" min="0" placeholder="0"></div>
-      <div class="form-row"><label>Wedding Party Size</label><input class="inp" id="iv-partySize" type="number" min="0" placeholder="0"></div>
-      <div class="form-row" style="grid-column:1/-1"><label>VIP / Notable Guests</label>${ta('iv-vipGuests','Names or roles')}</div>
-    </div>`,
-  ()=>`<h2 class="step-title">Ceremony Details</h2><p class="step-sub">Ceremony logistics.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Ceremony Type</label>${sel('iv-ceremonyType',['','Church / Religious','Civil','Garden','Beach','Chapel','Destination','Other'])}</div>
-      <div class="form-row"><label>Indoor / Outdoor</label>${sel('iv-indoorOutdoor',['','Indoor','Outdoor','Both'])}</div>
-      <div class="form-row"><label>Ceremony Venue</label>${inp('iv-ceremonyVenue','Name or address')}</div>
-      <div class="form-row"><label>Ceremony Time</label><input class="inp" id="iv-ceremonyTime" type="time"></div>
-    </div>`,
-  ()=>`<h2 class="step-title">Reception Details</h2><p class="step-sub">Setting, theme, and experience.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Reception Venue</label>${inp('iv-receptionVenue','Name or address')}</div>
-      <div class="form-row"><label>Overall Theme</label>${inp('iv-theme','e.g. Garden Romance, Modern Minimalist')}</div>
-      <div class="form-row"><label>Color Palette</label>${inp('iv-colorPalette','e.g. Blush, Ivory, Gold')}</div>
-      <div class="form-row"><label>Seating Style</label>${sel('iv-seatingStyle',['','Banquet','Cocktail','Family-style','Mixed'])}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Entertainment</label>${inp('iv-entertainment','e.g. Live band, DJ, String quartet')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Food & Catering Preference</label>${inp('iv-food','e.g. Buffet, Plated, Filipino cuisine')}</div>
-    </div>`,
-  ()=>`<h2 class="step-title">Vendor Requirements</h2><p class="step-sub">Select all categories needed.</p>
-    <div class="checkbox-grid">
-      ${VENDOR_CATS.map(v=>{const s=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${s?' selected':''}">
-        <input type="checkbox" value="${v}" ${s?'checked':''} onchange="syncVendorCheck(this)">
-        <span>${v}</span></label>`;}).join('')}
-    </div>`,
-  ()=>`<h2 class="step-title">Inspiration & Mood</h2><p class="step-sub">Visual references and direction.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Pinterest Board</label>${inp('iv-pinterest','pinterest.com/...')}</div>
-      <div class="form-row"><label>Instagram Reference</label>${inp('iv-instagram','@handle or #hashtag')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Sample Weddings</label>${ta('iv-sampleWeddings','References they love')}</div>
-      <div class="form-row"><label>Favorite Colors</label>${inp('iv-favoriteColors','e.g. Dusty Rose, Sage Green')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Flowers, arrangements, style')}</div>
-    </div>`,
-  ()=>`<h2 class="step-title">Special Requests</h2><p class="step-sub">Unique elements and needs.</p>
-    <div class="form-grid">
-      <div class="form-row"><label>Surprise Performance / Proposal</label>${inp('iv-surprisePerf','Describe any surprise')}</div>
-      <div class="form-row"><label>Cultural Traditions</label>${inp('iv-culturalTrads','Specific rituals or customs')}</div>
-      <div class="form-row"><label>Dietary Restrictions</label>${inp('iv-dietaryRestrictions','Vegan, Halal, Allergy-free...')}</div>
-      <div class="form-row"><label>Accessibility Needs</label>${inp('iv-accessibility','Wheelchair, sign language...')}</div>
-      <div class="form-row" style="grid-column:1/-1">
-        <label>Other Features</label>
-        <div style="display:flex;gap:24px;margin-top:8px">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);cursor:pointer"><input type="checkbox" id="iv-kidsArea" style="accent-color:var(--gold)"> Kids Area</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);cursor:pointer"><input type="checkbox" id="iv-petParticipation" style="accent-color:var(--gold)"> Pet Participation</label>
-        </div>
+  // 0 — Couple
+  ()=>`<h2 class="step-title">Meet the Couple</h2>
+    <p class="step-sub">Capture each partner's name and phone separately.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">💍</span>Partner 1</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Full Name</label>${inp('iv-p1Name','Full name')}</div>
+        <div class="form-row"><label>Phone Number</label>${phoneField('iv-p1Contact')}</div>
       </div>
-      <div class="form-row" style="grid-column:1/-1"><label>Other Requests</label>${ta('iv-otherRequests','Anything else?',3)}</div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">💍</span>Partner 2</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Full Name</label>${inp('iv-p2Name','Full name')}</div>
+        <div class="form-row"><label>Phone Number</label>${phoneField('iv-p2Contact')}</div>
+      </div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">📅</span>Wedding Details</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Wedding Date</label><input class="inp" id="iv-weddingDate" type="date"></div>
+        <div class="form-row"><label>Preferred Dates (if flexible)</label>${inp('iv-preferredDates','e.g. March – May 2026')}</div>
+        <div class="form-row"><label>Engagement Date</label><input class="inp" id="iv-engagementDate" type="date"></div>
+        <div class="form-row"><label>Best Way to Reach Them</label>${sel('iv-commMethod',['','WhatsApp','Email','Phone Call','In-Person','Viber'])}</div>
+      </div>
+    </div>`,
+
+  // 1 — Vision
+  ()=>`<h2 class="step-title">Wedding Vision</h2>
+    <p class="step-sub">Capture the look, feel, and what matters most.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">✨</span>Style &amp; Atmosphere</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Wedding Style</label>${inp('iv-style','e.g. Rustic, Bohemian, Modern Classic')}</div>
+        <div class="form-row"><label>Desired Atmosphere</label>${inp('iv-atmosphere','e.g. Intimate, Grand, Romantic')}</div>
+      </div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">❤️</span>Priorities &amp; Preferences</div>
+      <div class="form-row"><label>Top 3 Priorities</label>${ta('iv-priorities','What matters most to them?')}</div>
+      <div class="form-row"><label>Must-Haves</label>${ta('iv-mustHaves','Non-negotiables — things they absolutely need')}</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Traditions to Include</label>${inp('iv-includeTrads','Cultural or religious elements')}</div>
+        <div class="form-row"><label>Things to Avoid</label>${inp('iv-avoidTrads','Anything they don\'t want')}</div>
+      </div>
+    </div>`,
+
+  // 2 — Budget
+  ()=>`<h2 class="step-title">Budget</h2>
+    <p class="step-sub">Understanding their financial scope and flexibility.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">💰</span>Budget Range</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Total Budget (₱)</label><input class="inp" id="iv-totalBudget" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="form-row"><label>Ideal Budget (₱)</label><input class="inp" id="iv-idealBudget" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="form-row"><label>Maximum Budget (₱)</label><input class="inp" id="iv-maxBudget" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🎯</span>Spending Priorities</div>
+      <div class="form-row"><label>Willing to splurge on</label>${inp('iv-spendMore','e.g. Photography, Flowers, Food')}</div>
+      <div class="form-row"><label>Happy to save on</label>${inp('iv-saveMoney','e.g. Decorations, Cake, Transportation')}</div>
+    </div>`,
+
+  // 3 — Guests
+  ()=>`<h2 class="step-title">Guest Information</h2>
+    <p class="step-sub">Headcount and the people who matter most.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">👥</span>Guest Headcount</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Total Guests</label><input class="inp" id="iv-guestCount" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="form-row"><label>Adults</label><input class="inp" id="iv-adults" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="form-row"><label>Children</label><input class="inp" id="iv-children" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">⭐</span>Key People</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Immediate Family Size</label><input class="inp" id="iv-familySize" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+        <div class="form-row"><label>Wedding Party Size</label><input class="inp" id="iv-partySize" type="number" min="0" placeholder="0" inputmode="numeric"></div>
+      </div>
+      <div class="form-row"><label>VIP / Notable Guests</label>${ta('iv-vipGuests','Names, roles, or special guests to note')}</div>
+    </div>`,
+
+  // 4 — Ceremony
+  ()=>`<h2 class="step-title">Ceremony</h2>
+    <p class="step-sub">Logistics for the main event.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">⛪</span>Setup &amp; Format</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Ceremony Type</label>${sel('iv-ceremonyType',['','Church / Religious','Civil','Garden','Beach','Chapel','Destination','Other'])}</div>
+        <div class="form-row"><label>Indoor / Outdoor</label>${sel('iv-indoorOutdoor',['','Indoor','Outdoor','Both'])}</div>
+        <div class="form-row"><label>Ceremony Time</label><input class="inp" id="iv-ceremonyTime" type="time"></div>
+      </div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">📍</span>Venue</div>
+      <div class="form-row"><label>Ceremony Venue Name or Address</label>${inp('iv-ceremonyVenue','e.g. San Agustin Church, Intramuros')}</div>
+    </div>`,
+
+  // 5 — Reception
+  ()=>`<h2 class="step-title">Reception</h2>
+    <p class="step-sub">The celebration space, look, and experience.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🏛</span>Venue &amp; Setting</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Reception Venue</label>${inp('iv-receptionVenue','Name or address')}</div>
+        <div class="form-row"><label>Overall Theme</label>${inp('iv-theme','e.g. Garden Romance, Modern Minimalist')}</div>
+        <div class="form-row"><label>Seating Style</label>${sel('iv-seatingStyle',['','Banquet','Cocktail','Family-style','Mixed'])}</div>
+        <div class="form-row"><label>Color Palette</label>${inp('iv-colorPalette','e.g. Blush, Ivory, Gold')}</div>
+      </div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🎶</span>Experience</div>
+      <div class="form-row"><label>Entertainment</label>${inp('iv-entertainment','e.g. Live band, DJ, String quartet')}</div>
+      <div class="form-row"><label>Food &amp; Catering</label>${inp('iv-food','e.g. Filipino buffet, Plated 5-course, Cocktail stations')}</div>
+    </div>`,
+
+  // 6 — Vendors
+  ()=>`<h2 class="step-title">Vendor Requirements</h2>
+    <p class="step-sub">Select every category the couple needs. You can add specific names later in the Plan.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🤝</span>Select All That Apply</div>
+      <div class="checkbox-grid">
+        ${VENDOR_CATS.map(v=>{const s=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${s?' selected':''}">
+          <input type="checkbox" value="${v}" ${s?'checked':''} onchange="syncVendorCheck(this)">
+          <span>${v}</span></label>`;}).join('')}
+      </div>
+    </div>`,
+
+  // 7 — Inspiration
+  ()=>`<h2 class="step-title">Inspiration &amp; Mood</h2>
+    <p class="step-sub">Gather visual references and aesthetic direction.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🔗</span>Digital References</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Pinterest Board</label>${inp('iv-pinterest','pinterest.com/...')}</div>
+        <div class="form-row"><label>Instagram</label>${inp('iv-instagram','@handle or #hashtag')}</div>
+      </div>
+      <div class="form-row"><label>Sample Weddings They Love</label>${ta('iv-sampleWeddings','Names, photos, or descriptions')}</div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🌸</span>Colors &amp; Florals</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Favorite Colors</label>${inp('iv-favoriteColors','e.g. Dusty Rose, Sage Green, Champagne')}</div>
+      </div>
+      <div class="form-row"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Types of flowers, arrangements, density, style')}</div>
+    </div>`,
+
+  // 8 — Special
+  ()=>`<h2 class="step-title">Special Requests</h2>
+    <p class="step-sub">Surprises, traditions, and anything unique about this wedding.</p>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🎉</span>Special Moments</div>
+      <div class="form-row"><label>Surprise Performance or Proposal</label>${inp('iv-surprisePerf','Describe any planned surprise')}</div>
+      <div class="form-row"><label>Cultural or Religious Traditions</label>${inp('iv-culturalTrads','Specific rituals, customs, or ceremonies')}</div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">♿</span>Guest Needs</div>
+      <div class="form-row"><label>Dietary Restrictions</label>${inp('iv-dietaryRestrictions','Vegan, Halal, nut-free, allergies...')}</div>
+      <div class="form-row"><label>Accessibility Requirements</label>${inp('iv-accessibility','Wheelchair access, sign language interpreter...')}</div>
+      <div style="display:flex;gap:24px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);cursor:pointer">
+          <input type="checkbox" id="iv-kidsArea" style="accent-color:var(--gold);width:15px;height:15px"> Kids Area / Play Zone</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);cursor:pointer">
+          <input type="checkbox" id="iv-petParticipation" style="accent-color:var(--gold);width:15px;height:15px"> Pet Participation</label>
+      </div>
+      <div class="form-row"><label>Anything Else to Note</label>${ta('iv-otherRequests','Other requests, ideas, or things to remember',3)}</div>
     </div>`,
 ];
 
