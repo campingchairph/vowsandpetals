@@ -473,6 +473,51 @@ body {
   .lp-sup-cta-row { flex-direction: row; align-items: center; }
 }
 
+/* ── FOR COORDINATORS ───────────────────────────── */
+.lp-coord {
+  background: linear-gradient(160deg, #0d1b2e 0%, #1a2d45 100%);
+  padding: 64px 28px 72px;
+  color: #fff;
+}
+.lp-coord-inner { max-width: 820px; margin: 0 auto; }
+.lp-coord-eyebrow {
+  font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 2px; color: #d4a853; margin-bottom: 14px;
+}
+.lp-coord-h {
+  font-family: var(--f2); font-size: clamp(28px, 6vw, 44px);
+  font-style: italic; font-weight: 600; color: #fff;
+  line-height: 1.15; letter-spacing: -0.5px; margin: 0 0 16px;
+}
+.lp-coord-p {
+  font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.72);
+  max-width: 580px; margin: 0 0 36px;
+}
+.lp-coord-perks {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 40px;
+}
+.lp-coord-perk {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(212,168,83,0.22);
+  border-radius: var(--r-lg); padding: 18px 16px;
+}
+.lp-coord-perk-icon  { font-size: 22px; margin-bottom: 8px; }
+.lp-coord-perk-title { font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 5px; }
+.lp-coord-perk-desc  { font-size: 12px; color: rgba(255,255,255,0.60); line-height: 1.55; }
+.lp-coord-cta-row    { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.lp-coord-btn {
+  display: inline-block; padding: 15px 32px;
+  background: linear-gradient(135deg, #d4a853 0%, #b8882a 100%);
+  color: #0d1b2e; font-family: var(--f); font-size: 14px; font-weight: 800;
+  text-decoration: none; border-radius: var(--r-lg); letter-spacing: 0.1px;
+  transition: opacity 0.15s;
+}
+.lp-coord-btn:hover { opacity: 0.88; }
+.lp-coord-note { font-size: 11.5px; color: rgba(255,255,255,0.45); font-weight: 500; }
+@media (min-width: 760px) {
+  .lp-coord-perks  { grid-template-columns: repeat(2, 1fr); }
+  .lp-coord-cta-row { flex-direction: row; align-items: center; }
+}
+
 /* ── FOOTER ──────────────────────────────────────── */
 .lp-footer {
   background: var(--ink);

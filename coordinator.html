@@ -6,13 +6,16 @@
 <title>Coordinator Planner — Vows & Petals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --navy:#0d1b2e;--navy2:#1a2d45;--navy3:#243a55;
   --gold:#d4a853;--gold2:#e8c87a;--gold3:#b8882a;
   --ink:#e8e0d0;--ink2:#c4b8a8;--ink3:#8a7e72;
-  --r:14px;--r2:20px;--r3:28px;
+  --r:14px;--r2:20px;
   --f:Inter,sans-serif;--f2:'Cormorant Garamond',serif;
 }
 html,body{height:100%;background:var(--navy);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5}
@@ -21,7 +24,8 @@ body{display:flex;flex-direction:column;min-height:100vh}
 .screen{display:none;flex:1;flex-direction:column;min-height:0}
 .screen.active{display:flex}
 
-#topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(13,27,46,.95);border-bottom:1px solid rgba(212,168,83,.2);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+/* ── TOPBAR ── */
+#topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(13,27,46,.96);border-bottom:1px solid rgba(212,168,83,.2);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px);flex-shrink:0}
 #topbar h1{font-family:var(--f2);font-size:20px;color:var(--gold);flex:1}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:600;transition:all .15s}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold3));color:#0d1b2e}
@@ -34,59 +38,81 @@ body{display:flex;flex-direction:column;min-height:100vh}
 .btn-danger:hover{background:rgba(200,60,60,.25)}
 .btn-sm{padding:5px 10px;font-size:12px}
 
-.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r2);padding:20px}
+/* ── AUTH SCREEN ── */
+.auth-box{width:100%;max-width:420px}
+.auth-box h2{font-family:var(--f2);font-size:28px;color:var(--gold2);text-align:center;margin-bottom:6px}
+.auth-box .auth-sub{color:var(--ink3);text-align:center;font-size:13px;margin-bottom:24px}
+.auth-err{background:rgba(200,60,60,.15);border:1px solid rgba(200,60,60,.3);color:#ff8080;padding:10px 14px;border-radius:var(--r);font-size:13px;margin-bottom:14px;display:none}
+.auth-err.show{display:block}
+.divider-or{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink3);font-size:12px}
+.divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
+.btn-google{width:100%;justify-content:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--ink);font-size:14px;padding:11px 16px}
+.btn-google:hover{background:rgba(255,255,255,.13)}
+.auth-toggle{text-align:center;margin-top:16px;font-size:13px;color:var(--ink3)}
+.auth-toggle a{color:var(--gold);cursor:pointer;text-decoration:none}
+.auth-toggle a:hover{text-decoration:underline}
+
+/* ── SHARED CARD / FORMS ── */
+.center-wrap{display:flex;align-items:center;justify-content:center;flex:1;padding:24px;overflow-y:auto}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r2);padding:24px}
 .card-gold{border-color:rgba(212,168,83,.25)}
+.logo-ring{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
+.form-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.form-row label{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.5px;text-transform:uppercase}
+.inp{width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);color:var(--ink);font-family:var(--f);font-size:14px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--gold)}
+.inp::placeholder{color:var(--ink3)}
+select.inp option{background:#1a2d45}
+.textarea{resize:vertical;min-height:70px}
 .tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.4px}
 .tag-interview{background:rgba(100,160,255,.2);color:#80b4ff}
 .tag-planning{background:rgba(212,168,83,.2);color:var(--gold)}
 .tag-presenting{background:rgba(100,220,160,.2);color:#80deb0}
 .tag-approved{background:rgba(80,200,80,.15);color:#80e080}
 
-.center-wrap{display:flex;align-items:center;justify-content:center;flex:1;padding:24px}
-.onboarding-box{width:100%;max-width:480px}
-.logo-ring{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px}
-.onboarding-box h2{font-family:var(--f2);font-size:30px;color:var(--gold2);text-align:center;margin-bottom:8px}
-.onboarding-box p{color:var(--ink3);text-align:center;margin-bottom:28px}
-.form-row{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
-.form-row label{font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.4px;text-transform:uppercase}
-.inp{width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);color:var(--ink);font-family:var(--f);font-size:14px;outline:none;transition:border-color .15s}
-.inp:focus{border-color:var(--gold)}
-.inp::placeholder{color:var(--ink3)}
-select.inp option{background:#1a2d45}
-.textarea{resize:vertical;min-height:70px}
-
-#dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:20px}
-.plan-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r2);padding:20px;transition:all .2s;position:relative}
-.plan-card:hover{border-color:rgba(212,168,83,.4)}
+/* ── DASHBOARD ── */
+#dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:0 20px 20px}
+.plan-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r2);padding:20px;transition:all .2s}
+.plan-card:hover{border-color:rgba(212,168,83,.35)}
 .plan-card h3{font-family:var(--f2);font-size:20px;color:var(--ink);margin:10px 0 4px}
 .plan-card .meta{font-size:12px;color:var(--ink3)}
 .plan-card .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.dash-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0}
+.dash-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px}
 .dash-header h2{font-family:var(--f2);font-size:26px;color:var(--gold2)}
+.supplier-cta-card{background:linear-gradient(135deg,rgba(13,27,46,.8),rgba(26,45,69,.8));border:1px solid rgba(212,168,83,.3);border-radius:var(--r2);padding:20px 24px;margin:0 20px 20px;display:flex;align-items:center;gap:20px}
+.supplier-cta-icon{font-size:36px;flex-shrink:0}
+.supplier-cta-text h4{font-size:14px;font-weight:700;color:var(--gold2);margin-bottom:4px}
+.supplier-cta-text p{font-size:12px;color:var(--ink3);line-height:1.5;max-width:480px}
+.supplier-cta-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.empty-state{text-align:center;color:var(--ink3);padding:60px 20px}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
 
+/* ── INTERVIEW WIZARD ── */
 .interview-wrap{display:flex;flex-direction:column;flex:1;min-height:0}
-.step-bar{display:flex;gap:4px;padding:16px 20px 8px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
-.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink3);cursor:pointer;flex-shrink:0;transition:all .2s}
-.step-dot.done{background:rgba(212,168,83,.25);border-color:var(--gold3);color:var(--gold)}
+.step-bar{display:flex;gap:2px;padding:12px 16px 8px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
+.step-item{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.step-dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink3);cursor:pointer;transition:all .2s}
+.step-dot.done{background:rgba(212,168,83,.2);border-color:var(--gold3);color:var(--gold)}
 .step-dot.active{background:var(--gold);border-color:var(--gold);color:#0d1b2e}
-.step-label{font-size:11px;color:var(--ink3);margin-left:4px;white-space:nowrap}
-.step-item{display:flex;align-items:center;gap:4px}
+.step-label{font-size:11px;color:var(--ink3);white-space:nowrap}
+.step-label.active{color:var(--gold)}
 .step-content{flex:1;overflow-y:auto;padding:24px 20px}
 .step-title{font-family:var(--f2);font-size:26px;color:var(--gold2);margin-bottom:6px}
 .step-sub{color:var(--ink3);font-size:13px;margin-bottom:24px}
-.step-footer{display:flex;gap:12px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;background:var(--navy)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.step-footer{display:flex;gap:10px;padding:12px 20px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;background:var(--navy)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.form-grid{grid-template-columns:1fr}}
-.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
 .chk-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);cursor:pointer;transition:all .15s}
 .chk-item:hover{border-color:rgba(212,168,83,.3)}
-.chk-item input{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0}
+.chk-item input{accent-color:var(--gold);width:15px;height:15px;flex-shrink:0}
 .chk-item.selected{background:rgba(212,168,83,.1);border-color:rgba(212,168,83,.4)}
 .chk-item span{font-size:13px;color:var(--ink2)}
 
+/* ── PLANNING WORKSPACE ── */
 .planning-wrap{display:flex;flex-direction:column;flex:1;min-height:0}
-.plan-tabs{display:flex;gap:2px;padding:12px 20px 0;overflow-x:auto;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
-.plan-tab{padding:8px 14px;border-radius:var(--r) var(--r) 0 0;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink3);border:1px solid transparent;border-bottom:none;transition:all .15s;white-space:nowrap}
+.plan-tabs{display:flex;gap:2px;padding:10px 16px 0;overflow-x:auto;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
+.plan-tab{padding:7px 13px;border-radius:var(--r) var(--r) 0 0;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink3);border:1px solid transparent;border-bottom:none;transition:all .15s;white-space:nowrap}
 .plan-tab.active{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:var(--gold)}
 .plan-panels{flex:1;overflow-y:auto;padding:20px}
 .section-title{font-family:var(--f2);font-size:20px;color:var(--gold2);margin-bottom:16px}
@@ -121,11 +147,27 @@ select.inp option{background:#1a2d45}
 .budget-total{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(212,168,83,.2);margin-top:8px}
 .budget-total span:first-child{font-weight:600;color:var(--ink2)}
 .budget-total span:last-child{font-weight:700;color:var(--gold)}
-.empty-state{text-align:center;color:var(--ink3);padding:60px 20px}
-.empty-state .icon{font-size:48px;margin-bottom:12px}
-.divider{border:none;border-top:1px solid rgba(255,255,255,.08);margin:20px 0}
 
-/* PRESENTATION */
+/* ── JOURNEY TAB ── */
+.journey-phase{margin-bottom:24px}
+.journey-phase-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);cursor:pointer;margin-bottom:8px;transition:border-color .15s}
+.journey-phase-header:hover{border-color:rgba(212,168,83,.3)}
+.journey-phase-title{font-size:13px;font-weight:700;color:var(--ink)}
+.journey-phase-prog{font-size:11px;color:var(--ink3);margin-left:auto;margin-right:12px}
+.journey-task{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.journey-task:last-child{border-bottom:none}
+.journey-task input[type=checkbox]{accent-color:var(--gold);width:15px;height:15px;flex-shrink:0;margin-top:1px}
+.journey-task-body{flex:1}
+.journey-task-label{font-size:13px;color:var(--ink2);line-height:1.4}
+.journey-task.done .journey-task-label{text-decoration:line-through;color:var(--ink3)}
+.task-type{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.4px;margin-right:6px;vertical-align:middle}
+.type-client{background:rgba(80,140,255,.2);color:#80a8ff}
+.type-supplier{background:rgba(212,168,83,.2);color:var(--gold2)}
+.type-admin{background:rgba(160,100,220,.2);color:#c090e0}
+.journey-task-note{margin-top:4px;width:100%;font-size:12px}
+.journey-tasks-wrap{padding:0 6px}
+
+/* ── PRESENTATION ── */
 #s-presentation{position:fixed;inset:0;background:#050d18;z-index:1000;display:none;flex-direction:column}
 #s-presentation.active{display:flex}
 .pres-slide{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 60px;text-align:center;position:relative;overflow-y:auto}
@@ -183,18 +225,44 @@ select.inp option{background:#1a2d45}
   <a href="index.html" class="btn btn-ghost btn-sm">← App</a>
 </div>
 
-<!-- ONBOARDING -->
+<!-- AUTH -->
+<div id="s-auth" class="screen">
+  <div class="center-wrap">
+    <div class="auth-box card card-gold">
+      <div class="logo-ring">🎀</div>
+      <h2 id="auth-title">Welcome Back</h2>
+      <p class="auth-sub" id="auth-sub">Sign in to your coordinator account.</p>
+      <div class="auth-err" id="auth-err"></div>
+      <div id="auth-signup-fields" style="display:none">
+        <div class="form-row"><label>Full Name</label><input class="inp" id="auth-name" placeholder="Maria Santos"></div>
+      </div>
+      <div class="form-row"><label>Email</label><input class="inp" id="auth-email" type="email" placeholder="you@example.com"></div>
+      <div class="form-row"><label>Password</label><input class="inp" id="auth-pass" type="password" placeholder="6+ characters"></div>
+      <div id="auth-confirm-field" style="display:none">
+        <div class="form-row"><label>Confirm Password</label><input class="inp" id="auth-confirm" type="password" placeholder="Repeat password"></div>
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:4px" id="auth-submit" onclick="submitAuth()">Sign In</button>
+      <div class="divider-or">or</div>
+      <button class="btn btn-google" onclick="signInGoogle()">🇬 &nbsp;Continue with Google</button>
+      <div class="auth-toggle" id="auth-toggle">
+        Don't have an account? <a onclick="toggleAuthMode()">Create one</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING (profile setup after first sign-in) -->
 <div id="s-onboarding" class="screen">
   <div class="center-wrap">
-    <div class="onboarding-box card card-gold">
+    <div class="auth-box card card-gold">
       <div class="logo-ring">🎀</div>
-      <h2>Welcome, Coordinator</h2>
-      <p>Set up your profile to start managing client plans.</p>
+      <h2 style="font-family:var(--f2);font-size:26px;color:var(--gold2);text-align:center;margin-bottom:6px">Set Up Your Profile</h2>
+      <p style="color:var(--ink3);text-align:center;font-size:13px;margin-bottom:22px">Just a few details so your clients know who they're working with.</p>
       <div class="form-row"><label>Your Name</label><input class="inp" id="ob-name" placeholder="e.g. Maria Santos"></div>
       <div class="form-row"><label>Business / Agency Name</label><input class="inp" id="ob-biz" placeholder="e.g. Golden Vows Events"></div>
       <div class="form-row"><label>Specialization</label><input class="inp" id="ob-spec" placeholder="e.g. Intimate Weddings, Garden Events"></div>
-      <div class="form-row"><label>Contact / Email</label><input class="inp" id="ob-contact" placeholder="email or phone"></div>
-      <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:4px" onclick="saveProfile()">Get Started →</button>
+      <div class="form-row"><label>Contact / Phone</label><input class="inp" id="ob-contact" placeholder="0917 xxx xxxx"></div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:4px" onclick="saveProfile()">Save & Start Planning →</button>
     </div>
   </div>
 </div>
@@ -204,6 +272,18 @@ select.inp option{background:#1a2d45}
   <div class="dash-header">
     <h2>My Client Plans</h2>
     <button class="btn btn-gold" onclick="newPlanFromDash()">+ New Plan</button>
+  </div>
+  <!-- Supplier referral -->
+  <div class="supplier-cta-card">
+    <div class="supplier-cta-icon">🤝</div>
+    <div class="supplier-cta-text" style="flex:1">
+      <h4>Invite your suppliers to Vows & Petals — it's free for them</h4>
+      <p>Your clients trust your vendor recommendations. When your suppliers have a profile here, couples find them faster, bookings happen smoother, and you manage less back-and-forth. It takes 2 minutes to register.</p>
+      <div class="supplier-cta-actions">
+        <button class="btn btn-gold btn-sm" onclick="copySupplierLink()">📋 Copy Supplier Signup Link</button>
+        <button class="btn btn-outline btn-sm" onclick="shareSupplierWhatsApp()">💬 Share via WhatsApp</button>
+      </div>
+    </div>
   </div>
   <div id="dashboard-grid"></div>
 </div>
@@ -244,6 +324,24 @@ select.inp option{background:#1a2d45}
 </div>
 
 <script>
+/* ══════════════════════════════════════════════
+   FIREBASE INIT
+══════════════════════════════════════════════ */
+const FB_CONFIG={
+  apiKey:'AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs',
+  authDomain:'weddingthings.firebaseapp.com',
+  projectId:'weddingthings',
+  storageBucket:'weddingthings.firebasestorage.app',
+  messagingSenderId:'732042029649',
+  appId:'1:732042029649:web:21bbe63214e8b36770e670',
+};
+if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+const AUTH = firebase.auth();
+const DB   = firebase.firestore();
+
+/* ══════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════ */
 const FREE_LIMIT=3;
 const STEP_LABELS=['Couple','Vision','Budget','Guests','Ceremony','Reception','Vendors','Inspiration','Special'];
 const VENDOR_CATS=['Venue','Catering','Photographer','Videographer','Florist','Decorator','Host / MC','DJ or Band','Hair & Makeup','Wedding Gown','Suit','Transportation','Cake','Photo Booth','Invitation Designer','Souvenirs'];
@@ -279,7 +377,76 @@ const COLOR_MAP={
   'white':'#f8f8f8','black':'#2a2a2a','gray':'#9090a0','beige':'#e8dcc8',
 };
 
-let PROFILE=null,PLANS=[],CP=null;
+// Coordinator journey — phases & default tasks
+const DEFAULT_JOURNEY=[
+  {phase:'Initial Consultation (12+ Months)',tasks:[
+    {type:'client',label:'Schedule & conduct first consultation meeting'},
+    {type:'client',label:'Understand couple\'s vision, style & budget'},
+    {type:'client',label:'Present coordination packages & pricing'},
+    {type:'client',label:'Sign coordination agreement / contract'},
+    {type:'admin', label:'Collect retainer / deposit payment'},
+    {type:'admin', label:'Create couple\'s folder & save contacts'},
+  ]},
+  {phase:'Venue & Priority Vendors (9–12 Months)',tasks:[
+    {type:'client',   label:'2nd meeting: confirm venue shortlist & date'},
+    {type:'supplier', label:'Contact & tour shortlisted venues'},
+    {type:'supplier', label:'Introduce 3 photographer options'},
+    {type:'supplier', label:'Introduce videographer options'},
+    {type:'admin',    label:'Prepare vendor comparison document'},
+    {type:'supplier', label:'Assist couple with venue booking & contract'},
+  ]},
+  {phase:'Vendor Sourcing (6–9 Months)',tasks:[
+    {type:'client',   label:'3rd meeting: vendor updates & decisions'},
+    {type:'supplier', label:'Catering — coordinate food tasting & contract'},
+    {type:'supplier', label:'Florist — present design brief & mood board'},
+    {type:'supplier', label:'Hair & Makeup — coordinate trial session'},
+    {type:'supplier', label:'Entertainment — book DJ or band'},
+    {type:'admin',    label:'Track all supplier deposit deadlines'},
+    {type:'admin',    label:'Confirm all priority vendors signed'},
+  ]},
+  {phase:'Planning Deep Dive (3–6 Months)',tasks:[
+    {type:'client',   label:'6-month check-in meeting'},
+    {type:'supplier', label:'Confirm secondary vendors (cake, photo booth, etc.)'},
+    {type:'client',   label:'Assist with guest list finalization'},
+    {type:'supplier', label:'Coordinate invitation design & printing'},
+    {type:'admin',    label:'Send couple monthly planning update'},
+  ]},
+  {phase:'Final Preparations (1–3 Months)',tasks:[
+    {type:'client',   label:'3-month final details meeting'},
+    {type:'supplier', label:'Send detailed brief to ALL vendors'},
+    {type:'supplier', label:'Confirm vendor arrival times & logistics'},
+    {type:'client',   label:'Assist with final seating arrangement'},
+    {type:'admin',    label:'Prepare day-of coordination pack'},
+    {type:'client',   label:'Coordinate rehearsal'},
+  ]},
+  {phase:'Final Week',tasks:[
+    {type:'supplier', label:'Final vendor call & reconfirmation'},
+    {type:'supplier', label:'Venue final walkthrough & setup check'},
+    {type:'client',   label:'Final coordination call with couple'},
+    {type:'admin',    label:'Prepare tips & final payment envelopes'},
+  ]},
+  {phase:'Wedding Day',tasks:[
+    {type:'supplier', label:'Oversee venue & vendor setup'},
+    {type:'client',   label:'Coordinate bridal party preparation'},
+    {type:'client',   label:'Manage ceremony flow'},
+    {type:'supplier', label:'Vendor check-ins throughout the day'},
+    {type:'client',   label:'Manage reception program & flow'},
+    {type:'supplier', label:'Vendor wrap-up & payment coordination'},
+  ]},
+  {phase:'Post-Wedding',tasks:[
+    {type:'client',   label:'Post-wedding thank you & debrief with couple'},
+    {type:'supplier', label:'Collect feedback from all vendors'},
+    {type:'admin',    label:'Request couple\'s testimonial / review'},
+    {type:'supplier', label:'Send thank-you notes to vendor team'},
+    {type:'admin',    label:'Final invoice settlement & file closing'},
+  ]},
+];
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let PROFILE=null, PLANS=[], CP=null, CURRENT_UID=null;
+let AUTH_MODE='signin'; // 'signin' | 'signup'
 let activePlanTab=0;
 
 function uid(){return Math.random().toString(36).slice(2,9)}
@@ -318,50 +485,186 @@ function blankPlan(){
       checklist:Object.fromEntries(Object.entries(DEFAULT_CHECKLIST).map(([k,tasks])=>[k,tasks.map(t=>({id:uid(),task:t,done:false}))])),
       floorPlan:{ceremony:'',reception:'',stage:'',danceFloor:'',buffet:'',bar:'',registration:'',photoBooth:'',notes:''},
       risks:{rainBackup:'',emergencyContacts:'',medicalKit:'',backupTransport:'',vendorBackup:'',notes:''},
+      journey:DEFAULT_JOURNEY.map(p=>({
+        id:uid(),phase:p.phase,collapsed:false,
+        tasks:p.tasks.map(t=>({id:uid(),type:t.type,label:t.label,done:false,notes:''}))
+      })),
     }
   };
 }
 
-function saveAll(){
-  localStorage.setItem('at_coord_profile',JSON.stringify(PROFILE));
-  localStorage.setItem('at_coord_plans',JSON.stringify(PLANS));
+/* ══════════════════════════════════════════════
+   PERSISTENCE
+══════════════════════════════════════════════ */
+function plansKey(){return 'at_coord_plans_'+(CURRENT_UID||'guest')}
+
+function savePlans(){
+  localStorage.setItem(plansKey(),JSON.stringify(PLANS));
 }
-function loadAll(){
-  try{PROFILE=JSON.parse(localStorage.getItem('at_coord_profile'))}catch{PROFILE=null}
-  try{PLANS=(JSON.parse(localStorage.getItem('at_coord_plans'))||[]).filter(p=>p&&p.interview)}catch{PLANS=[]}
+function loadPlans(){
+  try{PLANS=(JSON.parse(localStorage.getItem(plansKey()))||[]).filter(p=>p&&p.interview);}
+  catch{PLANS=[]}
+  // migrate: ensure journey exists on old plans
+  PLANS.forEach(p=>{
+    if(!p.plan.journey){
+      p.plan.journey=DEFAULT_JOURNEY.map(ph=>({
+        id:uid(),phase:ph.phase,collapsed:false,
+        tasks:ph.tasks.map(t=>({id:uid(),type:t.type,label:t.label,done:false,notes:''}))
+      }));
+    }
+  });
 }
 
+async function saveProfileFirestore(){
+  if(!CURRENT_UID||!PROFILE)return;
+  try{await DB.collection('coordinators').doc(CURRENT_UID).set(PROFILE);}catch(e){console.warn('Firestore save:',e)}
+  localStorage.setItem('at_coord_profile_'+CURRENT_UID,JSON.stringify(PROFILE));
+}
+async function loadProfileFirestore(){
+  if(!CURRENT_UID)return false;
+  // Try Firestore first
+  try{
+    const snap=await DB.collection('coordinators').doc(CURRENT_UID).get();
+    if(snap.exists){PROFILE=snap.data();return true;}
+  }catch(e){console.warn('Firestore load:',e)}
+  // Fallback to localStorage
+  try{
+    const cached=JSON.parse(localStorage.getItem('at_coord_profile_'+CURRENT_UID));
+    if(cached&&cached.name){PROFILE=cached;return true;}
+  }catch{}
+  return false;
+}
+
+/* ══════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════ */
+function toggleAuthMode(){
+  AUTH_MODE=AUTH_MODE==='signin'?'signup':'signin';
+  const isSign=AUTH_MODE==='signin';
+  document.getElementById('auth-title').textContent=isSign?'Welcome Back':'Create Account';
+  document.getElementById('auth-sub').textContent=isSign?'Sign in to your coordinator account.':'Set up your free coordinator account.';
+  document.getElementById('auth-submit').textContent=isSign?'Sign In':'Create Account';
+  document.getElementById('auth-toggle').innerHTML=isSign
+    ?`Don't have an account? <a onclick="toggleAuthMode()">Create one</a>`
+    :`Already have an account? <a onclick="toggleAuthMode()">Sign in</a>`;
+  document.getElementById('auth-signup-fields').style.display=isSign?'none':'block';
+  document.getElementById('auth-confirm-field').style.display=isSign?'none':'block';
+  clearAuthErr();
+}
+
+function showAuthErr(msg){
+  const el=document.getElementById('auth-err');
+  el.textContent=msg;el.classList.add('show');
+}
+function clearAuthErr(){document.getElementById('auth-err').classList.remove('show')}
+
+async function submitAuth(){
+  clearAuthErr();
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  if(!email||!pass){showAuthErr('Please enter your email and password.');return}
+  const btn=document.getElementById('auth-submit');
+  btn.textContent='Please wait…';btn.disabled=true;
+  try{
+    if(AUTH_MODE==='signup'){
+      const confirm=document.getElementById('auth-confirm').value;
+      if(pass!==confirm){showAuthErr('Passwords do not match.');btn.textContent='Create Account';btn.disabled=false;return}
+      if(pass.length<6){showAuthErr('Password must be at least 6 characters.');btn.textContent='Create Account';btn.disabled=false;return}
+      const name=document.getElementById('auth-name').value.trim();
+      const cred=await AUTH.createUserWithEmailAndPassword(email,pass);
+      if(name) await cred.user.updateProfile({displayName:name});
+    } else {
+      await AUTH.signInWithEmailAndPassword(email,pass);
+    }
+    // onAuthStateChanged handles the rest
+  }catch(e){
+    const msgs={
+      'auth/user-not-found':'No account found with this email.',
+      'auth/wrong-password':'Incorrect password.',
+      'auth/email-already-in-use':'An account already exists with this email.',
+      'auth/invalid-email':'Please enter a valid email address.',
+      'auth/too-many-requests':'Too many attempts. Please try again later.',
+      'auth/invalid-credential':'Incorrect email or password.',
+    };
+    showAuthErr(msgs[e.code]||e.message);
+    btn.textContent=AUTH_MODE==='signin'?'Sign In':'Create Account';
+    btn.disabled=false;
+  }
+}
+
+async function signInGoogle(){
+  clearAuthErr();
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await AUTH.signInWithPopup(provider);
+  }catch(e){
+    if(e.code!=='auth/popup-closed-by-user') showAuthErr(e.message);
+  }
+}
+
+function signOut(){
+  AUTH.signOut().then(()=>{
+    PROFILE=null;PLANS=[];CP=null;CURRENT_UID=null;
+    show('s-auth');
+  });
+}
+
+/* ══════════════════════════════════════════════
+   ROUTING
+══════════════════════════════════════════════ */
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   const ta=document.getElementById('topbar-actions');
-  if(id==='s-dashboard') ta.innerHTML=`<span style="font-size:12px;color:var(--ink3)">👤 ${PROFILE?.name||''}</span>`;
-  else if(id==='s-interview'||id==='s-planning') ta.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="goToDash()">Dashboard</button>`;
-  else ta.innerHTML='';
+  if(id==='s-dashboard'){
+    ta.innerHTML=`<span style="font-size:12px;color:var(--ink3)">👤 ${PROFILE?.name||''}</span>
+      <button class="btn btn-ghost btn-sm" onclick="signOut()">Sign Out</button>`;
+  } else if(id==='s-interview'||id==='s-planning'){
+    ta.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="goToDash()">Dashboard</button>`;
+  } else { ta.innerHTML=''; }
 }
 
-/* ── ONBOARDING ── */
-function saveProfile(){
+/* ══════════════════════════════════════════════
+   PROFILE / ONBOARDING
+══════════════════════════════════════════════ */
+async function saveProfile(){
   const name=document.getElementById('ob-name').value.trim();
   if(!name){alert('Please enter your name.');return}
-  PROFILE={name,biz:document.getElementById('ob-biz').value.trim(),spec:document.getElementById('ob-spec').value.trim(),contact:document.getElementById('ob-contact').value.trim()};
-  saveAll();renderDashboard();show('s-dashboard');
+  PROFILE={
+    name,
+    biz:document.getElementById('ob-biz').value.trim(),
+    spec:document.getElementById('ob-spec').value.trim(),
+    contact:document.getElementById('ob-contact').value.trim(),
+    email:AUTH.currentUser?.email||'',
+    uid:CURRENT_UID,
+  };
+  await saveProfileFirestore();
+  renderDashboard();show('s-dashboard');
 }
 
-/* ── DASHBOARD ── */
+/* ══════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════ */
 function renderDashboard(){
   const grid=document.getElementById('dashboard-grid');
-  if(!PLANS.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>No plans yet. Create your first client plan!</p></div>`;return}
+  if(!PLANS.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>No plans yet. Create your first client plan!</p></div>`;
+    return;
+  }
   grid.innerHTML=PLANS.map(p=>{
     const iv=p.interview;
     const names=(iv.p1Name&&iv.p2Name)?`${iv.p1Name} & ${iv.p2Name}`:iv.p1Name||'Unnamed Couple';
     const date=iv.weddingDate?new Date(iv.weddingDate).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}):'Date TBD';
     const tcls=`tag tag-${p.status}`;
     const tlbl={interview:'Interview',planning:'Planning',presenting:'Ready to Present',approved:'Approved'}[p.status]||p.status;
+    // Journey progress
+    const allTasks=p.plan.journey?.flatMap(ph=>ph.tasks)||[];
+    const doneTasks=allTasks.filter(t=>t.done).length;
+    const jProg=allTasks.length?` · Journey ${doneTasks}/${allTasks.length}`:'';
     return`<div class="plan-card">
       <span class="${tcls}">${tlbl}</span>
       <h3>${names}</h3>
-      <div class="meta">${date}${iv.receptionVenue||iv.ceremonyVenue?' · '+(iv.receptionVenue||iv.ceremonyVenue):''}</div>
+      <div class="meta">${date}${iv.receptionVenue?' · '+iv.receptionVenue:''}${jProg}</div>
       <div class="actions">
         <button class="btn btn-outline btn-sm" onclick="openInterview('${p.id}')">✏️ Interview</button>
         <button class="btn btn-gold btn-sm" onclick="openPlanning('${p.id}')">📋 Plan</button>
@@ -374,27 +677,42 @@ function renderDashboard(){
 
 function newPlanFromDash(){
   if(PLANS.length>=FREE_LIMIT){alert(`Free plan limit (${FREE_LIMIT}) reached.\nUpgrade to Pro for unlimited plans.`);return}
-  CP=blankPlan();PLANS.push(CP);saveAll();startInterview();
+  CP=blankPlan();PLANS.push(CP);savePlans();startInterview();
 }
 function deletePlan(id){
   if(!confirm('Delete this plan?'))return;
-  PLANS=PLANS.filter(p=>p.id!==id);saveAll();renderDashboard();
+  PLANS=PLANS.filter(p=>p.id!==id);savePlans();renderDashboard();
 }
 function goToDash(){syncCP();renderDashboard();show('s-dashboard')}
 function syncCP(){
   if(!CP)return;
   const i=PLANS.findIndex(p=>p.id===CP.id);
-  if(i!==-1)PLANS[i]=CP;saveAll();
+  if(i!==-1)PLANS[i]=CP;savePlans();
 }
 
-/* ── INTERVIEW ── */
+/* Supplier referral */
+function copySupplierLink(){
+  const url=window.location.origin+'/supplier.html';
+  navigator.clipboard.writeText(url).then(()=>alert('Supplier registration link copied!\n\n'+url)).catch(()=>prompt('Copy this link:',url));
+}
+function shareSupplierWhatsApp(){
+  const url=window.location.origin+'/supplier.html';
+  const msg=encodeURIComponent('Hi! I use Vows & Petals to manage wedding plans. You can list your business for free so my clients can find you easily — takes 2 minutes: '+url);
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+/* ══════════════════════════════════════════════
+   INTERVIEW WIZARD
+══════════════════════════════════════════════ */
 function openInterview(id){CP=PLANS.find(p=>p.id===id);if(CP)startInterview()}
 function startInterview(){renderStepBar();renderStep(CP.interviewStep||0);show('s-interview')}
 
 function renderStepBar(){
   document.getElementById('step-bar').innerHTML=STEP_LABELS.map((l,i)=>{
-    const cls=i<(CP.interviewStep||0)?'done':i===(CP.interviewStep||0)?'active':'';
-    return`<div class="step-item"><div class="step-dot ${cls}" onclick="jumpStep(${i})" title="${l}">${i+1}</div><span class="step-label" style="${i===(CP.interviewStep||0)?'color:var(--gold)':''}">${l}</span></div>`;
+    const cur=CP.interviewStep||0;
+    const cls=i<cur?'done':i===cur?'active':'';
+    return`<div class="step-item"><div class="step-dot ${cls}" onclick="jumpStep(${i})" title="${l}">${i+1}</div>
+      <span class="step-label${i===cur?' active':''}">${l}</span></div>`;
   }).join('');
 }
 
@@ -423,17 +741,15 @@ const STEP_HTML=[
       <div class="form-row"><label>Engagement Date</label><input class="inp" id="iv-engagementDate" type="date"></div>
       <div class="form-row"><label>Preferred Communication</label>${sel('iv-commMethod',['','WhatsApp','Email','Phone Call','In-Person','Viber'])}</div>
     </div>`,
-
   ()=>`<h2 class="step-title">Wedding Vision</h2><p class="step-sub">The couple's dream and style.</p>
     <div class="form-grid">
       <div class="form-row"><label>Wedding Style</label>${inp('iv-style','e.g. Rustic, Modern, Bohemian, Classic')}</div>
       <div class="form-row"><label>Desired Atmosphere</label>${inp('iv-atmosphere','e.g. Intimate, Grand, Romantic')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Top Priorities</label>${ta('iv-priorities','What matters most to them?')}</div>
+      <div class="form-row" style="grid-column:1/-1"><label>Top Priorities</label>${ta('iv-priorities','What matters most?')}</div>
       <div class="form-row" style="grid-column:1/-1"><label>Must-Haves</label>${ta('iv-mustHaves','Non-negotiables')}</div>
       <div class="form-row"><label>Traditions to Include</label>${inp('iv-includeTrads','Cultural or religious traditions')}</div>
       <div class="form-row"><label>Things to Avoid</label>${inp('iv-avoidTrads','Anything they don\'t want')}</div>
     </div>`,
-
   ()=>`<h2 class="step-title">Budget</h2><p class="step-sub">Financial scope and flexibility.</p>
     <div class="form-grid">
       <div class="form-row"><label>Total Budget (₱)</label><input class="inp" id="iv-totalBudget" type="number" min="0" placeholder="0"></div>
@@ -442,7 +758,6 @@ const STEP_HTML=[
       <div class="form-row"><label>Willing to spend more on?</label>${inp('iv-spendMore','e.g. Photography, Flowers')}</div>
       <div class="form-row" style="grid-column:1/-1"><label>Where to save money?</label>${inp('iv-saveMoney','e.g. Decorations, Cake')}</div>
     </div>`,
-
   ()=>`<h2 class="step-title">Guest Information</h2><p class="step-sub">Headcount and special guests.</p>
     <div class="form-grid">
       <div class="form-row"><label>Total Guests</label><input class="inp" id="iv-guestCount" type="number" min="0" placeholder="0"></div>
@@ -452,7 +767,6 @@ const STEP_HTML=[
       <div class="form-row"><label>Wedding Party Size</label><input class="inp" id="iv-partySize" type="number" min="0" placeholder="0"></div>
       <div class="form-row" style="grid-column:1/-1"><label>VIP / Notable Guests</label>${ta('iv-vipGuests','Names or roles')}</div>
     </div>`,
-
   ()=>`<h2 class="step-title">Ceremony Details</h2><p class="step-sub">Ceremony logistics.</p>
     <div class="form-grid">
       <div class="form-row"><label>Ceremony Type</label>${sel('iv-ceremonyType',['','Church / Religious','Civil','Garden','Beach','Chapel','Destination','Other'])}</div>
@@ -460,7 +774,6 @@ const STEP_HTML=[
       <div class="form-row"><label>Ceremony Venue</label>${inp('iv-ceremonyVenue','Name or address')}</div>
       <div class="form-row"><label>Ceremony Time</label><input class="inp" id="iv-ceremonyTime" type="time"></div>
     </div>`,
-
   ()=>`<h2 class="step-title">Reception Details</h2><p class="step-sub">Setting, theme, and experience.</p>
     <div class="form-grid">
       <div class="form-row"><label>Reception Venue</label>${inp('iv-receptionVenue','Name or address')}</div>
@@ -470,24 +783,21 @@ const STEP_HTML=[
       <div class="form-row" style="grid-column:1/-1"><label>Entertainment</label>${inp('iv-entertainment','e.g. Live band, DJ, String quartet')}</div>
       <div class="form-row" style="grid-column:1/-1"><label>Food & Catering Preference</label>${inp('iv-food','e.g. Buffet, Plated, Filipino cuisine')}</div>
     </div>`,
-
   ()=>`<h2 class="step-title">Vendor Requirements</h2><p class="step-sub">Select all categories needed.</p>
     <div class="checkbox-grid">
-      ${VENDOR_CATS.map(v=>{const sel=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${sel?' selected':''}">
-        <input type="checkbox" value="${v}" ${sel?'checked':''} onchange="syncVendorCheck(this)">
+      ${VENDOR_CATS.map(v=>{const s=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${s?' selected':''}">
+        <input type="checkbox" value="${v}" ${s?'checked':''} onchange="syncVendorCheck(this)">
         <span>${v}</span></label>`;}).join('')}
     </div>`,
-
   ()=>`<h2 class="step-title">Inspiration & Mood</h2><p class="step-sub">Visual references and direction.</p>
     <div class="form-grid">
       <div class="form-row"><label>Pinterest Board</label>${inp('iv-pinterest','pinterest.com/...')}</div>
       <div class="form-row"><label>Instagram Reference</label>${inp('iv-instagram','@handle or #hashtag')}</div>
       <div class="form-row" style="grid-column:1/-1"><label>Sample Weddings</label>${ta('iv-sampleWeddings','References they love')}</div>
       <div class="form-row"><label>Favorite Colors</label>${inp('iv-favoriteColors','e.g. Dusty Rose, Sage Green')}</div>
-      <div class="form-row" style="grid-column:1/-1"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Types of flowers, style, arrangements')}</div>
+      <div class="form-row" style="grid-column:1/-1"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Flowers, arrangements, style')}</div>
     </div>`,
-
-  ()=>`<h2 class="step-title">Special Requests</h2><p class="step-sub">Unique elements and special needs.</p>
+  ()=>`<h2 class="step-title">Special Requests</h2><p class="step-sub">Unique elements and needs.</p>
     <div class="form-grid">
       <div class="form-row"><label>Surprise Performance / Proposal</label>${inp('iv-surprisePerf','Describe any surprise')}</div>
       <div class="form-row"><label>Cultural Traditions</label>${inp('iv-culturalTrads','Specific rituals or customs')}</div>
@@ -539,14 +849,12 @@ function collectStep(n){
     if(el)CP.interview[f]=el.type==='number'?parseFloat(el.value)||0:el.value;
   });
   if(n===8){
-    const ka=document.getElementById('iv-kidsArea');
-    const pp=document.getElementById('iv-petParticipation');
+    const ka=document.getElementById('iv-kidsArea'),pp=document.getElementById('iv-petParticipation');
     if(ka)CP.interview.kidsArea=ka.checked;
     if(pp)CP.interview.petParticipation=pp.checked;
   }
   syncCP();
 }
-
 function syncVendorCheck(el){
   const set=new Set(CP.interview.vendorsNeeded||[]);
   if(el.checked)set.add(el.value);else set.delete(el.value);
@@ -554,7 +862,9 @@ function syncVendorCheck(el){
   el.closest('.chk-item').classList.toggle('selected',el.checked);
 }
 
-/* ── AUTO-FILL PLANNING ── */
+/* ══════════════════════════════════════════════
+   AUTO-FILL PLANNING FROM INTERVIEW
+══════════════════════════════════════════════ */
 function autofillPlanning(){
   const iv=CP.interview,plan=CP.plan;
   const anyBudget=Object.values(plan.budget).some(v=>v>0);
@@ -566,8 +876,10 @@ function autofillPlanning(){
   });
 }
 
-/* ── PLANNING ── */
-const PLAN_TABS=['Summary','Budget','Vendors','Timeline','Checklist','Floor Plan','Risks'];
+/* ══════════════════════════════════════════════
+   PLANNING WORKSPACE
+══════════════════════════════════════════════ */
+const PLAN_TABS=['Summary','Budget','Vendors','Timeline','Checklist','Floor Plan','Risks','Journey'];
 
 function openPlanning(id){
   CP=PLANS.find(p=>p.id===id);if(!CP)return;
@@ -616,7 +928,6 @@ const PANEL_HTML=[
           <div class="summary-kv"><span class="k">Ceremony</span><span class="v">${iv.ceremonyVenue||'TBD'}</span></div>
           <div class="summary-kv"><span class="k">Reception</span><span class="v">${iv.receptionVenue||'TBD'}</span></div>
           <div class="summary-kv"><span class="k">Ceremony Time</span><span class="v">${iv.ceremonyTime||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Indoor/Outdoor</span><span class="v">${iv.indoorOutdoor||'—'}</span></div>
         </div>
         <div class="summary-block"><h4>Guests</h4>
           <div class="summary-kv"><span class="k">Total</span><span class="v">${iv.guestCount||0}</span></div>
@@ -634,7 +945,7 @@ const PANEL_HTML=[
           <div class="summary-kv"><span class="k">Food</span><span class="v">${iv.food||'—'}</span></div>
         </div>
         <div class="summary-block"><h4>Budget</h4>
-          <div class="summary-kv"><span class="k">Total Budget</span><span class="v">${fmtP(iv.totalBudget)}</span></div>
+          <div class="summary-kv"><span class="k">Total</span><span class="v">${fmtP(iv.totalBudget)}</span></div>
           <div class="summary-kv"><span class="k">Ideal</span><span class="v">${fmtP(iv.idealBudget)}</span></div>
           <div class="summary-kv"><span class="k">Maximum</span><span class="v">${fmtP(iv.maxBudget)}</span></div>
         </div>
@@ -729,7 +1040,7 @@ const PANEL_HTML=[
     const fp=CP.plan.floorPlan;
     const zones=[['ceremony','Ceremony Area'],['reception','Reception Hall'],['stage','Stage / Altar'],['danceFloor','Dance Floor'],['buffet','Buffet / Food Area'],['bar','Bar / Drinks'],['registration','Registration / Welcome'],['photoBooth','Photo Booth']];
     return`<h3 class="section-title">Floor Plan Notes</h3>
-    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px">Describe the layout for each zone. These appear in the presentation.</p>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px">Describe the layout for each zone.</p>
     <div class="fp-grid">
       ${zones.map(([k,l])=>`<div class="form-row">
         <label style="font-size:11px;color:var(--ink3)">${l}</label>
@@ -756,6 +1067,45 @@ const PANEL_HTML=[
       <label style="font-size:12px;font-weight:600;color:var(--ink2)">Additional Notes</label>
       <textarea class="inp textarea" data-riskkey="notes" rows="3" placeholder="Any other risk notes...">${r.notes||''}</textarea>
     </div>`;
+  },
+
+  // 7 Journey (Coordinator's own planning timeline)
+  ()=>{
+    const phases=CP.plan.journey||[];
+    const totalTasks=phases.flatMap(p=>p.tasks).length;
+    const doneTasks=phases.flatMap(p=>p.tasks).filter(t=>t.done).length;
+    return`<h3 class="section-title">Coordinator Journey</h3>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:8px">Track your own planning milestones — client meetings, supplier contacts, and admin tasks throughout the engagement.</p>
+    <div style="display:flex;gap:16px;margin-bottom:20px;padding:12px 16px;background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
+      <div><span style="font-size:11px;color:var(--gold);font-weight:700">OVERALL PROGRESS</span><br><span style="font-size:18px;font-weight:700">${doneTasks} / ${totalTasks}</span></div>
+      <div style="flex:1;display:flex;align-items:center"><div style="width:100%;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:4px;width:${totalTasks?Math.round((doneTasks/totalTasks)*100):0}%"></div></div></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;font-size:12px">
+      <span><span class="task-type type-client">CLIENT</span> Client meeting / interaction</span>
+      <span><span class="task-type type-supplier">SUPPLIER</span> Supplier / vendor task</span>
+      <span><span class="task-type type-admin">ADMIN</span> Admin / coordination task</span>
+    </div>
+    ${phases.map((ph,pi)=>{
+      const pdone=ph.tasks.filter(t=>t.done).length;
+      return`<div class="journey-phase">
+        <div class="journey-phase-header" onclick="toggleJourneyPhase(${pi})">
+          <span class="journey-phase-title">${ph.phase}</span>
+          <span class="journey-phase-prog">${pdone}/${ph.tasks.length}</span>
+          <span style="color:var(--ink3);font-size:14px">${ph.collapsed?'▶':'▼'}</span>
+        </div>
+        <div class="journey-tasks-wrap" ${ph.collapsed?'style="display:none"':''} id="jphase-${pi}">
+          ${ph.tasks.map((t,ti)=>`<div class="journey-task${t.done?' done':''}" data-pi="${pi}" data-ti="${ti}">
+            <input type="checkbox" ${t.done?'checked':''} onchange="toggleJourneyTask(${pi},${ti},this.checked)">
+            <div class="journey-task-body">
+              <div><span class="task-type type-${t.type}">${t.type.toUpperCase()}</span>
+                <span class="journey-task-label">${t.label}</span></div>
+              ${t.notes!==undefined?`<input class="inp-sm journey-task-note" style="margin-top:6px;width:100%;font-size:12px" placeholder="Notes…" value="${t.notes||''}" onchange="updateJourneyNote(${pi},${ti},this.value)">`:''}
+            </div>
+          </div>`).join('')}
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addJourneyTask(${pi})">+ Add Task</button>
+        </div>
+      </div>`;
+    }).join('')}`;
   },
 ];
 
@@ -786,7 +1136,37 @@ function updateTL(id,field,val){const t=CP.plan.timeline.find(t=>t.id===id);if(t
 function toggleCL(phase,id,checked){const item=CP.plan.checklist[phase]?.find(i=>i.id===id);if(item){item.done=checked;syncCP()}}
 function addCLItem(phase){const task=prompt('New checklist item:');if(!task)return;CP.plan.checklist[phase]?.push({id:uid(),task,done:false});syncCP();renderPlanUI()}
 
-/* ── PRESENTATION ── */
+function toggleJourneyPhase(pi){
+  CP.plan.journey[pi].collapsed=!CP.plan.journey[pi].collapsed;
+  syncCP();renderPlanUI();
+}
+function toggleJourneyTask(pi,ti,checked){
+  CP.plan.journey[pi].tasks[ti].done=checked;syncCP();
+  const row=document.querySelector(`[data-pi="${pi}"][data-ti="${ti}"]`);
+  if(row){row.classList.toggle('done',checked);}
+  // update progress bar
+  const phases=CP.plan.journey;
+  const total=phases.flatMap(p=>p.tasks).length;
+  const done=phases.flatMap(p=>p.tasks).filter(t=>t.done).length;
+  const ph=phases[pi];const pdone=ph.tasks.filter(t=>t.done).length;
+  // light DOM update instead of full re-render
+  const pbar=document.querySelector('.planning-wrap [style*="overall"]');
+  renderPanelContent(); // re-render to update counts
+}
+function updateJourneyNote(pi,ti,val){
+  if(CP.plan.journey[pi]?.tasks[ti])CP.plan.journey[pi].tasks[ti].notes=val;syncCP();
+}
+function addJourneyTask(pi){
+  const label=prompt('New task label:');if(!label)return;
+  const type=prompt('Type: client, supplier, or admin','client')||'admin';
+  const validType=['client','supplier','admin'].includes(type)?type:'admin';
+  CP.plan.journey[pi].tasks.push({id:uid(),type:validType,label,done:false,notes:''});
+  syncCP();renderPlanUI();
+}
+
+/* ══════════════════════════════════════════════
+   PRESENTATION
+══════════════════════════════════════════════ */
 let SLIDES=[],SIDX=0;
 
 function openPresentation(id){
@@ -796,19 +1176,16 @@ function openPresentation(id){
   document.addEventListener('keydown',presKey);
   document.getElementById('s-presentation').requestFullscreen?.().catch(()=>{});
 }
-
 function closePres(){
   document.removeEventListener('keydown',presKey);
   document.exitFullscreen?.().catch(()=>{});
   openPlanningDirect();
 }
-
 function presKey(e){
   if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();presNav(1)}
   else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();presNav(-1)}
   else if(e.key==='Escape')closePres();
 }
-
 function presNav(d){SIDX=Math.max(0,Math.min(SLIDES.length-1,SIDX+d));drawSlide()}
 
 function buildSlides(){
@@ -848,7 +1225,6 @@ function slideHTML(s){
         ${s.date?`<div class="slide-sub">${s.date}</div>`:''}
         ${s.venue?`<div style="font-size:16px;color:var(--ink3);margin-bottom:24px">📍 ${s.venue}</div>`:''}
         <div style="font-size:28px;color:var(--gold);font-family:var(--f2);letter-spacing:1px;margin-top:16px">Wedding Coordination Proposal</div>`;
-
     case 'overview':{
       const iv=s.iv;
       return`<div class="slide-h2">Wedding Overview</div>
@@ -862,66 +1238,54 @@ function slideHTML(s){
             ${iv.mustHaves?`<div class="slide-kv" style="margin-top:12px"><span class="k">Must-Haves</span><span class="v" style="font-style:italic">${iv.mustHaves}</span></div>`:''}</div>
         </div>`;
     }
-
     case 'moodboard':{
       const iv=s.iv;
       const cols=(iv.colorPalette||iv.favoriteColors||'').split(/[,;]+/).map(c=>c.trim()).filter(Boolean);
-      const swatches=cols.map(name=>{
-        const hex=COLOR_MAP[name.toLowerCase()]||'#888';
-        return`<div class="swatch" style="background:${hex}" title="${name}"><span>${name}</span></div>`;
-      }).join('');
+      const swatches=cols.map(n=>{const hex=COLOR_MAP[n.toLowerCase()]||'#888';return`<div class="swatch" style="background:${hex}" title="${n}"><span>${n}</span></div>`;}).join('');
       return`<div class="slide-h2">Mood Board</div>
         <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
           <div>${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}
             ${iv.floralInspiration?`<div class="slide-kv"><span class="k">Florals</span><span class="v">${iv.floralInspiration}</span></div>`:''}
             ${iv.sampleWeddings?`<div class="slide-kv"><span class="k">References</span><span class="v">${iv.sampleWeddings}</span></div>`:''}
-            ${iv.pinterest?`<div class="slide-kv"><span class="k">Pinterest</span><span class="v">${iv.pinterest}</span></div>`:''}
             ${iv.mustHaves?`<div style="margin-top:16px;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
               <span style="font-size:11px;font-weight:700;color:var(--gold)">MUST-HAVES: </span>
               <span style="font-size:13px;color:var(--ink2)">${iv.mustHaves}</span></div>`:''}
           </div>
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:12px">COLOR PALETTE</div>
-            ${swatches?`<div class="color-swatches">${swatches}</div>`:'<p style="color:var(--ink3);font-size:14px">No color palette set.</p>'}
+            ${swatches?`<div class="color-swatches">${swatches}</div>`:'<p style="color:var(--ink3)">No colors set.</p>'}
           </div>
         </div>`;
     }
-
     case 'budget':{
       const plan=s.plan,alloc=s.totalBudget||0;
       const allocated=Object.values(plan.budget).reduce((a,v)=>a+(+v||0),0);
       const maxVal=Math.max(...Object.values(plan.budget).map(v=>+v||0),1);
-      const hasVals=BUDGET_CATS.some(c=>(plan.budget[c.key]||0)>0);
       return`<div class="slide-h2">Budget Review</div>
         <div class="budget-slide-rows">
-          ${hasVals?BUDGET_CATS.filter(c=>(plan.budget[c.key]||0)>0).map(c=>{
+          ${BUDGET_CATS.filter(c=>(plan.budget[c.key]||0)>0).map(c=>{
             const val=plan.budget[c.key]||0;
-            const pct=Math.round((val/maxVal)*100);
             return`<div class="bs-row"><span class="bs-label">${c.label}</span>
-              <div class="bs-bar-wrap"><div class="bs-bar" style="width:${pct}%"></div></div>
+              <div class="bs-bar-wrap"><div class="bs-bar" style="width:${Math.round((val/maxVal)*100)}%"></div></div>
               <span class="bs-amt">₱${fmt(val)}</span></div>`;
-          }).join(''):'<p style="color:var(--ink3);padding:20px 0">No budget allocated yet.</p>'}
+          }).join('')||'<p style="color:var(--ink3)">No budget allocated yet.</p>'}
         </div>
         <div style="display:flex;gap:24px;margin-top:20px;padding:14px 20px;background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
-          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.4px">INTERVIEW BUDGET</div><div style="font-size:20px;font-weight:700">₱${fmt(alloc)}</div></div>`:''}
-          <div><div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.4px">TOTAL ALLOCATED</div><div style="font-size:20px;font-weight:700;color:${allocated>(alloc||Infinity)?'#ff8080':'var(--ink)'}">₱${fmt(allocated)}</div></div>
-          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.4px">REMAINING</div><div style="font-size:20px;font-weight:700;color:${alloc-allocated<0?'#ff8080':'#80e080'}">₱${fmt(alloc-allocated)}</div></div>`:''}
+          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">INTERVIEW BUDGET</div><div style="font-size:20px;font-weight:700">₱${fmt(alloc)}</div></div>`:''}
+          <div><div style="font-size:10px;color:var(--gold);font-weight:700">TOTAL ALLOCATED</div><div style="font-size:20px;font-weight:700">₱${fmt(allocated)}</div></div>
+          ${alloc?`<div><div style="font-size:10px;color:var(--gold);font-weight:700">REMAINING</div><div style="font-size:20px;font-weight:700;color:${alloc-allocated<0?'#ff8080':'#80e080'}">₱${fmt(alloc-allocated)}</div></div>`:''}
         </div>`;
     }
-
     case 'vendors':
       return`<div class="slide-h2">Vendor Recommendations${s.total>1?` (${s.page}/${s.total})`:''}</div>
         <div class="vendor-slides-grid">
           ${s.vendors.map(v=>`<div class="vs-card">
-            <div class="vs-cat">${v.category}</div>
-            <div class="vs-name">${v.name||'TBD'}</div>
+            <div class="vs-cat">${v.category}</div><div class="vs-name">${v.name||'TBD'}</div>
             ${v.cost?`<div class="vs-cost">₱${fmt(v.cost)}</div>`:''}
             ${v.availability?`<div style="font-size:11px;color:var(--gold);margin-top:4px">${v.availability}</div>`:''}
             ${v.pros?`<div style="font-size:11px;color:var(--ink3);margin-top:4px">✅ ${v.pros}</div>`:''}
-            ${v.notes?`<div style="font-size:10px;color:var(--ink3);margin-top:2px">${v.notes}</div>`:''}
           </div>`).join('')}
         </div>`;
-
     case 'timeline':
       return`<div class="slide-h2">Wedding Day Timeline${s.total>1?` (${s.page}/${s.total})`:''}</div>
         <div class="tl-slide-list">
@@ -930,10 +1294,9 @@ function slideHTML(s){
             <div><div class="tl-slide-event">${e.event}</div>${e.note?`<div class="tl-slide-note">${e.note}</div>`:''}</div>
           </div>`).join('')}
         </div>`;
-
     case 'floorplan':{
       const fp=s.fp;
-      const zones=[['ceremony','Ceremony Area'],['reception','Reception Hall'],['stage','Stage / Altar'],['danceFloor','Dance Floor'],['buffet','Buffet Area'],['bar','Bar'],['registration','Registration'],['photoBooth','Photo Booth']];
+      const zones=[['ceremony','Ceremony'],['reception','Reception'],['stage','Stage'],['danceFloor','Dance Floor'],['buffet','Buffet'],['bar','Bar'],['registration','Registration'],['photoBooth','Photo Booth']];
       const filled=zones.filter(([k])=>fp[k]&&fp[k].trim());
       return`<div class="slide-h2">Floor Plan</div>
         <div class="fp-slide-grid">
@@ -941,14 +1304,12 @@ function slideHTML(s){
         </div>
         ${fp.notes?`<div style="margin-top:14px;font-size:13px;color:var(--ink3);max-width:880px;text-align:left"><strong style="color:var(--gold)">Notes: </strong>${fp.notes}</div>`:''}`;
     }
-
     case 'checklist':{
       const phases=Object.entries(s.checklist);
       const half=Math.ceil(phases.length/2);
-      const cols=[phases.slice(0,half),phases.slice(half)];
       return`<div class="slide-h2">Planning Checklist</div>
         <div class="checklist-slide-cols">
-          ${cols.map(col=>`<div>${col.map(([phase,items])=>`
+          ${[phases.slice(0,half),phases.slice(half)].map(col=>`<div>${col.map(([phase,items])=>`
             <div class="cl-slide-section" style="margin-bottom:14px">
               <h4>${phase}</h4>
               ${items.map(i=>`<div class="cl-slide-item${i.done?' done':''}">
@@ -957,22 +1318,18 @@ function slideHTML(s){
             </div>`).join('')}</div>`).join('')}
         </div>`;
     }
-
     case 'risks':{
       const r=s.risks;
       const items=[['rainBackup','Rain / Weather'],['emergencyContacts','Emergency Contacts'],['medicalKit','Medical Kit'],['backupTransport','Backup Transport'],['vendorBackup','Vendor Backup']].filter(([k])=>r[k]&&r[k].trim());
       return`<div class="slide-h2">Contingency Plan</div>
         <div class="risk-slide-grid">
           ${items.map(([k,l])=>`<div class="risk-item"><h5>⚠️ ${l}</h5><p>${r[k]}</p></div>`).join('')}
-        </div>
-        ${r.notes?`<div style="margin-top:14px;font-size:13px;color:var(--ink3);max-width:880px;text-align:left"><strong style="color:#ff9090">Notes: </strong>${r.notes}</div>`:''}`;
+        </div>`;
     }
-
     case 'qa':
       return`<div class="slide-title" style="font-size:60px">Q &amp; A</div>
         <div class="slide-sub">Questions, clarifications, or additional requests?</div>
         <div style="margin-top:28px;font-size:16px;color:var(--ink3)">We're here to make your perfect day a reality.</div>`;
-
     case 'closing':
       return`<div class="slide-title" style="font-size:44px">Thank You</div>
         ${s.profile?.name?`<div class="slide-sub" style="font-size:22px">${s.profile.name}</div>`:''}
@@ -980,15 +1337,35 @@ function slideHTML(s){
         ${s.profile?.spec?`<div style="font-size:14px;color:var(--ink3);margin-top:4px">${s.profile.spec}</div>`:''}
         ${s.profile?.contact?`<div style="font-size:15px;color:var(--ink2);margin-top:12px">📞 ${s.profile.contact}</div>`:''}
         <div style="margin-top:44px;font-family:var(--f2);font-size:24px;color:var(--gold2)">Your perfect day, expertly planned.</div>`;
-
     default:return'';
   }
 }
 
-/* ── BOOT ── */
-loadAll();
-if(!PROFILE){show('s-onboarding')}
-else{renderDashboard();show('s-dashboard')}
+/* ══════════════════════════════════════════════
+   BOOT — Firebase auth gates everything
+══════════════════════════════════════════════ */
+// Show auth screen immediately while Firebase initialises
+show('s-auth');
+
+AUTH.onAuthStateChanged(async user=>{
+  if(!user){
+    PROFILE=null;PLANS=[];CP=null;CURRENT_UID=null;
+    show('s-auth');
+    return;
+  }
+  CURRENT_UID=user.uid;
+  loadPlans();
+  const hasProfile=await loadProfileFirestore();
+  if(hasProfile){
+    // Pre-fill onboarding in case they need to update
+    renderDashboard();show('s-dashboard');
+  } else {
+    // First time — pre-fill name from Google if available
+    const displayName=user.displayName||'';
+    if(displayName) setTimeout(()=>{const n=document.getElementById('ob-name');if(n)n.value=displayName},50);
+    show('s-onboarding');
+  }
+});
 </script>
 </body>
 </html>
