@@ -6,6 +6,7 @@
 <title>Coordinator Planner — Vows & Petals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -207,24 +208,33 @@ select.inp option{background:#1a2d45}
 .guest-stat .l{font-size:11px;color:var(--ink3)}
 
 /* ── CANVAS FLOOR PLAN ── */
-#cvs-wrap{position:relative;background:#ede4d3;border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+.fp-layout{display:flex;gap:14px;align-items:flex-start}
+.fp-canvas-col{flex:1;min-width:0}
+.fp-seat-col{width:260px;flex-shrink:0;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:14px;max-height:580px;overflow-y:auto;position:sticky;top:0}
+@media(max-width:700px){.fp-layout{flex-direction:column}.fp-seat-col{width:100%;max-height:260px;position:static}}
+#cvs-wrap{position:relative;background:#ede4d3;border-radius:var(--r);overflow:hidden;margin-bottom:6px}
 #coord-canvas{display:block;cursor:grab;touch-action:none;border-radius:var(--r)}
 #coord-canvas.dragging-cursor{cursor:grabbing}
-.cvs-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
-.cvs-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--r);border:1px solid rgba(212,168,83,.3);background:rgba(212,168,83,.08);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.cvs-toolbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.cvs-btn{display:inline-flex;align-items:center;gap:4px;padding:7px 11px;border-radius:var(--r);border:1px solid rgba(212,168,83,.3);background:rgba(212,168,83,.08);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;min-height:34px}
 .cvs-btn:hover{background:rgba(212,168,83,.18)}
 .cvs-btn.active{background:rgba(212,168,83,.25);border-color:var(--gold)}
 .cvs-btn-danger{border-color:rgba(200,60,60,.3);background:rgba(200,60,60,.08);color:#ff8080}
 .cvs-btn-danger:hover{background:rgba(200,60,60,.2)}
-.cvs-sep{width:1px;height:24px;background:rgba(255,255,255,.1);flex-shrink:0}
-.cvs-zoom-label{font-size:11px;color:var(--ink3);min-width:40px;text-align:center}
-.cvs-seat-list{margin-top:14px}
-.cvs-seat-list h4{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px}
-.seat-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
-.seat-row .sn{color:var(--ink3);width:130px;flex-shrink:0}
-.seat-row .sg{color:var(--ink)}
-.seat-row .sact{display:flex;gap:6px}
-.cvs-resize-handle{height:12px;background:rgba(255,255,255,.06);border-top:1px solid rgba(255,255,255,.1);cursor:ns-resize;text-align:center;font-size:9px;color:var(--ink3);line-height:12px;letter-spacing:1px;user-select:none}
+.cvs-sep{width:1px;height:24px;background:rgba(255,255,255,.1);flex-shrink:0;align-self:center}
+.cvs-zoom-label{font-size:11px;color:var(--ink3);min-width:38px;text-align:center}
+/* Selected item props bar */
+.fp-props{display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.2);border-radius:var(--r);margin-bottom:8px;font-size:12px}
+.fp-props.visible{display:flex}
+.fp-props label{color:var(--ink3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.fp-props-title{font-size:12px;font-weight:700;color:var(--gold2);margin-right:4px}
+/* Seat list inside side panel */
+.cvs-seat-list h4{font-size:10px;font-weight:800;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px}
+.seat-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.seat-row .sn{color:var(--ink3);font-size:11px;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat-row .sg{font-size:12px;color:var(--ink);font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat-row .sact{display:flex;gap:4px;flex-shrink:0}
+.cvs-resize-handle{height:14px;background:rgba(255,255,255,.05);border-top:1px solid rgba(255,255,255,.08);cursor:ns-resize;text-align:center;font-size:9px;color:var(--ink3);line-height:14px;letter-spacing:1px;user-select:none;border-radius:0 0 var(--r) var(--r)}
 
 /* Guest picker overlay */
 .guest-picker{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -1220,6 +1230,7 @@ const PANEL_HTML=[
     const dec=guests.filter(g=>g.rsvp==='declined').length;
     const ent=guests.filter(g=>g.entourageRole).length;
     const seated=guests.filter(g=>g._chairId).length;
+    const vip=guests.filter(g=>g.seatingPriority==='VIP').length;
     return`<h3 class="section-title">Guest List</h3>
     <div class="guest-stats">
       <div class="guest-stat"><div class="n">${total}</div><div class="l">Total</div></div>
@@ -1227,36 +1238,48 @@ const PANEL_HTML=[
       <div class="guest-stat"><div class="n" style="color:#ff8080">${dec}</div><div class="l">Declined</div></div>
       <div class="guest-stat"><div class="n" style="color:#c090e0">${ent}</div><div class="l">Entourage</div></div>
       <div class="guest-stat"><div class="n" style="color:#80a8ff">${seated}</div><div class="l">Seated</div></div>
+      <div class="guest-stat"><div class="n" style="color:var(--gold)">${vip}</div><div class="l">VIP</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="downloadGuestTemplate()">⬇ Download Excel Template</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ Import Excel <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importGuestExcel(this)"></label>
     </div>
     <div class="guest-add-bar">
-      <input class="inp" id="g-name-inp" placeholder="Guest full name" style="flex:1;min-width:160px">
-      <select class="inp" id="g-role-inp" style="max-width:200px">
+      <input class="inp" id="g-name-inp" placeholder="Guest full name" style="flex:1;min-width:150px">
+      <select class="inp" id="g-role-inp" style="max-width:180px">
         ${ENTOURAGE_ROLES.map(r=>`<option value="${r}">${r||'— No entourage role —'}</option>`).join('')}
       </select>
-      <select class="inp" id="g-meal-inp" style="max-width:140px">
+      <select class="inp" id="g-meal-inp" style="max-width:130px">
         ${MEAL_OPTIONS.map(m=>`<option value="${m}">${m||'Meal pref…'}</option>`).join('')}
       </select>
-      <button class="btn btn-gold btn-sm" onclick="addGuest()">+ Add Guest</button>
+      <button class="btn btn-gold btn-sm" onclick="addGuest()">+ Add</button>
     </div>
-    ${total===0?`<div class="empty-state"><div class="icon">👥</div><p>No guests yet. Add the first one above.</p></div>`:`
+    ${total===0?`<div class="empty-state"><div class="icon">👥</div>
+      <p>No guests yet.</p>
+      <p style="font-size:12px;margin-top:8px">Download the Excel template, share it with your client to fill in, then import it here.</p>
+    </div>`:`
+    <div style="overflow-x:auto">
     <table class="guest-table">
       <thead><tr>
-        <th>#</th><th>Name</th><th>RSVP</th><th>Meal</th><th>Entourage / Seat</th><th></th>
+        <th>#</th><th>Name</th><th>Contact</th><th>RSVP</th><th>Priority</th><th>Meal</th><th>Entourage / Seat</th><th></th>
       </tr></thead>
       <tbody>
       ${guests.map((g,i)=>{
         const chair=CP.plan.furniture?.find(f=>f.id===g._chairId);
         const seatLabel=chair?(chair.parentTableId?(()=>{const t=CP.plan.furniture.find(f=>f.id===chair.parentTableId);return t?t.label+' · '+chair.label.split('/').pop():chair.label})():chair.label):null;
+        const prioColor=g.seatingPriority==='VIP'?'#f0c060':g.seatingPriority==='Priority'?'#80a8ff':'var(--ink3)';
         return`<tr>
-          <td style="color:var(--ink3)">${i+1}</td>
-          <td><strong style="color:var(--ink)">${g.name}</strong>${g.notes?`<div style="font-size:11px;color:var(--ink3)">${g.notes}</div>`:''}</td>
-          <td><select class="inp-sm" onchange="updateGuest('${g.id}','rsvp',this.value)" style="width:100px">
+          <td style="color:var(--ink3);font-size:11px">${i+1}</td>
+          <td><strong style="color:var(--ink);font-size:13px">${g.name}</strong>${g.dietary?`<div style="font-size:10px;color:#ff9090">⚠ ${g.dietary}</div>`:''}</td>
+          <td style="font-size:12px;color:var(--ink3)">${g.contactNo||''}${g.email?`<div style="font-size:10px">${g.email}</div>`:''}</td>
+          <td><select class="inp-sm" onchange="updateGuest('${g.id}','rsvp',this.value)" style="width:95px">
             ${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}
           </select></td>
-          <td><select class="inp-sm" onchange="updateGuest('${g.id}','meal',this.value)" style="width:110px">
-            ${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'—'}</option>`).join('')}
+          <td><span style="font-size:11px;font-weight:700;color:${prioColor}">${g.seatingPriority||'—'}</span></td>
+          <td><select class="inp-sm" onchange="updateGuest('${g.id}','meal',this.value)" style="width:105px">
+            ${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'Standard'}</option>`).join('')}
           </select></td>
-          <td>${g.entourageRole?`<div class="entourage-badge">${g.entourageRole}</div>`:''}
+          <td style="white-space:nowrap">${g.entourageRole?`<div class="entourage-badge">${g.entourageRole}</div>`:''}
               ${seatLabel?`<div class="seat-badge">🪑 ${seatLabel}</div>`:''}</td>
           <td><div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-sm" onclick="editGuestModal('${g.id}')">✏️</button>
@@ -1265,31 +1288,49 @@ const PANEL_HTML=[
         </tr>`;
       }).join('')}
       </tbody>
-    </table>`}`;
+    </table></div>`}`;
   },
 
   // 6 Floor Plan (canvas)
   ()=>`<h3 class="section-title">Floor Plan</h3>
     <div class="cvs-toolbar">
-      <button class="cvs-btn" onclick="addTableWithSeats('round',8)">⭕ Round (8)</button>
-      <button class="cvs-btn" onclick="addTableWithSeats('round',6)">⭕ Round (6)</button>
-      <button class="cvs-btn" onclick="addTableWithSeats('long',10)">▬ Long (10)</button>
-      <button class="cvs-btn" onclick="addTableWithSeats('long',6)">▬ Long (6)</button>
-      <button class="cvs-btn" onclick="addFreeItem('freechair')">★ Free Chair</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('round',8)">⭕ Round 8</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('round',6)">⭕ Round 6</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('long',10)">▬ Long 10</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('long',6)">▬ Long 6</button>
+      <button class="cvs-btn" onclick="addFreeItem('freechair')">★ Chair</button>
       <button class="cvs-btn" onclick="addFreeItem('stage')">🎤 Stage</button>
       <button class="cvs-btn" onclick="addFreeItem('entrance')">🚪 Entrance</button>
       <div class="cvs-sep"></div>
-      <button class="cvs-btn" onclick="addChairToSelected()">＋ Chair</button>
-      <button class="cvs-btn cvs-btn-danger" onclick="deleteSelected()">🗑 Delete</button>
+      <button class="cvs-btn" onclick="addChairToSelected()">＋ Seat</button>
+      <button class="cvs-btn cvs-btn-danger" onclick="deleteSelected()">🗑</button>
       <div class="cvs-sep"></div>
-      <button class="cvs-btn" onclick="zoomCVS(1.2)">＋</button>
+      <button class="cvs-btn" onclick="zoomCVS(1.25)">＋</button>
       <span class="cvs-zoom-label" id="cvs-zoom-label">100%</span>
-      <button class="cvs-btn" onclick="zoomCVS(0.83)">－</button>
+      <button class="cvs-btn" onclick="zoomCVS(0.8)">－</button>
       <button class="cvs-btn" onclick="fitCVS()">Fit</button>
     </div>
-    <div id="cvs-wrap"><canvas id="coord-canvas"></canvas></div>
-    <div class="cvs-resize-handle" id="cvs-resize-handle">⠿ drag to resize</div>
-    <div class="cvs-seat-list" id="cvs-seat-list"></div>`,
+    <div class="fp-props" id="fp-props">
+      <span class="fp-props-title" id="fp-sel-label">—</span>
+      <div class="cvs-sep"></div>
+      <label>W</label><input class="inp-sm" type="number" id="fp-w" min="40" max="700" style="width:68px" onchange="applyTableSize()">
+      <label>H</label><input class="inp-sm" type="number" id="fp-h" min="20" max="400" style="width:58px" onchange="applyTableSize()">
+      <button class="cvs-btn" onclick="applyTableSize()">Apply</button>
+      <button class="cvs-btn" onclick="rotateSelected()">⟳ Rotate</button>
+      <button class="cvs-btn" onclick="editTableLabel()">✏️ Label</button>
+    </div>
+    <div class="fp-layout">
+      <div class="fp-canvas-col">
+        <div id="cvs-wrap"><canvas id="coord-canvas"></canvas></div>
+        <div class="cvs-resize-handle" id="cvs-resize-handle">⠿ drag to resize</div>
+      </div>
+      <div class="fp-seat-col">
+        <div class="cvs-seat-list" id="cvs-seat-list">
+          <h4>Seat Assignments</h4>
+          <p style="font-size:12px;color:var(--ink3)">Add tables to the canvas to see seats here.</p>
+        </div>
+      </div>
+    </div>`,
 
   // 7 Risks
   ()=>{
@@ -1432,18 +1473,25 @@ function updateGuest(id,field,val){
 
 function editGuestModal(id){
   const g=gPlan().guests.find(g=>g.id===id);if(!g)return;
-  const existing=document.getElementById('edit-guest-overlay');if(existing)existing.remove();
+  document.getElementById('edit-guest-overlay')?.remove();
   const ov=document.createElement('div');
-  ov.id='edit-guest-overlay';
-  ov.className='guest-picker';
-  ov.innerHTML=`<div class="guest-picker-box">
+  ov.id='edit-guest-overlay';ov.className='guest-picker';
+  ov.innerHTML=`<div class="guest-picker-box" style="max-width:440px">
     <h4>Edit Guest</h4>
-    <div class="form-row"><label>Full Name</label><input class="inp" id="eg-name" value="${g.name}"></div>
-    <div class="form-row"><label>RSVP</label><select class="inp" id="eg-rsvp">${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}</select></div>
-    <div class="form-row"><label>Meal Preference</label><select class="inp" id="eg-meal">${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'—'}</option>`).join('')}</select></div>
-    <div class="form-row"><label>Entourage Role</label><select class="inp" id="eg-role">${ENTOURAGE_ROLES.map(r=>`<option value="${r}"${g.entourageRole===r?' selected':''}>${r||'— None —'}</option>`).join('')}</select></div>
-    <div class="form-row"><label>Notes</label><textarea class="inp textarea" id="eg-notes" rows="2">${g.notes||''}</textarea></div>
-    <div style="display:flex;gap:8px;margin-top:8px">
+    <div class="form-grid">
+      <div class="form-row"><label>Full Name</label><input class="inp" id="eg-name" value="${g.name||''}"></div>
+      <div class="form-row"><label>RSVP Status</label><select class="inp" id="eg-rsvp">${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Phone Number</label><div class="phone-wrap"><span class="phone-prefix">🇵🇭 +63</span><input class="phone-inp" id="eg-contact" value="${g.contactNo||''}" type="tel" placeholder="917 xxx xxxx"></div></div>
+      <div class="form-row"><label>Email Address</label><input class="inp" id="eg-email" type="email" value="${g.email||''}" placeholder="email@example.com"></div>
+      <div class="form-row"><label>Entourage Role</label><select class="inp" id="eg-role">${ENTOURAGE_ROLES.map(r=>`<option value="${r}"${g.entourageRole===r?' selected':''}>${r||'— None —'}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Seating Priority</label><select class="inp" id="eg-prio">
+        ${['','VIP','Priority','General'].map(p=>`<option value="${p}"${g.seatingPriority===p?' selected':''}>${p||'—'}</option>`).join('')}
+      </select></div>
+      <div class="form-row"><label>Meal Preference</label><select class="inp" id="eg-meal">${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'Standard'}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Dietary Restrictions / Allergies</label><input class="inp" id="eg-dietary" value="${g.dietary||''}" placeholder="Nuts, shellfish, gluten-free..."></div>
+    </div>
+    <div class="form-row" style="margin-top:4px"><label>Special Notes / Requests</label><textarea class="inp textarea" id="eg-notes" rows="2">${g.notes||''}</textarea></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn btn-gold" style="flex:1" onclick="saveEditGuest('${id}')">Save</button>
       <button class="btn btn-ghost" onclick="document.getElementById('edit-guest-overlay').remove()">Cancel</button>
     </div>
@@ -1456,11 +1504,108 @@ function saveEditGuest(id){
   const g=gPlan().guests.find(g=>g.id===id);if(!g)return;
   g.name=document.getElementById('eg-name').value.trim()||g.name;
   g.rsvp=document.getElementById('eg-rsvp').value;
-  g.meal=document.getElementById('eg-meal').value;
+  g.contactNo=document.getElementById('eg-contact').value.trim();
+  g.email=document.getElementById('eg-email').value.trim();
   g.entourageRole=document.getElementById('eg-role').value;
+  g.seatingPriority=document.getElementById('eg-prio').value;
+  g.meal=document.getElementById('eg-meal').value;
+  g.dietary=document.getElementById('eg-dietary').value.trim();
   g.notes=document.getElementById('eg-notes').value.trim();
   document.getElementById('edit-guest-overlay')?.remove();
   syncCP();renderPlanUI();
+}
+
+/* ══════════════════════════════════════════════
+   GUEST EXCEL EXPORT / IMPORT
+══════════════════════════════════════════════ */
+function downloadGuestTemplate(){
+  const chairs=sFurn().filter(f=>f.type==='chair'||f.type==='freechair');
+  const rows=[
+    ['Seat #','Full Name','Entourage Role','Seating Priority','Meal Preference','Phone Number','Email Address','Dietary Restrictions / Allergies','RSVP Status','Special Notes / Requests']
+  ];
+  const count=Math.max(chairs.length,50);
+  for(let i=1;i<=count;i++){
+    const chair=chairs[i-1];
+    const par=chair?.parentTableId?sFurn().find(f=>f.id===chair.parentTableId):null;
+    const seatLabel=par?par.label+' – '+chair.label.split('/').pop():chair?.label||i;
+    rows.push([typeof seatLabel==='string'?seatLabel:i,'','','','','','','','pending','']);
+  }
+  // Style hints in row 2 via comments would need XLSX Pro — just use plain data
+  if(!window.XLSX){alert('Excel library not loaded yet, please try again.');return}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  // Column widths
+  ws['!cols']=[{wch:18},{wch:24},{wch:28},{wch:14},{wch:16},{wch:16},{wch:24},{wch:30},{wch:12},{wch:32}];
+  XLSX.utils.book_append_sheet(wb,ws,'Guest List');
+  // Instructions sheet
+  const inst=XLSX.utils.aoa_to_sheet([
+    ['INSTRUCTIONS'],
+    [''],
+    ['1. Fill in the "Guest List" sheet — one guest per row.'],
+    ['2. Seat # is pre-filled. Do not change it (used for seat assignment).'],
+    ['3. RSVP Status: use "pending", "attending", or "declined".'],
+    ['4. Seating Priority: use "VIP", "Priority", or "General".'],
+    ['5. Meal Preference: Standard, Vegetarian, Vegan, Halal, Kosher, Gluten-Free, Kids Meal.'],
+    ['6. Save the file and send to your client.'],
+    ['7. Client fills in names and details, sends back.'],
+    ['8. Go to Guest List tab → Import Excel → select the filled file.'],
+  ]);
+  XLSX.utils.book_append_sheet(wb,inst,'Instructions');
+  const couple=CP.interview?.p1Name&&CP.interview?.p2Name?`${CP.interview.p1Name}_${CP.interview.p2Name}`:'GuestList';
+  XLSX.writeFile(wb,`${couple}_GuestTemplate.xlsx`);
+}
+
+function importGuestExcel(input){
+  const file=input.files[0];if(!file)return;
+  if(!window.XLSX){alert('Excel library not loaded yet.');return}
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      // Find "Guest List" sheet or use first
+      const wsName=wb.SheetNames.includes('Guest List')?'Guest List':wb.SheetNames[0];
+      const ws=wb.Sheets[wsName];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(rows.length<2){alert('No data found in the file.');return}
+      const headers=rows[0].map(h=>String(h).toLowerCase().trim());
+      const col=(name)=>{const i=headers.findIndex(h=>h.includes(name));return i;};
+      const iSeat=col('seat'),iName=col('name'),iRole=col('entourage'),iPrio=col('priority'),
+            iMeal=col('meal'),iPhone=col('phone'),iEmail=col('email'),
+            iDiet=col('dietary'),iRsvp=col('rsvp'),iNotes=col('notes');
+      if(iName===-1){alert('Could not find a "Full Name" column. Please use the template.');return}
+      const chairs=sFurn().filter(f=>f.type==='chair'||f.type==='freechair');
+      let added=0,skipped=0;
+      rows.slice(1).forEach((row,rowIdx)=>{
+        const name=String(row[iName]||'').trim();
+        if(!name){skipped++;return}
+        // Check for duplicate
+        const dup=gPlan().guests.find(g=>g.name.toLowerCase()===name.toLowerCase());
+        if(dup){skipped++;return}
+        const seatNum=iSeat>=0?String(row[iSeat]||'').trim():'';
+        // Try to match seat to chair by index (row position = chair index)
+        const chair=chairs[rowIdx]||null;
+        const gId=uid();
+        gPlan().guests.push({
+          id:gId,
+          name,
+          rsvp:iRsvp>=0&&['attending','declined','pending'].includes(String(row[iRsvp]).toLowerCase())?String(row[iRsvp]).toLowerCase():'pending',
+          meal:iMeal>=0?String(row[iMeal]||'').trim():'',
+          entourageRole:iRole>=0?String(row[iRole]||'').trim():'',
+          seatingPriority:iPrio>=0?String(row[iPrio]||'').trim():'',
+          contactNo:iPhone>=0?String(row[iPhone]||'').trim():'',
+          email:iEmail>=0?String(row[iEmail]||'').trim():'',
+          dietary:iDiet>=0?String(row[iDiet]||'').trim():'',
+          notes:iNotes>=0?String(row[iNotes]||'').trim():'',
+          _chairId:chair?chair.id:null,
+        });
+        added++;
+      });
+      syncCP();renderPlanUI();
+      alert(`✅ Imported ${added} guest${added!==1?'s':''}${skipped?' ('+skipped+' skipped — duplicate or empty)':''}.`);
+    }catch(err){alert('Error reading file: '+err.message);}
+  };
+  reader.readAsBinaryString(file);
+  input.value=''; // allow re-upload of same file
 }
 
 /* ══════════════════════════════════════════════
@@ -1582,14 +1727,14 @@ function bindCVSEvents(){
       if(hit.type==='chair'||hit.type==='freechair'){
         const now=Date.now(),key='_lt_'+hit.id;
         const isDbl=(now-(cvs2[key]||0))<400;cvs2[key]=isDbl?0:now;
-        CP.plan.selectedFurniture=hit.id;drawCVS();
+        CP.plan.selectedFurniture=hit.id;drawCVS();renderFPProps();
         if(isDbl){openGuestPicker(hit.id);return;}
       }
       CP.plan.dragging=hit;CP.plan.dragOffX=x-hit.x;CP.plan.dragOffY=y-hit.y;CP.plan._panStart=null;
       CP.plan.selectedFurniture=hit.id;cvs2.classList.add('dragging-cursor');
-      drawCVS();
+      drawCVS();renderFPProps();
     } else {
-      CP.plan._panStart={sx,sy,ox:cTx2.ox,oy:cTx2.oy};CP.plan.dragging=null;CP.plan.selectedFurniture=null;drawCVS();
+      CP.plan._panStart={sx,sy,ox:cTx2.ox,oy:cTx2.oy};CP.plan.dragging=null;CP.plan.selectedFurniture=null;drawCVS();renderFPProps();
     }
   };
   const move=(e)=>{
@@ -1673,6 +1818,42 @@ function rotateItem(sel){
   syncCP();drawCVS();
 }
 
+function renderFPProps(){
+  const bar=document.getElementById('fp-props');if(!bar)return;
+  const id=CP.plan.selectedFurniture;
+  const sel=id?sFurn().find(f=>f.id===id):null;
+  const resizable=sel&&(sel.type==='long'||sel.type==='stage'||sel.type==='entrance');
+  if(resizable){
+    bar.classList.add('visible');
+    const lbl=document.getElementById('fp-sel-label');if(lbl)lbl.textContent=sel.label;
+    const wi=document.getElementById('fp-w');if(wi)wi.value=Math.round(sel.w);
+    const hi=document.getElementById('fp-h');if(hi)hi.value=Math.round(sel.h);
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function applyTableSize(){
+  const sel=sFurn().find(f=>f.id===CP.plan.selectedFurniture);if(!sel)return;
+  const wi=document.getElementById('fp-w');
+  const hi=document.getElementById('fp-h');
+  if(wi)sel.w=Math.max(40,Math.min(700,parseInt(wi.value)||sel.w));
+  if(hi)sel.h=Math.max(20,Math.min(400,parseInt(hi.value)||sel.h));
+  if(sel.parentTableId==null) _redistributeChairs2(sel.id);
+  syncCP();drawCVS();renderFPProps();
+}
+
+function rotateSelected(){
+  const sel=sFurn().find(f=>f.id===CP.plan.selectedFurniture);
+  if(sel){rotateItem(sel);renderFPProps();}
+}
+
+function editTableLabel(){
+  const sel=sFurn().find(f=>f.id===CP.plan.selectedFurniture);if(!sel)return;
+  const nl=prompt('New label:',sel.label);
+  if(nl&&nl.trim()){sel.label=nl.trim();syncCP();drawCVS();renderFPProps();}
+}
+
 function _nextFId(){const n=CP.plan.nextFurnitureId||1;CP.plan.nextFurnitureId=n+1;return n;}
 
 function addFreeItem(type){
@@ -1682,8 +1863,9 @@ function addFreeItem(type){
   const label=type==='stage'?'Stage':type==='entrance'?'Entrance':'Free Chair '+n;
   const cx3=cvs2?cvs2.width/2:200,cy=cvs2?cvs2.height/2:200;
   const wx=(cx3-cTx2.ox)/cTx2.scale,wy=(cy-cTx2.oy)/cTx2.scale;
-  sFurn().push({id:uid(),type,label,x:wx-d.w/2,y:wy-d.h/2,w:d.w,h:d.h,rot:false,parentTableId:null});
-  syncCP();drawCVS();renderSeatList();
+  const nit={id:uid(),type,label,x:wx-d.w/2,y:wy-d.h/2,w:d.w,h:d.h,rot:false,parentTableId:null};
+  sFurn().push(nit);CP.plan.selectedFurniture=nit.id;
+  syncCP();drawCVS();renderSeatList();renderFPProps();
 }
 
 function addChairToSelected(){
@@ -1696,7 +1878,7 @@ function addChairToSelected(){
   const chairId=uid();
   sFurn().push({id:chairId,type:'chair',label:`${prefix}${tNum}/${cNum}`,x:sel.x,y:sel.y-36,w:32,h:28,rot:false,parentTableId:sel.id});
   _redistributeChairs2(sel.id);
-  syncCP();drawCVS();renderSeatList();
+  syncCP();drawCVS();renderSeatList();renderFPProps();
 }
 
 function deleteSelected(){
@@ -1712,7 +1894,7 @@ function deleteSelected(){
     sGuests().forEach(g=>{if(g._chairId===id)g._chairId=null;});
     CP.plan.furniture=sFurn().filter(f=>f.id!==id);
   }
-  CP.plan.selectedFurniture=null;syncCP();drawCVS();renderSeatList();
+  CP.plan.selectedFurniture=null;syncCP();drawCVS();renderSeatList();renderFPProps();
 }
 
 function _redistributeChairs2(tableId){
@@ -1747,7 +1929,7 @@ function addTableWithSeats(type,seats){
     for(let i=0;i<seats;i++){sFurn().push({id:uid(),type:'chair',label:`LT${n}/Chair ${i+1}`,x:wx,y:wy-h/2-32,w:32,h:28,rot:false,parentTableId:tId});}
     _redistributeChairs2(tId);
   }
-  CP.plan.selectedFurniture=tId;syncCP();drawCVS();renderSeatList();
+  CP.plan.selectedFurniture=tId;syncCP();drawCVS();renderSeatList();renderFPProps();
 }
 
 function renderSeatList(){
