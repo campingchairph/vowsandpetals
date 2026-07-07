@@ -188,6 +188,53 @@ select.inp option{background:#1a2d45}
 .journey-task-note{margin-top:4px;width:100%;font-size:12px}
 .journey-tasks-wrap{padding:0 6px}
 
+/* ── GUEST TAB ── */
+.guest-add-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.guest-add-bar .inp{max-width:220px}
+.guest-table{width:100%;border-collapse:collapse;font-size:13px}
+.guest-table th{text-align:left;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid rgba(212,168,83,.2)}
+.guest-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;color:var(--ink2)}
+.guest-table tr:hover td{background:rgba(255,255,255,.03)}
+.rsvp-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.4px}
+.rsvp-pending{background:rgba(212,168,83,.15);color:var(--gold)}
+.rsvp-attending{background:rgba(80,200,100,.15);color:#80e090}
+.rsvp-declined{background:rgba(200,60,60,.15);color:#ff8080}
+.entourage-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(160,100,220,.2);color:#c090e0;margin-top:3px}
+.seat-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;background:rgba(80,140,255,.15);color:#80a8ff;margin-top:3px}
+.guest-stats{display:flex;gap:16px;margin-bottom:16px;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:var(--r)}
+.guest-stat{text-align:center}
+.guest-stat .n{font-size:22px;font-weight:700;color:var(--gold)}
+.guest-stat .l{font-size:11px;color:var(--ink3)}
+
+/* ── CANVAS FLOOR PLAN ── */
+#cvs-wrap{position:relative;background:#ede4d3;border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+#coord-canvas{display:block;cursor:grab;touch-action:none;border-radius:var(--r)}
+#coord-canvas.dragging-cursor{cursor:grabbing}
+.cvs-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.cvs-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--r);border:1px solid rgba(212,168,83,.3);background:rgba(212,168,83,.08);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.cvs-btn:hover{background:rgba(212,168,83,.18)}
+.cvs-btn.active{background:rgba(212,168,83,.25);border-color:var(--gold)}
+.cvs-btn-danger{border-color:rgba(200,60,60,.3);background:rgba(200,60,60,.08);color:#ff8080}
+.cvs-btn-danger:hover{background:rgba(200,60,60,.2)}
+.cvs-sep{width:1px;height:24px;background:rgba(255,255,255,.1);flex-shrink:0}
+.cvs-zoom-label{font-size:11px;color:var(--ink3);min-width:40px;text-align:center}
+.cvs-seat-list{margin-top:14px}
+.cvs-seat-list h4{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px}
+.seat-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.seat-row .sn{color:var(--ink3);width:130px;flex-shrink:0}
+.seat-row .sg{color:var(--ink)}
+.seat-row .sact{display:flex;gap:6px}
+.cvs-resize-handle{height:12px;background:rgba(255,255,255,.06);border-top:1px solid rgba(255,255,255,.1);cursor:ns-resize;text-align:center;font-size:9px;color:var(--ink3);line-height:12px;letter-spacing:1px;user-select:none}
+
+/* Guest picker overlay */
+.guest-picker{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.guest-picker-box{background:#1a2d45;border:1px solid rgba(212,168,83,.3);border-radius:var(--r2);padding:20px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto}
+.guest-picker-box h4{font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:14px}
+.gp-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;transition:all .15s}
+.gp-item:hover{background:rgba(212,168,83,.1);border-color:rgba(212,168,83,.25)}
+.gp-item .gn{font-size:13px;color:var(--ink)}
+.gp-item .gs{font-size:11px;color:var(--ink3)}
+
 /* ── PRESENTATION ── */
 #s-presentation{position:fixed;inset:0;background:#050d18;z-index:1000;display:none;flex-direction:column}
 #s-presentation.active{display:flex}
@@ -509,7 +556,12 @@ function blankPlan(){
         {id:uid(),time:'17:00',event:'Send-off',note:''},
       ],
       checklist:Object.fromEntries(Object.entries(DEFAULT_CHECKLIST).map(([k,tasks])=>[k,tasks.map(t=>({id:uid(),task:t,done:false}))])),
-      floorPlan:{ceremony:'',reception:'',stage:'',danceFloor:'',buffet:'',bar:'',registration:'',photoBooth:'',notes:''},
+      guests:[],
+      furniture:[],
+      nextGuestId:1,
+      nextFurnitureId:1,
+      selectedFurniture:null,
+      dragging:null,dragOffX:0,dragOffY:0,_panStart:null,
       risks:{rainBackup:'',emergencyContacts:'',medicalKit:'',backupTransport:'',vendorBackup:'',notes:''},
       journey:DEFAULT_JOURNEY.map(p=>({
         id:uid(),phase:p.phase,collapsed:false,
@@ -530,7 +582,7 @@ function savePlans(){
 function loadPlans(){
   try{PLANS=(JSON.parse(localStorage.getItem(plansKey()))||[]).filter(p=>p&&p.interview);}
   catch{PLANS=[]}
-  // migrate: ensure journey exists on old plans
+  // migrate old plans to current schema
   PLANS.forEach(p=>{
     if(!p.plan.journey){
       p.plan.journey=DEFAULT_JOURNEY.map(ph=>({
@@ -538,6 +590,10 @@ function loadPlans(){
         tasks:ph.tasks.map(t=>({id:uid(),type:t.type,label:t.label,done:false,notes:''}))
       }));
     }
+    if(!p.plan.guests)p.plan.guests=[];
+    if(!p.plan.furniture)p.plan.furniture=[];
+    if(!p.plan.nextGuestId)p.plan.nextGuestId=1;
+    if(!p.plan.nextFurnitureId)p.plan.nextFurnitureId=1;
   });
 }
 
@@ -996,7 +1052,11 @@ function autofillPlanning(){
 /* ══════════════════════════════════════════════
    PLANNING WORKSPACE
 ══════════════════════════════════════════════ */
-const PLAN_TABS=['Summary','Budget','Vendors','Timeline','Checklist','Floor Plan','Risks','Journey'];
+const PLAN_TABS=['Summary','Budget','Vendors','Timeline','Checklist','Guests','Floor Plan','Risks','Journey'];
+
+const ENTOURAGE_ROLES=['','Best Man','Maid of Honor','Groomsman','Bridesmaid','Principal Sponsor (Ninong)','Principal Sponsor (Ninang)','Secondary Sponsor – Candle','Secondary Sponsor – Veil','Secondary Sponsor – Cord','Flower Girl','Ring Bearer','Bible Bearer','Coin Bearer','Reader','Usher','Usherette','Parent of the Couple','Emcee / Host'];
+const MEAL_OPTIONS=['','Standard','Vegetarian','Vegan','Halal','Kosher','Gluten-Free','Kids Meal'];
+const RSVP_OPTS=['pending','attending','declined'];
 
 function openPlanning(id){
   CP=PLANS.find(p=>p.id===id);if(!CP)return;
@@ -1152,25 +1212,86 @@ const PANEL_HTML=[
       </div>`;
     }).join('')}`,
 
-  // 5 Floor Plan
+  // 5 Guests
   ()=>{
-    const fp=CP.plan.floorPlan;
-    const zones=[['ceremony','Ceremony Area'],['reception','Reception Hall'],['stage','Stage / Altar'],['danceFloor','Dance Floor'],['buffet','Buffet / Food Area'],['bar','Bar / Drinks'],['registration','Registration / Welcome'],['photoBooth','Photo Booth']];
-    return`<h3 class="section-title">Floor Plan Notes</h3>
-    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px">Describe the layout for each zone.</p>
-    <div class="fp-grid">
-      ${zones.map(([k,l])=>`<div class="form-row">
-        <label style="font-size:11px;color:var(--ink3)">${l}</label>
-        <textarea class="inp textarea" data-fpkey="${k}" rows="2" placeholder="Layout, capacity, setup...">${fp[k]||''}</textarea>
-      </div>`).join('')}
-      <div class="form-row" style="grid-column:1/-1">
-        <label style="font-size:11px;color:var(--ink3)">Additional Notes</label>
-        <textarea class="inp textarea" data-fpkey="notes" rows="3" placeholder="Any other layout notes...">${fp.notes||''}</textarea>
-      </div>
-    </div>`;
+    const guests=CP.plan.guests||[];
+    const total=guests.length;
+    const att=guests.filter(g=>g.rsvp==='attending').length;
+    const dec=guests.filter(g=>g.rsvp==='declined').length;
+    const ent=guests.filter(g=>g.entourageRole).length;
+    const seated=guests.filter(g=>g._chairId).length;
+    return`<h3 class="section-title">Guest List</h3>
+    <div class="guest-stats">
+      <div class="guest-stat"><div class="n">${total}</div><div class="l">Total</div></div>
+      <div class="guest-stat"><div class="n" style="color:#80e090">${att}</div><div class="l">Attending</div></div>
+      <div class="guest-stat"><div class="n" style="color:#ff8080">${dec}</div><div class="l">Declined</div></div>
+      <div class="guest-stat"><div class="n" style="color:#c090e0">${ent}</div><div class="l">Entourage</div></div>
+      <div class="guest-stat"><div class="n" style="color:#80a8ff">${seated}</div><div class="l">Seated</div></div>
+    </div>
+    <div class="guest-add-bar">
+      <input class="inp" id="g-name-inp" placeholder="Guest full name" style="flex:1;min-width:160px">
+      <select class="inp" id="g-role-inp" style="max-width:200px">
+        ${ENTOURAGE_ROLES.map(r=>`<option value="${r}">${r||'— No entourage role —'}</option>`).join('')}
+      </select>
+      <select class="inp" id="g-meal-inp" style="max-width:140px">
+        ${MEAL_OPTIONS.map(m=>`<option value="${m}">${m||'Meal pref…'}</option>`).join('')}
+      </select>
+      <button class="btn btn-gold btn-sm" onclick="addGuest()">+ Add Guest</button>
+    </div>
+    ${total===0?`<div class="empty-state"><div class="icon">👥</div><p>No guests yet. Add the first one above.</p></div>`:`
+    <table class="guest-table">
+      <thead><tr>
+        <th>#</th><th>Name</th><th>RSVP</th><th>Meal</th><th>Entourage / Seat</th><th></th>
+      </tr></thead>
+      <tbody>
+      ${guests.map((g,i)=>{
+        const chair=CP.plan.furniture?.find(f=>f.id===g._chairId);
+        const seatLabel=chair?(chair.parentTableId?(()=>{const t=CP.plan.furniture.find(f=>f.id===chair.parentTableId);return t?t.label+' · '+chair.label.split('/').pop():chair.label})():chair.label):null;
+        return`<tr>
+          <td style="color:var(--ink3)">${i+1}</td>
+          <td><strong style="color:var(--ink)">${g.name}</strong>${g.notes?`<div style="font-size:11px;color:var(--ink3)">${g.notes}</div>`:''}</td>
+          <td><select class="inp-sm" onchange="updateGuest('${g.id}','rsvp',this.value)" style="width:100px">
+            ${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}
+          </select></td>
+          <td><select class="inp-sm" onchange="updateGuest('${g.id}','meal',this.value)" style="width:110px">
+            ${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'—'}</option>`).join('')}
+          </select></td>
+          <td>${g.entourageRole?`<div class="entourage-badge">${g.entourageRole}</div>`:''}
+              ${seatLabel?`<div class="seat-badge">🪑 ${seatLabel}</div>`:''}</td>
+          <td><div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-sm" onclick="editGuestModal('${g.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="removeGuest('${g.id}')">✕</button>
+          </div></td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table>`}`;
   },
 
-  // 6 Risks
+  // 6 Floor Plan (canvas)
+  ()=>`<h3 class="section-title">Floor Plan</h3>
+    <div class="cvs-toolbar">
+      <button class="cvs-btn" onclick="addTableWithSeats('round',8)">⭕ Round (8)</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('round',6)">⭕ Round (6)</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('long',10)">▬ Long (10)</button>
+      <button class="cvs-btn" onclick="addTableWithSeats('long',6)">▬ Long (6)</button>
+      <button class="cvs-btn" onclick="addFreeItem('freechair')">★ Free Chair</button>
+      <button class="cvs-btn" onclick="addFreeItem('stage')">🎤 Stage</button>
+      <button class="cvs-btn" onclick="addFreeItem('entrance')">🚪 Entrance</button>
+      <div class="cvs-sep"></div>
+      <button class="cvs-btn" onclick="addChairToSelected()">＋ Chair</button>
+      <button class="cvs-btn cvs-btn-danger" onclick="deleteSelected()">🗑 Delete</button>
+      <div class="cvs-sep"></div>
+      <button class="cvs-btn" onclick="zoomCVS(1.2)">＋</button>
+      <span class="cvs-zoom-label" id="cvs-zoom-label">100%</span>
+      <button class="cvs-btn" onclick="zoomCVS(0.83)">－</button>
+      <button class="cvs-btn" onclick="fitCVS()">Fit</button>
+    </div>
+    <div id="cvs-wrap"><canvas id="coord-canvas"></canvas></div>
+    <div class="cvs-resize-handle" id="cvs-resize-handle">⠿ drag to resize</div>
+    <div class="cvs-seat-list" id="cvs-seat-list"></div>`,
+
+  // 7 Risks
   ()=>{
     const r=CP.plan.risks;
     const fields=[['rainBackup','Rain / Weather Backup'],['emergencyContacts','Emergency Contacts'],['medicalKit','Medical Kit Plan'],['backupTransport','Backup Transportation'],['vendorBackup','Vendor No-show Backup']];
@@ -1186,7 +1307,7 @@ const PANEL_HTML=[
     </div>`;
   },
 
-  // 7 Journey (Coordinator's own planning timeline)
+  // 8 Journey (Coordinator's own planning timeline)
   ()=>{
     const phases=CP.plan.journey||[];
     const totalTasks=phases.flatMap(p=>p.tasks).length;
@@ -1240,8 +1361,8 @@ function bindPanelEvents(i){
       });
     });
   }
-  if(i===5) document.querySelectorAll('[data-fpkey]').forEach(el=>el.addEventListener('input',()=>{CP.plan.floorPlan[el.dataset.fpkey]=el.value;syncCP()}));
-  if(i===6) document.querySelectorAll('[data-riskkey]').forEach(el=>el.addEventListener('input',()=>{CP.plan.risks[el.dataset.riskkey]=el.value;syncCP()}));
+  if(i===6) setTimeout(initCVS,50);
+  if(i===7) document.querySelectorAll('[data-riskkey]').forEach(el=>el.addEventListener('input',()=>{CP.plan.risks[el.dataset.riskkey]=el.value;syncCP()}));
 }
 
 function addVendor(){CP.plan.vendors.push({id:uid(),category:'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:''});syncCP();renderPlanUI()}
@@ -1279,6 +1400,411 @@ function addJourneyTask(pi){
   const validType=['client','supplier','admin'].includes(type)?type:'admin';
   CP.plan.journey[pi].tasks.push({id:uid(),type:validType,label,done:false,notes:''});
   syncCP();renderPlanUI();
+}
+
+/* ══════════════════════════════════════════════
+   GUEST MANAGEMENT
+══════════════════════════════════════════════ */
+function gPlan(){if(!CP.plan.guests)CP.plan.guests=[];return CP.plan;}
+
+function addGuest(){
+  const name=document.getElementById('g-name-inp')?.value.trim();
+  if(!name){alert('Enter a guest name.');return}
+  const role=document.getElementById('g-role-inp')?.value||'';
+  const meal=document.getElementById('g-meal-inp')?.value||'';
+  gPlan().guests.push({id:uid(),name,rsvp:'pending',meal,entourageRole:role,notes:'',_chairId:null});
+  gPlan().nextGuestId=(gPlan().nextGuestId||1)+1;
+  syncCP();renderPlanUI();
+}
+
+function removeGuest(id){
+  // Unlink chair if assigned
+  const g=gPlan().guests.find(g=>g.id===id);
+  if(g?._chairId)drawCVS();
+  gPlan().guests=gPlan().guests.filter(g=>g.id!==id);
+  syncCP();renderPlanUI();
+}
+
+function updateGuest(id,field,val){
+  const g=gPlan().guests.find(g=>g.id===id);
+  if(g){g[field]=val;syncCP();}
+}
+
+function editGuestModal(id){
+  const g=gPlan().guests.find(g=>g.id===id);if(!g)return;
+  const existing=document.getElementById('edit-guest-overlay');if(existing)existing.remove();
+  const ov=document.createElement('div');
+  ov.id='edit-guest-overlay';
+  ov.className='guest-picker';
+  ov.innerHTML=`<div class="guest-picker-box">
+    <h4>Edit Guest</h4>
+    <div class="form-row"><label>Full Name</label><input class="inp" id="eg-name" value="${g.name}"></div>
+    <div class="form-row"><label>RSVP</label><select class="inp" id="eg-rsvp">${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Meal Preference</label><select class="inp" id="eg-meal">${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'—'}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Entourage Role</label><select class="inp" id="eg-role">${ENTOURAGE_ROLES.map(r=>`<option value="${r}"${g.entourageRole===r?' selected':''}>${r||'— None —'}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Notes</label><textarea class="inp textarea" id="eg-notes" rows="2">${g.notes||''}</textarea></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-gold" style="flex:1" onclick="saveEditGuest('${id}')">Save</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('edit-guest-overlay').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+
+function saveEditGuest(id){
+  const g=gPlan().guests.find(g=>g.id===id);if(!g)return;
+  g.name=document.getElementById('eg-name').value.trim()||g.name;
+  g.rsvp=document.getElementById('eg-rsvp').value;
+  g.meal=document.getElementById('eg-meal').value;
+  g.entourageRole=document.getElementById('eg-role').value;
+  g.notes=document.getElementById('eg-notes').value.trim();
+  document.getElementById('edit-guest-overlay')?.remove();
+  syncCP();renderPlanUI();
+}
+
+/* ══════════════════════════════════════════════
+   CANVAS FLOOR PLAN
+══════════════════════════════════════════════ */
+let cvs2,cx2;
+let cTx2={scale:1,ox:20,oy:20};
+
+function sFurn(){return CP.plan.furniture||(CP.plan.furniture=[])}
+function sGuests(){return CP.plan.guests||(CP.plan.guests=[])}
+
+function s2w(sx,sy){return{x:(sx-cTx2.ox)/cTx2.scale,y:(sy-cTx2.oy)/cTx2.scale}}
+
+function initCVS(){
+  cvs2=document.getElementById('coord-canvas');
+  if(!cvs2)return;
+  cx2=cvs2.getContext('2d');
+  resizeCVS();
+  if(!cvs2._init){
+    cvs2._init=true;
+    bindCVSEvents();
+    bindCVSZoom();
+    bindCVSResizeHandle();
+  }
+  drawCVS();
+  renderSeatList();
+}
+
+function resizeCVS(){
+  if(!cvs2)return;
+  const wrap=document.getElementById('cvs-wrap');
+  const W=wrap?wrap.clientWidth:380;
+  cvs2.width=W;
+  cvs2.height=cvs2._userH||Math.max(420,window.innerHeight-320);
+}
+
+function drawCVS(){
+  if(!cx2||!cvs2)return;
+  cx2.clearRect(0,0,cvs2.width,cvs2.height);
+  cx2.fillStyle='#ede4d3';cx2.fillRect(0,0,cvs2.width,cvs2.height);
+  cx2.save();cx2.setTransform(cTx2.scale,0,0,cTx2.scale,cTx2.ox,cTx2.oy);
+  const vL=-cTx2.ox/cTx2.scale-20,vT=-cTx2.oy/cTx2.scale-20;
+  const vR=vL+cvs2.width/cTx2.scale+40,vB=vT+cvs2.height/cTx2.scale+40;
+  const bg=cx2.createLinearGradient(vL,vT,vR,vB);
+  bg.addColorStop(0,'#fef6e8');bg.addColorStop(1,'#f5e6c8');
+  cx2.fillStyle=bg;cx2.fillRect(vL,vT,vR-vL,vB-vT);
+  const GRID=20;cx2.fillStyle='rgba(201,169,110,0.22)';
+  const gX=Math.floor(vL/GRID)*GRID,gY=Math.floor(vT/GRID)*GRID;
+  for(let gx=gX;gx<vR;gx+=GRID)for(let gy=gY;gy<vB;gy+=GRID){cx2.beginPath();cx2.arc(gx,gy,1.5,0,Math.PI*2);cx2.fill();}
+  sFurn().forEach(f=>drawItem(f));
+  cx2.restore();
+}
+
+function drawItem(f){
+  if(!cx2)return;
+  const sel=CP.plan.selectedFurniture===f.id;
+  cx2.save();
+  const x=f.x,y=f.y,w=f.w,h=f.h;
+  if(f.type==='round'){
+    const rx=x+w/2,ry=y+h/2,r=w/2;
+    if(sel){const sr=sFurn().find(c=>c.type==='chair'&&c.parentTableId===f.id);const gr=r+(sr?sr.w/2:16)+6;cx2.beginPath();cx2.arc(rx,ry,gr,0,Math.PI*2);cx2.strokeStyle='rgba(201,169,110,0.28)';cx2.lineWidth=1;cx2.setLineDash([3,5]);cx2.stroke();cx2.setLineDash([]);}
+    cx2.beginPath();cx2.arc(rx,ry,r,0,Math.PI*2);
+    cx2.fillStyle=sel?'rgba(224,120,152,0.22)':'rgba(255,253,248,0.88)';cx2.fill();
+    cx2.strokeStyle=sel?'#e07898':'rgba(201,169,110,0.65)';cx2.lineWidth=sel?2.5:1.5;cx2.stroke();
+    const lp=f.label.split(' ');const lh=Math.max(9,Math.min(13,Math.floor(r/4)));
+    cx2.textAlign='center';cx2.fillStyle='rgba(44,31,14,0.52)';cx2.font=`500 ${lh}px Inter,sans-serif`;cx2.fillText(lp[0],rx,ry-lh*.65);
+    cx2.fillStyle='rgba(44,31,14,0.82)';cx2.font=`700 ${lh}px Inter,sans-serif`;cx2.fillText(lp.slice(1).join(' '),rx,ry+lh*.75);
+    cx2.restore();return;
+  }
+  if(f.type==='long'){
+    if(sel){const sr=sFurn().find(c=>c.type==='chair'&&c.parentTableId===f.id);const pad=(sr?sr.h:28)+4;cx2.beginPath();cx2.roundRect(x-4,y-pad,w+8,h+pad*2,8);cx2.strokeStyle='rgba(90,171,122,0.25)';cx2.lineWidth=1;cx2.setLineDash([3,5]);cx2.stroke();cx2.setLineDash([]);}
+    cx2.beginPath();cx2.roundRect(x,y,w,h,8);
+    cx2.fillStyle=sel?'rgba(90,171,122,0.18)':'rgba(255,253,248,0.88)';cx2.fill();
+    cx2.strokeStyle=sel?'#5aab7a':'rgba(201,169,110,0.65)';cx2.lineWidth=sel?2.5:1.5;cx2.stroke();
+    if(sel){cx2.fillStyle='rgba(90,171,122,0.9)';cx2.font='10px serif';cx2.textAlign='center';cx2.fillText('⟳',x+w/2,y-5);}
+  } else if(f.type==='chair'||f.type==='freechair'){
+    const ag=sGuests().find(g=>g._chairId===f.id);
+    cx2.beginPath();cx2.roundRect(x,y,w,h,f.type==='freechair'?6:5);
+    cx2.fillStyle=ag?'rgba(90,171,122,0.35)':(sel?'rgba(201,169,110,0.28)':'rgba(242,232,213,0.75)');cx2.fill();
+    cx2.strokeStyle=ag?'#3a7a54':(sel?'rgba(201,169,110,0.9)':'rgba(201,169,110,0.5)');cx2.lineWidth=ag||sel?2:1;cx2.stroke();
+    cx2.fillStyle='rgba(44,31,14,0.82)';cx2.textAlign='center';
+    if(ag){cx2.font='600 7px Inter,sans-serif';cx2.fillText(ag.name.split(' ')[0],x+w/2,y+h/2+3);}
+    else{const fs=Math.max(5,Math.min(7,Math.floor(w/4.5)));const pts=f.label.split('/');cx2.font=`700 ${fs}px Inter,sans-serif`;cx2.fillText(pts[0]||f.label,x+w/2,y+h/2-1);if(pts[1]){cx2.font=`600 ${Math.max(4,fs-1)}px Inter,sans-serif`;cx2.fillText(pts[1],x+w/2,y+h/2+fs+1);}}
+    cx2.restore();return;
+  } else if(f.type==='stage'){
+    cx2.beginPath();cx2.roundRect(x,y,w,h,10);
+    cx2.fillStyle=sel?'rgba(224,120,152,0.28)':'rgba(252,232,238,0.88)';cx2.fill();
+    cx2.strokeStyle=sel?'#e07898':'rgba(224,120,152,0.5)';cx2.lineWidth=sel?2.5:1.5;cx2.stroke();
+    if(sel){cx2.fillStyle='rgba(224,120,152,0.9)';cx2.font='bold 11px serif';cx2.textAlign='center';cx2.fillText('⟳',x+w/2,y-5);}
+  } else if(f.type==='entrance'){
+    cx2.beginPath();cx2.roundRect(x,y,w,h,8);
+    cx2.fillStyle=sel?'rgba(90,171,122,0.22)':'rgba(232,245,237,0.88)';cx2.fill();
+    cx2.strokeStyle=sel?'#5aab7a':'rgba(90,171,122,0.5)';cx2.lineWidth=sel?2.5:1.5;cx2.stroke();
+    if(sel){cx2.fillStyle='rgba(90,171,122,0.9)';cx2.font='bold 11px serif';cx2.textAlign='center';cx2.fillText('⟳',x+w/2,y-5);}
+  } else {
+    cx2.beginPath();cx2.roundRect(x,y,w,h,8);
+    cx2.fillStyle=sel?'rgba(242,232,213,0.7)':'rgba(255,253,248,0.88)';cx2.fill();
+    cx2.strokeStyle=sel?'rgba(201,169,110,0.8)':'rgba(201,169,110,0.5)';cx2.lineWidth=sel?2:1.5;cx2.stroke();
+  }
+  cx2.fillStyle='rgba(44,31,14,0.72)';cx2.font=`600 ${f.type==='stage'?12:10}px Inter,sans-serif`;
+  cx2.textAlign='center';cx2.fillText(f.label,x+w/2,y+h/2+4);cx2.restore();
+}
+
+function bindCVSEvents(){
+  let _pinch=null;
+  const pos=(e,touch)=>{const r=cvs2.getBoundingClientRect();const s=touch?e.touches[0]:e;return{x:s.clientX-r.left,y:s.clientY-r.top};};
+  const down=(e)=>{
+    if(e.type!=='touchstart')e.preventDefault();
+    if(e.touches&&e.touches.length>1)return;
+    _pinch=null;
+    const{x:sx,y:sy}=pos(e,e.type==='touchstart');
+    const{x,y}=s2w(sx,sy);
+    const hit=[...sFurn()].reverse().find(f=>{
+      if(f.type==='chair'||f.type==='freechair')return x>=f.x-4&&x<=f.x+f.w+4&&y>=f.y-4&&y<=f.y+f.h+4;
+      if(f.type==='round'){const dx=x-(f.x+f.w/2),dy=y-(f.y+f.h/2);return Math.sqrt(dx*dx+dy*dy)<=f.w/2+6;}
+      return x>=f.x-8&&x<=f.x+f.w+8&&y>=f.y-8&&y<=f.y+f.h+8;
+    });
+    if(hit){
+      if(hit.type==='chair'||hit.type==='freechair'){
+        const now=Date.now(),key='_lt_'+hit.id;
+        const isDbl=(now-(cvs2[key]||0))<400;cvs2[key]=isDbl?0:now;
+        CP.plan.selectedFurniture=hit.id;drawCVS();
+        if(isDbl){openGuestPicker(hit.id);return;}
+      }
+      CP.plan.dragging=hit;CP.plan.dragOffX=x-hit.x;CP.plan.dragOffY=y-hit.y;CP.plan._panStart=null;
+      CP.plan.selectedFurniture=hit.id;cvs2.classList.add('dragging-cursor');
+      drawCVS();
+    } else {
+      CP.plan._panStart={sx,sy,ox:cTx2.ox,oy:cTx2.oy};CP.plan.dragging=null;CP.plan.selectedFurniture=null;drawCVS();
+    }
+  };
+  const move=(e)=>{
+    if(e.cancelable)e.preventDefault();
+    if(e.touches&&e.touches.length===2){
+      const r=cvs2.getBoundingClientRect();
+      const t1=e.touches[0],t2=e.touches[1];
+      const x1=t1.clientX-r.left,y1=t1.clientY-r.top,x2=t2.clientX-r.left,y2=t2.clientY-r.top;
+      const dist=Math.sqrt((x2-x1)**2+(y2-y1)**2),mx=(x1+x2)/2,my=(y1+y2)/2;
+      if(_pinch){const f=dist/_pinch.dist;const ns=Math.max(0.15,Math.min(6,cTx2.scale*f));cTx2.ox=mx-(mx-cTx2.ox)*(ns/cTx2.scale)+(mx-_pinch.mx);cTx2.oy=my-(my-cTx2.oy)*(ns/cTx2.scale)+(my-_pinch.my);cTx2.scale=ns;drawCVS();_updateZL();}
+      _pinch={dist,mx,my};CP.plan.dragging=null;CP.plan._panStart=null;return;
+    }
+    _pinch=null;
+    const{x:sx,y:sy}=pos(e,e.type==='touchmove');
+    if(CP.plan._panStart){cTx2.ox=CP.plan._panStart.ox+(sx-CP.plan._panStart.sx);cTx2.oy=CP.plan._panStart.oy+(sy-CP.plan._panStart.sy);drawCVS();return;}
+    if(!CP.plan.dragging)return;
+    const{x,y}=s2w(sx,sy);const drag=CP.plan.dragging;
+    if(drag.type==='round'||drag.type==='long'){
+      const ox=drag.x,oy=drag.y;drag.x=x-CP.plan.dragOffX;drag.y=y-CP.plan.dragOffY;
+      const dx=drag.x-ox,dy=drag.y-oy;
+      if(dx||dy)sFurn().forEach(f=>{if(f.parentTableId===drag.id){f.x+=dx;f.y+=dy;}});
+    } else if(drag.type==='chair'&&drag.parentTableId){
+      const par=sFurn().find(f=>f.id===drag.parentTableId);
+      if(par&&par.type==='round'){const tCX=par.x+par.w/2,tCY=par.y+par.h/2;const orR=par.w/2+drag.w/2+6;const ang=Math.atan2(y-tCY,x-tCX);drag.x=Math.round(tCX+orR*Math.cos(ang)-drag.w/2);drag.y=Math.round(tCY+orR*Math.sin(ang)-drag.h/2);}
+      else if(par&&par.type==='long'){const tL=par.x,tR=par.x+par.w,tT=par.y,tB=par.y+par.h;const wX=x-CP.plan.dragOffX,wCY=(y-CP.plan.dragOffY)+drag.h/2;drag.x=Math.max(tL,Math.min(tR-drag.w,wX));drag.y=(wCY<(tT+tB)/2)?tT-drag.h-4:tB+4;}
+      else{drag.x=x-CP.plan.dragOffX;drag.y=y-CP.plan.dragOffY;}
+    } else {drag.x=x-CP.plan.dragOffX;drag.y=y-CP.plan.dragOffY;}
+    drawCVS();
+  };
+  const up=()=>{_pinch=null;CP.plan._panStart=null;cvs2.classList.remove('dragging-cursor');if(!CP.plan.dragging)return;CP.plan.dragging=null;syncCP();renderSeatList();};
+  cvs2.addEventListener('mousedown',down);cvs2.addEventListener('mousemove',move);cvs2.addEventListener('mouseup',up);
+  cvs2.addEventListener('touchstart',down,{passive:true});cvs2.addEventListener('touchmove',move,{passive:false});cvs2.addEventListener('touchend',up);
+  // double-click rotate for long/stage/entrance
+  let _lastDbl=0;
+  cvs2.addEventListener('mousedown',()=>{const now=Date.now();if(now-_lastDbl<350){const sel=sFurn().find(f=>f.id===CP.plan.selectedFurniture);if(sel&&(sel.type==='long'||sel.type==='stage'||sel.type==='entrance'))rotateItem(sel);}_lastDbl=now;});
+}
+
+function bindCVSZoom(){
+  if(!cvs2)return;
+  cvs2.addEventListener('wheel',(e)=>{
+    e.preventDefault();const r=cvs2.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;
+    const f=e.deltaY>0?0.9:1.1;const ns=Math.max(0.15,Math.min(6,cTx2.scale*f));
+    cTx2.ox=sx-(sx-cTx2.ox)*(ns/cTx2.scale);cTx2.oy=sy-(sy-cTx2.oy)*(ns/cTx2.scale);cTx2.scale=ns;
+    drawCVS();_updateZL();
+  },{passive:false});
+}
+
+function bindCVSResizeHandle(){
+  const h=document.getElementById('cvs-resize-handle');if(!h||h._bound)return;h._bound=true;
+  let sY=0,sH=0;
+  const start=(e)=>{e.preventDefault();sY=e.touches?e.touches[0].clientY:e.clientY;sH=cvs2._userH||400;document.addEventListener('mousemove',mv);document.addEventListener('mouseup',end);document.addEventListener('touchmove',mv,{passive:false});document.addEventListener('touchend',end);};
+  const mv=(e)=>{if(e.cancelable)e.preventDefault();const y=e.touches?e.touches[0].clientY:e.clientY;const nH=Math.max(240,Math.min(1200,sH+(y-sY)));cvs2._userH=nH;cvs2.height=nH;drawCVS();};
+  const end=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',end);document.removeEventListener('touchmove',mv);document.removeEventListener('touchend',end);};
+  h.addEventListener('mousedown',start);h.addEventListener('touchstart',start,{passive:false});
+}
+
+function _updateZL(){const el=document.getElementById('cvs-zoom-label');if(el)el.textContent=Math.round(cTx2.scale*100)+'%';}
+
+function zoomCVS(factor){if(!cvs2)return;const sx=cvs2.width/2,sy=cvs2.height/2;const ns=Math.max(0.15,Math.min(6,cTx2.scale*factor));cTx2.ox=sx-(sx-cTx2.ox)*(ns/cTx2.scale);cTx2.oy=sy-(sy-cTx2.oy)*(ns/cTx2.scale);cTx2.scale=ns;drawCVS();_updateZL();}
+
+function fitCVS(){
+  if(!cvs2)return;
+  const furn=sFurn();
+  if(!furn.length){cTx2={scale:1,ox:20,oy:20};drawCVS();_updateZL();return;}
+  const xs=furn.flatMap(f=>[f.x,f.x+f.w]),ys=furn.flatMap(f=>[f.y,f.y+f.h]);
+  const minX=Math.min(...xs)-60,maxX=Math.max(...xs)+60,minY=Math.min(...ys)-60,maxY=Math.max(...ys)+60;
+  const ns=Math.min(2.5,cvs2.width/(maxX-minX),cvs2.height/(maxY-minY));
+  cTx2.scale=ns;cTx2.ox=-minX*ns+(cvs2.width-(maxX-minX)*ns)/2;cTx2.oy=-minY*ns+(cvs2.height-(maxY-minY)*ns)/2;
+  drawCVS();_updateZL();
+}
+
+function rotateItem(sel){
+  if(!sel)return;
+  if(sel.type==='long'){
+    const wasH=sel.w>=sel.h,oW=sel.w,oH=sel.h;
+    const kids=sFurn().filter(f=>f.parentTableId===sel.id);
+    const kd=kids.map(c=>{let iFS,rA;if(wasH){iFS=(c.y+c.h/2)<(sel.y+sel.h/2);rA=(c.x+c.w/2-sel.x)/sel.w;}else{iFS=(c.x+c.w/2)<(sel.x+sel.w/2);rA=(c.y+c.h/2-sel.y)/sel.h;}rA=Math.max(0,Math.min(1,rA));return{c,iFS,rA};});
+    sel.rot=!sel.rot;sel.w=oH;sel.h=oW;
+    kd.forEach(({c,iFS,rA})=>{const nCW=c.h,nCH=c.w;c.w=nCW;c.h=nCH;if(wasH){c.x=iFS?sel.x-nCW-4:sel.x+sel.w+4;c.y=sel.y+rA*sel.h-nCH/2;}else{c.y=iFS?sel.y-nCH-4:sel.y+sel.h+4;c.x=sel.x+rA*sel.w-nCW/2;}});
+  } else {const t=sel.w;sel.w=sel.h;sel.h=t;sel.rot=!sel.rot;}
+  syncCP();drawCVS();
+}
+
+function _nextFId(){const n=CP.plan.nextFurnitureId||1;CP.plan.nextFurnitureId=n+1;return n;}
+
+function addFreeItem(type){
+  const defs={stage:{w:140,h:56},entrance:{w:76,h:34},freechair:{w:32,h:32}};
+  const d=defs[type]||{w:60,h:40};
+  const n=_nextFId();
+  const label=type==='stage'?'Stage':type==='entrance'?'Entrance':'Free Chair '+n;
+  const cx3=cvs2?cvs2.width/2:200,cy=cvs2?cvs2.height/2:200;
+  const wx=(cx3-cTx2.ox)/cTx2.scale,wy=(cy-cTx2.oy)/cTx2.scale;
+  sFurn().push({id:uid(),type,label,x:wx-d.w/2,y:wy-d.h/2,w:d.w,h:d.h,rot:false,parentTableId:null});
+  syncCP();drawCVS();renderSeatList();
+}
+
+function addChairToSelected(){
+  const sel=sFurn().find(f=>f.id===CP.plan.selectedFurniture);
+  if(!sel||sel.type==='chair'||sel.type==='freechair'){alert('Select a table first.');return;}
+  const chairs=sFurn().filter(f=>f.type==='chair'&&f.parentTableId===sel.id);
+  const cNum=chairs.length+1;
+  const prefix=sel.type==='round'?'RT':'LT';
+  const tNum=sel.label.match(/\d+/)?.[0]||'1';
+  const chairId=uid();
+  sFurn().push({id:chairId,type:'chair',label:`${prefix}${tNum}/${cNum}`,x:sel.x,y:sel.y-36,w:32,h:28,rot:false,parentTableId:sel.id});
+  _redistributeChairs2(sel.id);
+  syncCP();drawCVS();renderSeatList();
+}
+
+function deleteSelected(){
+  const id=CP.plan.selectedFurniture;if(!id)return;
+  const item=sFurn().find(f=>f.id===id);if(!item)return;
+  // Unassign guests
+  sGuests().forEach(g=>{if(g._chairId===id||(item.type==='round'||item.type==='long')){}});
+  if(item.type==='round'||item.type==='long'){
+    const kids=sFurn().filter(f=>f.parentTableId===id);
+    kids.forEach(k=>{sGuests().forEach(g=>{if(g._chairId===k.id)g._chairId=null;});});
+    CP.plan.furniture=sFurn().filter(f=>f.id!==id&&f.parentTableId!==id);
+  } else {
+    sGuests().forEach(g=>{if(g._chairId===id)g._chairId=null;});
+    CP.plan.furniture=sFurn().filter(f=>f.id!==id);
+  }
+  CP.plan.selectedFurniture=null;syncCP();drawCVS();renderSeatList();
+}
+
+function _redistributeChairs2(tableId){
+  const table=sFurn().find(f=>f.id===tableId);if(!table)return;
+  const chairs=sFurn().filter(f=>f.type==='chair'&&f.parentTableId===tableId);
+  const n=chairs.length;if(n===0)return;
+  if(table.type==='round'){
+    const r=table.w/2,tCX=table.x+table.w/2,tCY=table.y+table.h/2;
+    const orR=r+chairs[0].w/2+6;
+    chairs.forEach((c,i)=>{const ang=-Math.PI/2+(2*Math.PI*i/n);c.x=Math.round(tCX+orR*Math.cos(ang)-c.w/2);c.y=Math.round(tCY+orR*Math.sin(ang)-c.h/2);});
+  } else if(table.type==='long'){
+    const isH=table.w>=table.h,tL=table.x,tR=table.x+table.w,tT=table.y,tB=table.y+table.h;
+    const top=chairs.filter((_,i)=>i%2===0),bot=chairs.filter((_,i)=>i%2===1);
+    const place=(arr,onTop)=>{const count=arr.length;arr.forEach((c,i)=>{const frac=(i+1)/(count+1);if(isH){c.x=Math.round(tL+frac*(tR-tL)-c.w/2);c.y=onTop?tT-c.h-4:tB+4;}else{c.y=Math.round(tT+frac*(tB-tT)-c.h/2);c.x=onTop?tL-c.w-4:tR+4;}});};
+    place(top,true);place(bot,false);
+  }
+}
+
+function addTableWithSeats(type,seats){
+  if(!cvs2)return;
+  const cx3=cvs2.width/2,cy=cvs2.height/2;
+  const wx=(cx3-cTx2.ox)/cTx2.scale,wy=(cy-cTx2.oy)/cTx2.scale;
+  const tId=uid();const n=_nextFId();
+  if(type==='round'){
+    const w=68,h=68;
+    sFurn().push({id:tId,type:'round',label:`Round Table ${n}`,x:wx-w/2,y:wy-h/2,w,h,rot:false,parentTableId:null});
+    for(let i=0;i<seats;i++){sFurn().push({id:uid(),type:'chair',label:`RT${n}/Chair ${i+1}`,x:wx,y:wy-h/2-32,w:32,h:28,rot:false,parentTableId:tId});}
+    _redistributeChairs2(tId);
+  } else {
+    const w=115,h=46;
+    sFurn().push({id:tId,type:'long',label:`Long Table ${n}`,x:wx-w/2,y:wy-h/2,w,h,rot:false,parentTableId:null});
+    for(let i=0;i<seats;i++){sFurn().push({id:uid(),type:'chair',label:`LT${n}/Chair ${i+1}`,x:wx,y:wy-h/2-32,w:32,h:28,rot:false,parentTableId:tId});}
+    _redistributeChairs2(tId);
+  }
+  CP.plan.selectedFurniture=tId;syncCP();drawCVS();renderSeatList();
+}
+
+function renderSeatList(){
+  const el=document.getElementById('cvs-seat-list');if(!el)return;
+  const chairs=sFurn().filter(f=>f.type==='chair'||f.type==='freechair');
+  if(!chairs.length){el.innerHTML='';return;}
+  const guests=sGuests();
+  el.innerHTML=`<h4>Seat Assignments</h4>`+chairs.map(c=>{
+    const ag=guests.find(g=>g._chairId===c.id);
+    const par=c.parentTableId?sFurn().find(f=>f.id===c.parentTableId):null;
+    const seatLabel=par?par.label+' · '+c.label.split('/').pop():c.label;
+    return`<div class="seat-row">
+      <span class="sn">${seatLabel}</span>
+      <span class="sg">${ag?ag.name:'<span style="color:var(--ink3)">— unassigned —</span>'}</span>
+      <div class="sact">
+        <button class="cvs-btn" style="padding:3px 8px;font-size:11px" onclick="openGuestPicker('${c.id}')">Assign</button>
+        ${ag?`<button class="cvs-btn cvs-btn-danger" style="padding:3px 8px;font-size:11px" onclick="unassignSeat('${c.id}')">✕</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openGuestPicker(chairId){
+  const existing=document.getElementById('guest-picker-overlay');if(existing)existing.remove();
+  const guests=sGuests().filter(g=>!g._chairId||g._chairId===chairId);
+  const chair=sFurn().find(f=>f.id===chairId);
+  const par=chair?.parentTableId?sFurn().find(f=>f.id===chair.parentTableId):null;
+  const label=par?par.label+' · '+chair.label.split('/').pop():chair?.label||'Chair';
+  const ov=document.createElement('div');
+  ov.id='guest-picker-overlay';ov.className='guest-picker';
+  ov.innerHTML=`<div class="guest-picker-box">
+    <h4>Assign Guest to ${label}</h4>
+    ${guests.length===0?'<p style="color:var(--ink3);font-size:13px">All guests are already seated, or no guests added yet.</p>':''}
+    ${guests.map(g=>`<div class="gp-item" onclick="assignSeat('${chairId}','${g.id}')">
+      <div><div class="gn">${g.name}</div><div class="gs">${g.entourageRole||g.meal||''}</div></div>
+      ${g._chairId===chairId?'<span style="color:var(--gold);font-size:12px">✓ Current</span>':''}
+    </div>`).join('')}
+    <div style="margin-top:12px;display:flex;gap:8px">
+      ${sGuests().find(g=>g._chairId===chairId)?`<button class="btn btn-danger btn-sm" onclick="unassignSeat('${chairId}');document.getElementById('guest-picker-overlay').remove()">Remove</button>`:''}
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="document.getElementById('guest-picker-overlay').remove()">Close</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+
+function assignSeat(chairId,guestId){
+  sGuests().forEach(g=>{if(g._chairId===chairId)g._chairId=null;});
+  const g=sGuests().find(g=>g.id===guestId);
+  if(g){if(g._chairId)sGuests().forEach(og=>{if(og._chairId===g._chairId&&og.id!==guestId)og._chairId=null;});g._chairId=chairId;}
+  document.getElementById('guest-picker-overlay')?.remove();
+  syncCP();drawCVS();renderSeatList();
+}
+
+function unassignSeat(chairId){
+  sGuests().forEach(g=>{if(g._chairId===chairId)g._chairId=null;});
+  syncCP();drawCVS();renderSeatList();
 }
 
 /* ══════════════════════════════════════════════
