@@ -190,8 +190,9 @@ select.inp option{background:#1a2d45}
 .journey-tasks-wrap{padding:0 6px}
 
 /* ── GUEST TAB ── */
-.guest-add-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
-.guest-add-bar .inp{max-width:220px}
+.guest-add-bar{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:8px;margin-bottom:18px;align-items:end}
+.guest-add-bar .inp{width:100%}
+.guest-add-bar-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px}
 .guest-table{width:100%;border-collapse:collapse;font-size:13px}
 .guest-table th{text-align:left;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid rgba(212,168,83,.2)}
 .guest-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;color:var(--ink2)}
@@ -1439,14 +1440,15 @@ const PANEL_HTML=[
       <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ Import Excel <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importGuestExcel(this)"></label>
     </div>
     <div class="guest-add-bar">
-      <input class="inp" id="g-name-inp" placeholder="Guest full name" style="flex:1;min-width:150px">
-      <select class="inp" id="g-role-inp" style="max-width:180px">
-        ${ENTOURAGE_ROLES.map(r=>`<option value="${r}">${r||'— No entourage role —'}</option>`).join('')}
-      </select>
-      <select class="inp" id="g-meal-inp" style="max-width:130px">
-        ${MEAL_OPTIONS.map(m=>`<option value="${m}">${m||'Meal pref…'}</option>`).join('')}
-      </select>
-      <button class="btn btn-gold btn-sm" onclick="addGuest()">+ Add</button>
+      <div><div class="guest-add-bar-label">Full Name *</div><input class="inp" id="g-name-inp" placeholder="Guest full name"></div>
+      <div><div class="guest-add-bar-label">Phone Number</div><input class="inp" id="g-phone-inp" placeholder="e.g. 0917 xxx xxxx" type="tel"></div>
+      <div><div class="guest-add-bar-label">Email</div><input class="inp" id="g-email-inp" placeholder="email@example.com" type="email"></div>
+      <div><div class="guest-add-bar-label">Entourage Role</div><select class="inp" id="g-role-inp">${ENTOURAGE_ROLES.map(r=>`<option value="${r}">${r||'— None —'}</option>`).join('')}</select></div>
+      <div style="grid-column:5;grid-row:1/3;display:flex;align-items:center"><button class="btn btn-gold" onclick="addGuest()" style="width:100%;padding:10px 18px;white-space:nowrap">+ Add Guest</button></div>
+      <div><div class="guest-add-bar-label">Seating Priority</div><select class="inp" id="g-prio-inp">${['','VIP','Priority','General'].map(p=>`<option value="${p}">${p||'—'}</option>`).join('')}</select></div>
+      <div><div class="guest-add-bar-label">Meal Preference</div><select class="inp" id="g-meal-inp">${MEAL_OPTIONS.map(m=>`<option value="${m}">${m||'Standard'}</option>`).join('')}</select></div>
+      <div><div class="guest-add-bar-label">Dietary Restrictions</div><input class="inp" id="g-dietary-inp" placeholder="Nuts, gluten-free…"></div>
+      <div><div class="guest-add-bar-label">Notes</div><input class="inp" id="g-notes-inp" placeholder="Special requests…"></div>
     </div>
     ${total===0?`<div class="empty-state"><div class="icon">👥</div>
       <p>No guests yet.</p>
@@ -1650,7 +1652,12 @@ function addGuest(){
   if(!name){alert('Enter a guest name.');return}
   const role=document.getElementById('g-role-inp')?.value||'';
   const meal=document.getElementById('g-meal-inp')?.value||'';
-  gPlan().guests.push({id:uid(),name,rsvp:'pending',meal,entourageRole:role,notes:'',_chairId:null});
+  const phone=document.getElementById('g-phone-inp')?.value.trim()||'';
+  const email=document.getElementById('g-email-inp')?.value.trim()||'';
+  const prio=document.getElementById('g-prio-inp')?.value||'';
+  const dietary=document.getElementById('g-dietary-inp')?.value.trim()||'';
+  const notes=document.getElementById('g-notes-inp')?.value.trim()||'';
+  gPlan().guests.push({id:uid(),name,rsvp:'pending',meal,entourageRole:role,contactNo:phone,email,seatingPriority:prio,dietary,notes,_chairId:null});
   gPlan().nextGuestId=(gPlan().nextGuestId||1)+1;
   syncCP();renderPlanUI();
 }
