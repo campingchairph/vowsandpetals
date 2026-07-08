@@ -253,7 +253,12 @@ select.inp option{background:#1a2d45}
 .palette-card:hover{border-color:rgba(212,168,83,.5);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .palette-card.pal-selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 4px 12px rgba(212,168,83,.25)}
 .palette-strip{display:flex;height:36px}
-.palette-strip-sw{flex:1}
+.palette-strip-sw{flex:1;position:relative;cursor:pointer;transition:filter .12s;overflow:hidden}
+.palette-strip-sw:hover{filter:brightness(1.18)}
+.palette-strip-sw.sw-on{box-shadow:inset 0 0 0 2.5px rgba(255,255,255,.85)}
+.sw-tick{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#fff;font-weight:900;text-shadow:0 1px 5px rgba(0,0,0,1);pointer-events:none;line-height:1}
+.palette-card.pal-any{border-color:rgba(212,168,83,.4)}
+.palette-card.pal-all{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 4px 12px rgba(212,168,83,.25)}
 .palette-card-name{font-size:10px;color:var(--ink2);padding:5px 7px;background:rgba(13,27,46,.6);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .palette-custom-row{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)}
 .palette-custom-row label{font-size:11px;color:var(--ink3);display:block;margin-bottom:4px}
@@ -318,6 +323,29 @@ select.inp option{background:#1a2d45}
 .risk-item{background:rgba(255,80,80,.05);border:1px solid rgba(255,80,80,.15);border-radius:var(--r);padding:12px}
 .risk-item h5{font-size:12px;font-weight:700;color:#ff9090;margin-bottom:4px}
 .risk-item p{font-size:13px;color:var(--ink2)}
+/* Entourage slide */
+.ent-slide-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;width:100%;max-width:880px;text-align:left}
+.ent-role-card{background:rgba(255,255,255,.04);border:1px solid rgba(212,168,83,.2);border-radius:var(--r);padding:14px 16px}
+.ent-role-label{font-size:9px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.ent-guest-row{font-size:13px;color:var(--ink2);margin-bottom:3px;line-height:1.4}
+/* Guest overview slide */
+.guest-slide-stats{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+.gss-item{text-align:center;padding:16px 22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);min-width:90px}
+.gss-n{font-size:38px;font-weight:700;color:var(--gold);line-height:1}
+.gss-l{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.6px;margin-top:6px}
+/* Seat plan slide */
+.seat-slide-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;width:100%;max-width:880px;text-align:left}
+.seat-table-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:12px 14px}
+.seat-table-name{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;border-bottom:1px solid rgba(212,168,83,.2);padding-bottom:6px}
+.seat-row{font-size:12px;color:var(--ink2);margin-bottom:3px;display:flex;gap:6px;align-items:baseline}
+.seat-num{color:var(--ink3);font-size:10px;flex-shrink:0;width:16px}
+/* Journey slide */
+.journey-slide-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:880px;text-align:left}
+.jp-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:14px 16px}
+.jp-phase{font-size:12px;font-weight:700;color:var(--gold2);margin-bottom:10px;line-height:1.3}
+.jp-bar-wrap{height:5px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:6px;overflow:hidden}
+.jp-bar-fill{height:100%;background:linear-gradient(90deg,rgba(212,168,83,.6),var(--gold));border-radius:3px;transition:.3s}
+.jp-nums{font-size:11px;color:var(--ink3)}
 </style>
 </head>
 <body>
@@ -1147,15 +1175,20 @@ function collectStep(n){
   syncCP();
 }
 function renderPalettePicker(){
-  const cur=(CP.interview.colorPalette||'').toLowerCase();
-  const selectedPal=WEDDING_PALETTES.flatMap(c=>c.palettes).find(p=>p.colors.map(c=>c.toLowerCase()).join(',')===cur.split(',').map(s=>s.trim()).join(','));
+  const curCols=(CP.interview.colorPalette||'').split(',').map(c=>c.trim().toLowerCase()).filter(Boolean);
   return WEDDING_PALETTES.map(cat=>`
     <div class="palette-cat-label">${cat.cat}</div>
     <div class="palette-grid">
       ${cat.palettes.map(pal=>{
-        const isSelected=selectedPal&&selectedPal.name===pal.name;
-        const strip=pal.colors.map(c=>`<div class="palette-strip-sw" style="background:${COLOR_MAP[c.toLowerCase()]||'#888'}"></div>`).join('');
-        return`<div class="palette-card${isSelected?' pal-selected':''}" onclick="selectPalette('${pal.colors.join(', ')}')">
+        const palLower=pal.colors.map(c=>c.toLowerCase());
+        const selCount=palLower.filter(c=>curCols.includes(c)).length;
+        const cls=selCount===palLower.length?' pal-all':selCount>0?' pal-any':'';
+        const strip=pal.colors.map(c=>{
+          const hex=COLOR_MAP[c.toLowerCase()]||'#888';
+          const on=curCols.includes(c.toLowerCase());
+          return`<div class="palette-strip-sw${on?' sw-on':''}" style="background:${hex}" onclick="event.stopPropagation();toggleColor('${c}')" title="${c}">${on?'<span class="sw-tick">✓</span>':''}</div>`;
+        }).join('');
+        return`<div class="palette-card${cls}" onclick="togglePalette('${pal.colors.join(', ')}')">
           <div class="palette-strip">${strip}</div>
           <div class="palette-card-name">${pal.name}</div>
         </div>`;
@@ -1163,14 +1196,26 @@ function renderPalettePicker(){
     </div>`).join('');
 }
 
-function selectPalette(colorStr){
-  CP.interview.colorPalette=colorStr;
-  const inp=document.getElementById('iv-colorPalette');
-  if(inp)inp.value=colorStr;
-  // Refresh just the palette picker area
-  const pick=document.getElementById('palette-picker-area');
-  if(pick)pick.innerHTML=renderPalettePicker();
-  // Update selected chips bar
+function toggleColor(name){
+  const cols=(CP.interview.colorPalette||'').split(',').map(c=>c.trim()).filter(Boolean);
+  const i=cols.findIndex(c=>c.toLowerCase()===name.toLowerCase());
+  if(i>=0)cols.splice(i,1);else cols.push(name);
+  CP.interview.colorPalette=cols.join(', ');
+  const inp=document.getElementById('iv-colorPalette');if(inp)inp.value=CP.interview.colorPalette;
+  const pk=document.getElementById('palette-picker-area');if(pk)pk.innerHTML=renderPalettePicker();
+  _renderPaletteChips();
+}
+
+function togglePalette(colorStr){
+  const pal=colorStr.split(', ');
+  const cur=(CP.interview.colorPalette||'').split(',').map(c=>c.trim()).filter(Boolean);
+  const allSel=pal.every(c=>cur.some(x=>x.toLowerCase()===c.toLowerCase()));
+  const next=allSel
+    ?cur.filter(c=>!pal.some(p=>p.toLowerCase()===c.toLowerCase()))
+    :[...cur,...pal.filter(c=>!cur.some(x=>x.toLowerCase()===c.toLowerCase()))];
+  CP.interview.colorPalette=next.join(', ');
+  const inp=document.getElementById('iv-colorPalette');if(inp)inp.value=CP.interview.colorPalette;
+  const pk=document.getElementById('palette-picker-area');if(pk)pk.innerHTML=renderPalettePicker();
   _renderPaletteChips();
 }
 
@@ -2197,14 +2242,27 @@ function buildSlides(){
   SLIDES.push({type:'budget',plan,iv,totalBudget:iv.totalBudget});
   const vl=plan.vendors.filter(v=>v.name);
   if(vl.length)for(let i=0;i<vl.length;i+=6)SLIDES.push({type:'vendors',vendors:vl.slice(i,i+6),page:Math.floor(i/6)+1,total:Math.ceil(vl.length/6)});
+  // Checklist before timeline
+  SLIDES.push({type:'checklist',checklist:plan.checklist});
   const tl=plan.timeline.filter(t=>t.event);
   if(tl.length)for(let i=0;i<tl.length;i+=8)SLIDES.push({type:'timeline',events:tl.slice(i,i+8),page:Math.floor(i/8)+1,total:Math.ceil(tl.length/8)});
+  // Entourage slide
+  const entGuests=(plan.guests||[]).filter(g=>g.entourageRole);
+  if(entGuests.length)SLIDES.push({type:'entourage',guests:entGuests});
+  // Guest overview slide
+  if((plan.guests||[]).length)SLIDES.push({type:'guests',guests:plan.guests||[]});
+  // Seat plan slide
+  const furniture=plan.furniture||[];
+  const seatedGuests=(plan.guests||[]).filter(g=>g._chairId);
+  if(seatedGuests.length)SLIDES.push({type:'seatplan',furniture,guests:plan.guests||[]});
   if(Object.values(plan.floorPlan).some(v=>v&&v.trim()))SLIDES.push({type:'floorplan',fp:plan.floorPlan});
-  SLIDES.push({type:'checklist',checklist:plan.checklist});
-  // Special requirements slide — only if any special field filled
+  // Special requirements slide
   const specFields=['surprisePerf','culturalTrads','dietaryRestrictions','accessibility','otherRequests','includeTrads','avoidTrads'];
   if(specFields.some(k=>iv[k]&&String(iv[k]).trim()))SLIDES.push({type:'special',iv});
-  if(Object.values(plan.risks).some(v=>v&&v.trim()))SLIDES.push({type:'risks',risks:plan.risks});
+  // Risks — always show
+  SLIDES.push({type:'risks',risks:plan.risks});
+  // Coordinator journey
+  if((plan.journey||[]).length)SLIDES.push({type:'journey',journey:plan.journey});
   SLIDES.push({type:'qa'});
   SLIDES.push({type:'closing',profile:PROFILE});
 }
@@ -2230,7 +2288,7 @@ function slideHTML(s){
     case 'overview':{
       const iv=s.iv;
       return`<div class="slide-h2">Wedding Overview</div>
-        <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+        <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin:0 auto">
           <div>
             ${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}${kv('Theme',iv.theme)}
             ${kv('Ceremony Type',iv.ceremonyType+(iv.indoorOutdoor?' ('+iv.indoorOutdoor+')':''))}
@@ -2356,11 +2414,89 @@ function slideHTML(s){
         </div>`;
     }
     case 'risks':{
-      const r=s.risks;
+      const r=s.risks||{};
       const items=[['rainBackup','Rain / Weather'],['emergencyContacts','Emergency Contacts'],['medicalKit','Medical Kit'],['backupTransport','Backup Transport'],['vendorBackup','Vendor Backup']].filter(([k])=>r[k]&&r[k].trim());
       return`<div class="slide-h2">Contingency Plan</div>
         <div class="risk-slide-grid">
-          ${items.map(([k,l])=>`<div class="risk-item"><h5>⚠️ ${l}</h5><p>${r[k]}</p></div>`).join('')}
+          ${items.length?items.map(([k,l])=>`<div class="risk-item"><h5>⚠️ ${l}</h5><p>${r[k]}</p></div>`).join('')
+          :'<div style="grid-column:1/-1;text-align:center;padding:36px 20px;color:var(--ink3);font-size:14px;line-height:1.7">No contingency plans added yet.<br><span style="font-size:12px">Fill these in the <strong style="color:var(--gold)">Risks</strong> tab of the planning workspace.</span></div>'}
+        </div>`;
+    }
+    case 'entourage':{
+      const roleMap={};
+      s.guests.forEach(g=>{
+        if(!roleMap[g.entourageRole])roleMap[g.entourageRole]=[];
+        roleMap[g.entourageRole].push(g.name||'—');
+      });
+      return`<div class="slide-h2">Wedding Entourage</div>
+        <div class="ent-slide-grid">
+          ${Object.entries(roleMap).map(([role,names])=>`<div class="ent-role-card">
+            <div class="ent-role-label">${role}</div>
+            ${names.map(n=>`<div class="ent-guest-row">${n}</div>`).join('')}
+          </div>`).join('')}
+        </div>`;
+    }
+    case 'guests':{
+      const g=s.guests;
+      const att=g.filter(x=>x.rsvp==='attending').length;
+      const dec=g.filter(x=>x.rsvp==='declined').length;
+      const pen=g.filter(x=>!x.rsvp||x.rsvp==='pending').length;
+      const ent=g.filter(x=>x.entourageRole).length;
+      const seated=g.filter(x=>x._chairId).length;
+      const vip=g.filter(x=>x.seatingPriority==='VIP').length;
+      return`<div class="slide-h2">Guest Overview</div>
+        <div class="guest-slide-stats">
+          <div class="gss-item"><div class="gss-n">${g.length}</div><div class="gss-l">Total Invited</div></div>
+          <div class="gss-item"><div class="gss-n" style="color:#80e080">${att}</div><div class="gss-l">Attending</div></div>
+          <div class="gss-item"><div class="gss-n" style="color:#ff9090">${dec}</div><div class="gss-l">Declined</div></div>
+          <div class="gss-item"><div class="gss-n" style="color:rgba(255,255,255,.4)">${pen}</div><div class="gss-l">Pending</div></div>
+          ${vip?`<div class="gss-item"><div class="gss-n" style="color:#f0c060">${vip}</div><div class="gss-l">VIP</div></div>`:''}
+          ${ent?`<div class="gss-item"><div class="gss-n" style="color:var(--gold)">${ent}</div><div class="gss-l">Entourage</div></div>`:''}
+          ${seated?`<div class="gss-item"><div class="gss-n">${seated}</div><div class="gss-l">Seated</div></div>`:''}
+        </div>`;
+    }
+    case 'seatplan':{
+      const furn=s.furniture;
+      const guests=s.guests;
+      const tables=furn.filter(f=>f.label&&f.type!=='chair'&&f.type!=='freechair');
+      const chairMap={};
+      furn.filter(f=>f.type==='chair'||f.type==='freechair').forEach(c=>{
+        const key=c.parentTableId||'__free';
+        if(!chairMap[key])chairMap[key]=[];
+        chairMap[key].push(c);
+      });
+      const tableCards=tables.map(t=>{
+        const chairs=chairMap[t.id]||[];
+        const assigned=chairs.map(c=>guests.find(g=>g._chairId===c.id)).filter(Boolean);
+        if(!assigned.length)return'';
+        return`<div class="seat-table-card">
+          <div class="seat-table-name">${t.label}</div>
+          ${assigned.map((g,i)=>`<div class="seat-row"><span class="seat-num">${i+1}.</span>${g.name||'—'}</div>`).join('')}
+        </div>`;
+      }).filter(Boolean);
+      const freeChairs=chairMap['__free']||[];
+      const freeAssigned=freeChairs.map(c=>guests.find(g=>g._chairId===c.id)).filter(Boolean);
+      if(freeAssigned.length)tableCards.push(`<div class="seat-table-card">
+        <div class="seat-table-name">Other Seats</div>
+        ${freeAssigned.map((g,i)=>`<div class="seat-row"><span class="seat-num">${i+1}.</span>${g.name||'—'}</div>`).join('')}
+      </div>`);
+      return`<div class="slide-h2">Seat Plan</div>
+        <div class="seat-slide-grid">${tableCards.join('')||'<p style="color:var(--ink3)">No seat assignments yet.</p>'}</div>`;
+    }
+    case 'journey':{
+      const phases=s.journey;
+      return`<div class="slide-h2">Coordinator Journey</div>
+        <div class="journey-slide-grid">
+          ${phases.map(ph=>{
+            const total=ph.tasks.length;
+            const done=ph.tasks.filter(t=>t.done).length;
+            const pct=total?Math.round((done/total)*100):0;
+            return`<div class="jp-card">
+              <div class="jp-phase">${ph.phase}</div>
+              <div class="jp-bar-wrap"><div class="jp-bar-fill" style="width:${pct}%"></div></div>
+              <div class="jp-nums">${done} / ${total} tasks complete</div>
+            </div>`;
+          }).join('')}
         </div>`;
     }
     case 'special':{
