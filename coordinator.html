@@ -1455,7 +1455,7 @@ const PANEL_HTML=[
     <div style="overflow-x:auto">
     <table class="guest-table">
       <thead><tr>
-        <th>#</th><th>Full Name</th><th>Contact</th><th>RSVP</th><th>Seating Priority</th><th>Meal</th><th>Entourage / Seat</th><th></th>
+        <th>#</th><th>Full Name</th><th>Phone Number</th><th>Email</th><th>Entourage Role</th><th>Seat</th><th>Seating Priority</th><th>Meal Preference</th><th>Dietary Restrictions</th><th>RSVP</th><th>Notes</th><th></th>
       </tr></thead>
       <tbody>
       ${guests.map((g,i)=>{
@@ -1464,17 +1464,20 @@ const PANEL_HTML=[
         const prioColor=g.seatingPriority==='VIP'?'#f0c060':g.seatingPriority==='Priority'?'#80a8ff':'var(--ink3)';
         return`<tr>
           <td style="color:var(--ink3);font-size:11px">${i+1}</td>
-          <td><strong style="color:var(--ink);font-size:13px">${g.name}</strong>${g.dietary?`<div style="font-size:10px;color:#ff9090">⚠ ${g.dietary}</div>`:''}</td>
-          <td style="font-size:12px;color:var(--ink3)">${g.contactNo||''}${g.email?`<div style="font-size:10px">${g.email}</div>`:''}</td>
+          <td><strong style="color:var(--ink);font-size:13px">${g.name}</strong></td>
+          <td style="font-size:12px;color:var(--ink3)">${g.contactNo||'—'}</td>
+          <td style="font-size:12px;color:var(--ink3)">${g.email||'—'}</td>
+          <td>${g.entourageRole?`<div class="entourage-badge">${g.entourageRole}</div>`:'<span style="color:var(--ink3);font-size:11px">—</span>'}</td>
+          <td style="white-space:nowrap">${seatLabel?`<div class="seat-badge">🪑 ${seatLabel}</div>`:'<span style="color:var(--ink3);font-size:11px">—</span>'}</td>
+          <td><span style="font-size:11px;font-weight:700;color:${prioColor}">${g.seatingPriority||'—'}</span></td>
+          <td><select class="inp-sm" onchange="updateGuest('${g.id}','meal',this.value)" style="width:115px">
+            ${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'Standard'}</option>`).join('')}
+          </select></td>
+          <td style="font-size:12px;color:${g.dietary?'#ff9090':'var(--ink3)'}">${g.dietary||'—'}</td>
           <td><select class="inp-sm" onchange="updateGuest('${g.id}','rsvp',this.value)" style="width:95px">
             ${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}
           </select></td>
-          <td><span style="font-size:11px;font-weight:700;color:${prioColor}">${g.seatingPriority||'—'}</span></td>
-          <td><select class="inp-sm" onchange="updateGuest('${g.id}','meal',this.value)" style="width:105px">
-            ${MEAL_OPTIONS.map(m=>`<option value="${m}"${g.meal===m?' selected':''}>${m||'Standard'}</option>`).join('')}
-          </select></td>
-          <td style="white-space:nowrap">${g.entourageRole?`<div class="entourage-badge">${g.entourageRole}</div>`:''}
-              ${seatLabel?`<div class="seat-badge">🪑 ${seatLabel}</div>`:''}</td>
+          <td style="font-size:12px;color:var(--ink3);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${g.notes||''}">${g.notes||'—'}</td>
           <td><div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-sm" onclick="editGuestModal('${g.id}')">✏️</button>
             <button class="btn btn-danger btn-sm" onclick="removeGuest('${g.id}')">✕</button>
