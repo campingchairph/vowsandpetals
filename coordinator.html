@@ -245,7 +245,32 @@ select.inp option{background:#1a2d45}
 .gp-item .gn{font-size:13px;color:var(--ink)}
 .gp-item .gs{font-size:11px;color:var(--ink3)}
 
+/* ── PALETTE PICKER ── */
+.palette-picker{margin-top:4px}
+.palette-cat-label{font-size:10px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 6px}
+.palette-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:2px}
+.palette-card{cursor:pointer;border:1.5px solid rgba(255,255,255,.1);border-radius:var(--r);overflow:hidden;transition:all .15s}
+.palette-card:hover{border-color:rgba(212,168,83,.5);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.palette-card.pal-selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 4px 12px rgba(212,168,83,.25)}
+.palette-strip{display:flex;height:36px}
+.palette-strip-sw{flex:1}
+.palette-card-name{font-size:10px;color:var(--ink2);padding:5px 7px;background:rgba(13,27,46,.6);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.palette-custom-row{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)}
+.palette-custom-row label{font-size:11px;color:var(--ink3);display:block;margin-bottom:4px}
+.palette-selected-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:8px 10px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.2);border-radius:var(--r);min-height:36px}
+.pal-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 4px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.pal-chip-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);flex-shrink:0}
+
 /* ── PRESENTATION ── */
+/* Moodboard brand-guide strip */
+.mb-pal-strip{display:flex;border-radius:var(--r);overflow:hidden;width:100%;max-width:880px;height:72px;margin:0 auto 20px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.mb-sw{flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;position:relative}
+.mb-sw-name{font-size:9px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.5px;text-shadow:0 1px 4px rgba(0,0,0,.8);text-align:center;padding:0 2px}
+.mb-divider{width:100%;max-width:880px;height:1px;background:rgba(255,255,255,.1);margin:0 auto 20px}
+.mb-insp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:880px;margin:16px auto 0}
+.mb-insp-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r);border:1px solid rgba(255,255,255,.1);display:block}
+.mb-insp-err{width:100%;aspect-ratio:4/3;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.15);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink3);text-align:center;padding:10px;word-break:break-all;line-height:1.4}
+
 #s-presentation{position:fixed;inset:0;background:#050d18;z-index:1000;display:none;flex-direction:column}
 #s-presentation.active{display:flex}
 .pres-slide{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 60px;text-align:center;position:relative;overflow-y:auto}
@@ -449,16 +474,81 @@ const DEFAULT_CHECKLIST={
   '1 Week Before':['Wedding rehearsal','Confirm timeline with all vendors','Prepare tips & final payments'],
 };
 const COLOR_MAP={
+  // Pinks & Reds
   'rose':'#e8747a','blush':'#f4a0a8','dusty rose':'#c9909b','pink':'#f48fb1',
-  'ivory':'#faf6ee','cream':'#f5ede0','champagne':'#f7e7c6',
-  'sage':'#8fad88','sage green':'#8fad88','green':'#5a8f5a',
-  'gold':'#d4a853','bronze':'#b8882a','yellow':'#f5d060',
-  'navy':'#1e3a5a','blue':'#4a6fa5','teal':'#3d9a8a',
-  'lavender':'#b8a0c8','purple':'#8b5cf6','lilac':'#c8a8d8',
-  'coral':'#e8855a','peach':'#f5b08a','terracotta':'#c27356','orange':'#e8974a',
-  'silver':'#b0b8c8','burgundy':'#800020','mauve':'#b08080','maroon':'#7a1c2e',
-  'white':'#f8f8f8','black':'#2a2a2a','gray':'#9090a0','beige':'#e8dcc8',
+  'deep rose':'#c05060','hot pink':'#f06090','ballet pink':'#f7c5d0','berry':'#883358',
+  'burgundy':'#800020','wine':'#722f37','maroon':'#7a1c2e','cranberry':'#9c1c2c',
+  // Neutrals
+  'ivory':'#faf6ee','cream':'#f5ede0','champagne':'#f7e7c6','pearl':'#f8f4f0',
+  'nude':'#e8d5c0','sand':'#d8c4a8','linen':'#f2ece0','vanilla':'#f8f0d8',
+  'white':'#f8f8f8','off-white':'#f4f0e8','beige':'#e8dcc8','ecru':'#e8ddb8',
+  // Greens
+  'sage':'#8fad88','sage green':'#8fad88','green':'#5a8f5a','eucalyptus':'#6aad80',
+  'mint':'#a8d8b8','moss':'#7a9a68','forest green':'#3a6840','hunter green':'#335530',
+  'olive':'#8a9a50','fern':'#7aad70','seafoam':'#90c8b0','emerald':'#2e8b57',
+  // Blues & Teals
+  'navy':'#1e3a5a','navy blue':'#1e3a5a','blue':'#4a6fa5','dusty blue':'#7898c0',
+  'teal':'#3d9a8a','slate blue':'#6080a8','powder blue':'#a8c0d8','french blue':'#4878a8',
+  'sky blue':'#88b8d8','cobalt':'#2050a8','cornflower':'#7898d8','periwinkle':'#a0a8e8',
+  // Purples
+  'lavender':'#b8a0c8','lilac':'#c8a8d8','purple':'#8b5cf6','violet':'#8060b0',
+  'mauve':'#b08080','wisteria':'#c0a8d8','amethyst':'#9868b8','plum':'#703060',
+  'orchid':'#d880d0','thistle':'#d0a8d8',
+  // Yellows & Oranges
+  'gold':'#d4a853','bronze':'#b8882a','yellow':'#f5d060','butter':'#f8e880',
+  'peach':'#f5b08a','coral':'#e8855a','orange':'#e8974a','terracotta':'#c27356',
+  'rust':'#a84830','copper':'#c87050','amber':'#d49030','apricot':'#f8b880',
+  // Browns
+  'mocha':'#907060','taupe':'#b0a090','clay':'#c07858','caramel':'#c8882a',
+  // Others
+  'silver':'#b0b8c8','charcoal':'#606878','gray':'#9090a0','slate':'#708090',
+  'black':'#2a2a2a','blush pink':'#f4c0c0','dusty pink':'#d89898',
 };
+
+const WEDDING_PALETTES=[
+  {cat:'Romantic & Floral',palettes:[
+    {name:'Blush & Gold',colors:['Blush','Rose','Champagne','Gold']},
+    {name:'Garden Romance',colors:['Dusty Rose','Sage','Ivory','Champagne']},
+    {name:'Peony Dream',colors:['Pink','Blush','Lilac','Cream']},
+    {name:'Rose Garden',colors:['Deep Rose','Blush','Sage Green','Ivory']},
+  ]},
+  {cat:'Earth & Warm Tones',palettes:[
+    {name:'Terracotta Harvest',colors:['Terracotta','Peach','Champagne','Cream']},
+    {name:'Bohemian Earth',colors:['Rust','Bronze','Sage','Sand']},
+    {name:'Desert Bloom',colors:['Coral','Peach','Olive','Beige']},
+    {name:'Warm Mocha',colors:['Mocha','Caramel','Cream','Gold']},
+  ]},
+  {cat:'Garden & Botanical',palettes:[
+    {name:'Sage & Gold',colors:['Sage','Ivory','Gold','Blush']},
+    {name:'Eucalyptus Dream',colors:['Eucalyptus','Sage Green','Ivory','Cream']},
+    {name:'Garden Party',colors:['Mint','Sage','White','Champagne']},
+    {name:'Forest Romance',colors:['Forest Green','Hunter Green','Ivory','Gold']},
+  ]},
+  {cat:'Classic & Timeless',palettes:[
+    {name:'Ivory & Gold',colors:['Ivory','Gold','Champagne','Pearl']},
+    {name:'Black Tie',colors:['Black','Gold','White','Silver']},
+    {name:'Navy Elegance',colors:['Navy','Gold','Ivory','Silver']},
+    {name:'White Glove',colors:['White','Silver','Pearl','Champagne']},
+  ]},
+  {cat:'Soft & Dreamy',palettes:[
+    {name:'Lavender Fields',colors:['Lavender','Lilac','Blush','Ivory']},
+    {name:'Mauve Romance',colors:['Mauve','Dusty Rose','Blush','Cream']},
+    {name:'Dusty Blue',colors:['Dusty Blue','Silver','Ivory','Champagne']},
+    {name:'Wisteria',colors:['Wisteria','Lavender','Lilac','Pearl']},
+  ]},
+  {cat:'Bold & Vibrant',palettes:[
+    {name:'Burgundy & Gold',colors:['Burgundy','Wine','Gold','Champagne']},
+    {name:'Emerald Luxe',colors:['Emerald','Hunter Green','Gold','Ivory']},
+    {name:'Tropical Bloom',colors:['Coral','Peach','Sage','Ivory']},
+    {name:'Royal Amethyst',colors:['Amethyst','Plum','Lilac','Gold']},
+  ]},
+  {cat:'Filipino & Tropical',palettes:[
+    {name:'Sunset Philippines',colors:['Coral','Orange','Peach','Champagne']},
+    {name:'Taal Vista',colors:['Teal','Sage','Ivory','Gold']},
+    {name:'Sampaguita',colors:['White','Ivory','Gold','Sage']},
+    {name:'Archipelago',colors:['Cobalt','Teal','Coral','Sand']},
+  ]},
+];
 
 // Coordinator journey — phases & default tasks
 const DEFAULT_JOURNEY=[
@@ -546,7 +636,7 @@ function blankPlan(){
       ceremonyType:'',ceremonyVenue:'',indoorOutdoor:'',ceremonyTime:'',
       receptionVenue:'',theme:'',colorPalette:'',entertainment:'',food:'',seatingStyle:'',
       vendorsNeeded:[],
-      pinterest:'',instagram:'',sampleWeddings:'',favoriteColors:'',floralInspiration:'',
+      pinterest:'',instagram:'',sampleWeddings:'',favoriteColors:'',floralInspiration:'',inspirationImages:'',
       surprisePerf:'',culturalTrads:'',dietaryRestrictions:'',accessibility:'',
       kidsArea:false,petParticipation:false,otherRequests:'',
     },
@@ -862,8 +952,18 @@ const STEP_HTML=[
         <div class="form-row"><label>Wedding Style</label>${inp('iv-style','e.g. Rustic, Bohemian, Modern Classic')}</div>
         <div class="form-row"><label>Desired Atmosphere</label>${inp('iv-atmosphere','e.g. Intimate, Grand, Romantic')}</div>
       </div>
-      <div class="form-row"><label>Color Palette</label>${inp('iv-colorPalette','e.g. Blush, Ivory, Gold — separate with commas')}</div>
-      <p style="font-size:11px;color:var(--ink3);margin:4px 0 0">Colors entered here will appear as visual swatches on the Mood Board slide.</p>
+      <div class="form-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <label>Color Palette</label>
+        <div class="palette-picker">
+          <div id="palette-picker-area">${renderPalettePicker()}</div>
+          <div class="palette-custom-row">
+            <label>Selected colors (edit or type custom):</label>
+            <div class="palette-selected-bar" id="palette-chips-bar"></div>
+            <input class="inp" id="iv-colorPalette" placeholder="e.g. Blush, Ivory, Gold" style="margin-top:8px"
+              oninput="CP.interview.colorPalette=this.value;_renderPaletteChips()">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="form-group-card">
       <div class="form-group-title"><span class="gi">❤️</span>Priorities &amp; Preferences</div>
@@ -971,6 +1071,12 @@ const STEP_HTML=[
     <div class="form-group-card">
       <div class="form-group-title"><span class="gi">🌸</span>Florals</div>
       <div class="form-row"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Types of flowers, arrangements, density, style — e.g. Peonies and eucalyptus, lush and romantic')}</div>
+    </div>
+    <div class="form-group-card">
+      <div class="form-group-title"><span class="gi">🖼</span>Inspiration Images</div>
+      <p style="font-size:12px;color:var(--ink3);margin-bottom:10px;line-height:1.5">Paste direct image URLs (one per line) — these will display as a visual board on the Mood Board slide.<br>
+        Tip: On Pinterest, right-click an image → <em>Copy image address</em> to get a direct URL.</p>
+      ${ta('iv-inspirationImages','https://images.example.com/wedding1.jpg\nhttps://images.example.com/wedding2.jpg')}
     </div>`,
 
   // 8 — Special
@@ -1003,7 +1109,7 @@ const STEP_FIELDS=[
   ['ceremonyType','ceremonyVenue','indoorOutdoor','ceremonyTime'],
   ['receptionVenue','theme','entertainment','food','seatingStyle'],
   [],
-  ['pinterest','instagram','sampleWeddings','floralInspiration'],
+  ['pinterest','instagram','sampleWeddings','floralInspiration','inspirationImages'],
   ['surprisePerf','culturalTrads','dietaryRestrictions','accessibility','otherRequests'],
 ];
 
@@ -1013,6 +1119,10 @@ function renderStep(n){
     const el=document.getElementById('iv-'+f);
     if(el&&CP.interview[f]!==undefined)el.value=CP.interview[f]||'';
   });
+  if(n===1){
+    // Init chips bar after DOM is set with existing value
+    _renderPaletteChips();
+  }
   if(n===8){
     const ka=document.getElementById('iv-kidsArea');
     const pp=document.getElementById('iv-petParticipation');
@@ -1036,6 +1146,47 @@ function collectStep(n){
   }
   syncCP();
 }
+function renderPalettePicker(){
+  const cur=(CP.interview.colorPalette||'').toLowerCase();
+  const selectedPal=WEDDING_PALETTES.flatMap(c=>c.palettes).find(p=>p.colors.map(c=>c.toLowerCase()).join(',')===cur.split(',').map(s=>s.trim()).join(','));
+  return WEDDING_PALETTES.map(cat=>`
+    <div class="palette-cat-label">${cat.cat}</div>
+    <div class="palette-grid">
+      ${cat.palettes.map(pal=>{
+        const isSelected=selectedPal&&selectedPal.name===pal.name;
+        const strip=pal.colors.map(c=>`<div class="palette-strip-sw" style="background:${COLOR_MAP[c.toLowerCase()]||'#888'}"></div>`).join('');
+        return`<div class="palette-card${isSelected?' pal-selected':''}" onclick="selectPalette(${JSON.stringify(pal.colors.join(', '))})">
+          <div class="palette-strip">${strip}</div>
+          <div class="palette-card-name">${pal.name}</div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function selectPalette(colorStr){
+  CP.interview.colorPalette=colorStr;
+  const inp=document.getElementById('iv-colorPalette');
+  if(inp)inp.value=colorStr;
+  // Refresh just the palette picker area
+  const pick=document.getElementById('palette-picker-area');
+  if(pick)pick.innerHTML=renderPalettePicker();
+  // Update selected chips bar
+  _renderPaletteChips();
+}
+
+function _renderPaletteChips(){
+  const bar=document.getElementById('palette-chips-bar');if(!bar)return;
+  const val=document.getElementById('iv-colorPalette')?.value||CP.interview.colorPalette||'';
+  const cols=val.split(',').map(c=>c.trim()).filter(Boolean);
+  if(!cols.length){bar.innerHTML='<span style="font-size:11px;color:var(--ink3)">No palette selected yet</span>';return;}
+  bar.innerHTML=cols.map(c=>{
+    const hex=COLOR_MAP[c.toLowerCase()]||'#888';
+    return`<span class="pal-chip" style="background:${hex}40;border:1px solid ${hex}60">
+      <span class="pal-chip-dot" style="background:${hex}"></span>${c}
+    </span>`;
+  }).join('');
+}
+
 function syncVendorCheck(el){
   const set=new Set(CP.interview.vendorsNeeded||[]);
   if(el.checked)set.add(el.value);else set.delete(el.value);
@@ -2100,33 +2251,47 @@ function slideHTML(s){
       const iv=s.iv;
       const paletteText=iv.colorPalette||'';
       const cols=paletteText.split(/[,;]+/).map(c=>c.trim()).filter(Boolean);
-      const swatches=cols.map(n=>{const hex=COLOR_MAP[n.toLowerCase()]||'#888';return`<div class="swatch" style="background:${hex}" title="${n}"><span>${n}</span></div>`;}).join('');
-      const hasContent=iv.style||iv.atmosphere||iv.floralInspiration||iv.sampleWeddings||iv.pinterest||iv.instagram||iv.mustHaves||paletteText;
+      const hasContent=iv.style||iv.atmosphere||iv.floralInspiration||iv.sampleWeddings||iv.pinterest||iv.instagram||iv.mustHaves||paletteText||(iv.inspirationImages||'').trim();
       if(!hasContent)return`<div class="slide-h2">Mood Board</div>
-        <div style="max-width:560px;margin:32px auto;text-align:center;padding:32px;background:rgba(255,255,255,.03);border:1px dashed rgba(212,168,83,.3);border-radius:var(--r-lg)">
+        <div style="max-width:560px;margin:32px auto;text-align:center;padding:36px;background:rgba(255,255,255,.03);border:1px dashed rgba(212,168,83,.3);border-radius:var(--r-lg)">
           <div style="font-size:48px;margin-bottom:16px">🎨</div>
           <p style="font-size:16px;color:var(--ink2);line-height:1.6;margin-bottom:8px">The Mood Board is empty.</p>
-          <p style="font-size:13px;color:var(--ink3);line-height:1.6">Go back to the <strong style="color:var(--gold)">Interview → Step 2 (Vision)</strong> to fill in Style, Atmosphere, and Color Palette.<br>
-          Then <strong style="color:var(--gold)">Step 8 (Inspiration)</strong> for Florals and digital references.</p>
+          <p style="font-size:13px;color:var(--ink3);line-height:1.7">Go back to the <strong style="color:var(--gold)">Interview → Step 2 (Vision)</strong> to fill in Style, Atmosphere, and Color Palette.<br>Then <strong style="color:var(--gold)">Step 8 (Inspiration)</strong> for Florals and image references.</p>
         </div>`;
-      return`<div class="slide-h2">Mood Board</div>
-        <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+      // Full-width coolors-style palette strip
+      const palStrip=cols.length?`
+        <div class="mb-pal-strip">
+          ${cols.map(n=>{const hex=COLOR_MAP[n.toLowerCase()]||'#888';return`<div class="mb-sw" style="background:${hex}"><span class="mb-sw-name">${n}</span></div>`;}).join('')}
+        </div>`:'';
+      // Inspiration images grid
+      const imgUrls=(iv.inspirationImages||'').split(/[\n,]+/).map(u=>u.trim()).filter(u=>u.startsWith('http'));
+      const imgGrid=imgUrls.length?`<div class="mb-insp-grid">${imgUrls.slice(0,6).map(u=>`<img class="mb-insp-img" src="${u}" alt="" onerror="this.outerHTML='<div class=\\'mb-insp-err\\'>⚠ Image could not load</div>'">`).join('')}</div>`:'';
+      return`
+        <div style="width:100%;max-width:880px;display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div class="slide-h2" style="margin:0">Mood Board</div>
+          ${iv.style||iv.atmosphere?`<div style="font-size:13px;color:var(--ink3);font-style:italic">${[iv.style,iv.atmosphere].filter(Boolean).join(' · ')}</div>`:''}
+        </div>
+        ${palStrip||`<div style="font-size:12px;color:var(--ink3);margin-bottom:20px;font-style:italic">No color palette — add one in Interview Step 2.</div>`}
+        <div class="mb-divider"></div>
+        <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:36px;max-width:880px;width:100%;text-align:left">
           <div>
-            ${kv('Style',iv.style)}${kv('Atmosphere',iv.atmosphere)}
-            ${iv.floralInspiration?`<div class="slide-kv"><span class="k">Florals</span><span class="v">${iv.floralInspiration}</span></div>`:''}
-            ${iv.sampleWeddings?`<div class="slide-kv"><span class="k">References</span><span class="v">${iv.sampleWeddings}</span></div>`:''}
-            ${iv.pinterest?`<div class="slide-kv"><span class="k">Pinterest</span><span class="v" style="word-break:break-all;font-size:12px">${iv.pinterest}</span></div>`:''}
-            ${iv.instagram?`<div class="slide-kv"><span class="k">Instagram</span><span class="v" style="word-break:break-all;font-size:12px">${iv.instagram}</span></div>`:''}
-            ${iv.mustHaves?`<div style="margin-top:12px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,83,.2);border-radius:var(--r)">
-              <span style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.5px">MUST-HAVES </span>
-              <span style="font-size:13px;color:var(--ink2)">${iv.mustHaves}</span></div>`:''}
+            ${iv.mustHaves?`<div style="margin-bottom:14px;padding:12px 14px;background:rgba(212,168,83,.07);border-left:3px solid var(--gold);border-radius:0 var(--r) var(--r) 0">
+              <div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.8px;margin-bottom:4px">MUST-HAVES</div>
+              <div style="font-size:13px;color:var(--ink2);line-height:1.6">${iv.mustHaves}</div></div>`:''}
+            ${iv.floralInspiration?`<div style="margin-bottom:10px"><div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.8px;margin-bottom:3px">FLORALS</div>
+              <div style="font-size:13px;color:var(--ink2);line-height:1.5">${iv.floralInspiration}</div></div>`:''}
+            ${iv.sampleWeddings?`<div><div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.8px;margin-bottom:3px">REFERENCES</div>
+              <div style="font-size:13px;color:var(--ink3);line-height:1.5">${iv.sampleWeddings}</div></div>`:''}
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:4px">COLOR PALETTE</div>
-            ${paletteText?`<div style="font-size:12px;color:var(--ink3);margin-bottom:10px;font-style:italic">${paletteText}</div>`:''}
-            ${swatches?`<div class="color-swatches">${swatches}</div>`:`<p style="font-size:13px;color:var(--ink3)">No colors set — add them in Interview → Step 2 (Vision).</p>`}
+            ${iv.pinterest?`<div style="margin-bottom:10px"><div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.8px;margin-bottom:3px">PINTEREST</div>
+              <div style="font-size:12px;color:var(--ink3);word-break:break-all">${iv.pinterest}</div></div>`:''}
+            ${iv.instagram?`<div style="margin-bottom:10px"><div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.8px;margin-bottom:3px">INSTAGRAM</div>
+              <div style="font-size:12px;color:var(--ink3)">${iv.instagram}</div></div>`:''}
+            ${!iv.floralInspiration&&!iv.mustHaves&&!iv.sampleWeddings?kv('Style',iv.style)+kv('Atmosphere',iv.atmosphere):''}
           </div>
-        </div>`;
+        </div>
+        ${imgGrid}`;
     }
     case 'budget':{
       const plan=s.plan,alloc=s.totalBudget||0;
