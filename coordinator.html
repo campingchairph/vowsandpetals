@@ -855,13 +855,15 @@ const STEP_HTML=[
 
   // 1 — Vision
   ()=>`<h2 class="step-title">Wedding Vision</h2>
-    <p class="step-sub">Capture the look, feel, and what matters most.</p>
+    <p class="step-sub">Capture the look, feel, and what matters most — this feeds directly into the Mood Board.</p>
     <div class="form-group-card">
-      <div class="form-group-title"><span class="gi">✨</span>Style &amp; Atmosphere</div>
+      <div class="form-group-title"><span class="gi">✨</span>Style, Atmosphere &amp; Colors</div>
       <div class="form-grid">
         <div class="form-row"><label>Wedding Style</label>${inp('iv-style','e.g. Rustic, Bohemian, Modern Classic')}</div>
         <div class="form-row"><label>Desired Atmosphere</label>${inp('iv-atmosphere','e.g. Intimate, Grand, Romantic')}</div>
       </div>
+      <div class="form-row"><label>Color Palette</label>${inp('iv-colorPalette','e.g. Blush, Ivory, Gold — separate with commas')}</div>
+      <p style="font-size:11px;color:var(--ink3);margin:4px 0 0">Colors entered here will appear as visual swatches on the Mood Board slide.</p>
     </div>
     <div class="form-group-card">
       <div class="form-group-title"><span class="gi">❤️</span>Priorities &amp; Preferences</div>
@@ -935,7 +937,6 @@ const STEP_HTML=[
         <div class="form-row"><label>Reception Venue</label>${inp('iv-receptionVenue','Name or address')}</div>
         <div class="form-row"><label>Overall Theme</label>${inp('iv-theme','e.g. Garden Romance, Modern Minimalist')}</div>
         <div class="form-row"><label>Seating Style</label>${sel('iv-seatingStyle',['','Banquet','Cocktail','Family-style','Mixed'])}</div>
-        <div class="form-row"><label>Color Palette</label>${inp('iv-colorPalette','e.g. Blush, Ivory, Gold')}</div>
       </div>
     </div>
     <div class="form-group-card">
@@ -958,7 +959,7 @@ const STEP_HTML=[
 
   // 7 — Inspiration
   ()=>`<h2 class="step-title">Inspiration &amp; Mood</h2>
-    <p class="step-sub">Gather visual references and aesthetic direction.</p>
+    <p class="step-sub">Visual references and floral direction — these appear on the Mood Board slide.</p>
     <div class="form-group-card">
       <div class="form-group-title"><span class="gi">🔗</span>Digital References</div>
       <div class="form-grid">
@@ -968,11 +969,8 @@ const STEP_HTML=[
       <div class="form-row"><label>Sample Weddings They Love</label>${ta('iv-sampleWeddings','Names, photos, or descriptions')}</div>
     </div>
     <div class="form-group-card">
-      <div class="form-group-title"><span class="gi">🌸</span>Colors &amp; Florals</div>
-      <div class="form-grid">
-        <div class="form-row"><label>Favorite Colors</label>${inp('iv-favoriteColors','e.g. Dusty Rose, Sage Green, Champagne')}</div>
-      </div>
-      <div class="form-row"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Types of flowers, arrangements, density, style')}</div>
+      <div class="form-group-title"><span class="gi">🌸</span>Florals</div>
+      <div class="form-row"><label>Floral Inspiration</label>${ta('iv-floralInspiration','Types of flowers, arrangements, density, style — e.g. Peonies and eucalyptus, lush and romantic')}</div>
     </div>`,
 
   // 8 — Special
@@ -999,13 +997,13 @@ const STEP_HTML=[
 
 const STEP_FIELDS=[
   ['p1Name','p1Contact','p2Name','p2Contact','weddingDate','preferredDates','engagementDate','commMethod'],
-  ['style','atmosphere','priorities','mustHaves','includeTrads','avoidTrads'],
+  ['style','atmosphere','colorPalette','priorities','mustHaves','includeTrads','avoidTrads'],
   ['totalBudget','idealBudget','maxBudget','spendMore','saveMoney'],
   ['guestCount','adults','children','vipGuests','familySize','partySize'],
   ['ceremonyType','ceremonyVenue','indoorOutdoor','ceremonyTime'],
-  ['receptionVenue','theme','colorPalette','entertainment','food','seatingStyle'],
+  ['receptionVenue','theme','entertainment','food','seatingStyle'],
   [],
-  ['pinterest','instagram','sampleWeddings','favoriteColors','floralInspiration'],
+  ['pinterest','instagram','sampleWeddings','floralInspiration'],
   ['surprisePerf','culturalTrads','dietaryRestrictions','accessibility','otherRequests'],
 ];
 
@@ -2100,9 +2098,17 @@ function slideHTML(s){
     }
     case 'moodboard':{
       const iv=s.iv;
-      const paletteText=iv.colorPalette||iv.favoriteColors||'';
+      const paletteText=iv.colorPalette||'';
       const cols=paletteText.split(/[,;]+/).map(c=>c.trim()).filter(Boolean);
       const swatches=cols.map(n=>{const hex=COLOR_MAP[n.toLowerCase()]||'#888';return`<div class="swatch" style="background:${hex}" title="${n}"><span>${n}</span></div>`;}).join('');
+      const hasContent=iv.style||iv.atmosphere||iv.floralInspiration||iv.sampleWeddings||iv.pinterest||iv.instagram||iv.mustHaves||paletteText;
+      if(!hasContent)return`<div class="slide-h2">Mood Board</div>
+        <div style="max-width:560px;margin:32px auto;text-align:center;padding:32px;background:rgba(255,255,255,.03);border:1px dashed rgba(212,168,83,.3);border-radius:var(--r-lg)">
+          <div style="font-size:48px;margin-bottom:16px">🎨</div>
+          <p style="font-size:16px;color:var(--ink2);line-height:1.6;margin-bottom:8px">The Mood Board is empty.</p>
+          <p style="font-size:13px;color:var(--ink3);line-height:1.6">Go back to the <strong style="color:var(--gold)">Interview → Step 2 (Vision)</strong> to fill in Style, Atmosphere, and Color Palette.<br>
+          Then <strong style="color:var(--gold)">Step 8 (Inspiration)</strong> for Florals and digital references.</p>
+        </div>`;
       return`<div class="slide-h2">Mood Board</div>
         <div class="slide-body" style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
           <div>
@@ -2118,7 +2124,7 @@ function slideHTML(s){
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:4px">COLOR PALETTE</div>
             ${paletteText?`<div style="font-size:12px;color:var(--ink3);margin-bottom:10px;font-style:italic">${paletteText}</div>`:''}
-            ${swatches?`<div class="color-swatches">${swatches}</div>`:'<p style="color:var(--ink3);font-size:13px">No colors specified yet.</p>'}
+            ${swatches?`<div class="color-swatches">${swatches}</div>`:`<p style="font-size:13px;color:var(--ink3)">No colors set — add them in Interview → Step 2 (Vision).</p>`}
           </div>
         </div>`;
     }
