@@ -178,9 +178,9 @@ select.inp option{background:#1a2d45}
 .vendor-row-pc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* ── CHECKLIST CALENDAR ── */
-.cl-layout{display:grid;grid-template-columns:minmax(280px,3fr) 2fr;gap:20px;align-items:start}
+.cl-layout{display:grid;grid-template-columns:minmax(280px,3fr) 2fr;gap:20px;align-items:stretch}
 @media(max-width:800px){.cl-layout{grid-template-columns:1fr}}
-.cl-cal-panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:12px;position:sticky;top:8px}
+.cl-cal-panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:12px;position:sticky;top:8px;display:flex;flex-direction:column;min-height:520px}
 .cl-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cl-cal-header span{font-size:12px;font-weight:700;color:var(--gold)}
 .cl-cal-nav{background:none;border:none;color:var(--ink2);cursor:pointer;font-size:17px;padding:2px 8px;border-radius:var(--r);line-height:1}
@@ -195,7 +195,7 @@ select.inp option{background:#1a2d45}
 .cl-cal-day.selected{background:rgba(212,168,83,.2);color:var(--gold)}
 .cl-dot{display:none;position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold)}
 .cl-cal-day.has-tasks .cl-dot{display:block}
-.cl-cal-tasks{border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px;min-height:36px}
+.cl-cal-tasks{border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px;flex:1;overflow-y:auto}
 .cl-cal-task-item{font-size:10px;color:var(--ink2);padding:4px 6px;border-radius:4px;background:rgba(255,255,255,.04);margin-bottom:3px;line-height:1.4}
 .cl-cal-task-item.done{color:var(--ink3);text-decoration:line-through}
 .cl-cal-task-phase{font-size:9px;color:var(--ink3);display:block;margin-bottom:1px}
@@ -1463,9 +1463,15 @@ const PANEL_HTML=[
   ()=>{
     const vl=CP.plan.vendors;
     const needed=CP.interview.vendorsNeeded||[];
-    const customCats=needed.filter(c=>!VENDOR_CATS.includes(c));
-    const allCats=[...VENDOR_CATS,...customCats].filter((c,i,a)=>a.indexOf(c)===i);
-    if(!activeVendorCat||!allCats.includes(activeVendorCat))activeVendorCat=allCats[0]||VENDOR_CATS[0];
+    // Only show tabs for interview-selected types + any manually added vendor categories
+    const manualCats=vl.map(v=>v.category).filter(c=>!needed.includes(c));
+    const allCats=[...new Set([...needed,...manualCats])].filter(c=>c);
+    if(!allCats.length)return`<h3 class="section-title">Vendor Recommendations</h3>
+      <div class="empty-state"><div class="icon">🤝</div>
+        <p>No vendor types selected yet.</p>
+        <p style="font-size:12px;margin-top:8px;color:var(--ink3)">Go to the Interview (Step 7 — Vendors) and check the categories the couple needs.</p>
+      </div>`;
+    if(!activeVendorCat||!allCats.includes(activeVendorCat))activeVendorCat=allCats[0];
     const catVendors=vl.filter(v=>v.category===activeVendorCat);
     const catLabel=activeVendorCat||'Vendor';
     return`<h3 class="section-title">Vendor Recommendations</h3>
