@@ -125,6 +125,14 @@ select.inp option{background:#1a2d45}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.form-grid{grid-template-columns:1fr}}
 .checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.vendor-check-list{display:flex;flex-direction:column;gap:4px}
+.vchk-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);transition:all .15s}
+.vchk-row.selected{background:rgba(212,168,83,.06);border-color:rgba(212,168,83,.25)}
+.vchk-label{display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;min-width:170px}
+.vchk-label input[type=checkbox]{accent-color:var(--gold);width:14px;height:14px;flex-shrink:0}
+.vchk-label span{font-size:13px;color:var(--ink2)}
+.vchk-note{flex:1;font-size:12px;transition:opacity .15s}
+.vchk-note:disabled{opacity:.3}
 .chk-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);cursor:pointer;transition:all .15s}
 .chk-item:hover{border-color:rgba(212,168,83,.3)}
 .chk-item input{accent-color:var(--gold);width:15px;height:15px;flex-shrink:0}
@@ -170,22 +178,22 @@ select.inp option{background:#1a2d45}
 .vendor-row-pc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* ── CHECKLIST CALENDAR ── */
-.cl-layout{display:grid;grid-template-columns:210px 1fr;gap:20px;align-items:start}
-@media(max-width:720px){.cl-layout{grid-template-columns:1fr}}
+.cl-layout{display:grid;grid-template-columns:minmax(280px,3fr) 2fr;gap:20px;align-items:start}
+@media(max-width:800px){.cl-layout{grid-template-columns:1fr}}
 .cl-cal-panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:12px;position:sticky;top:8px}
 .cl-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cl-cal-header span{font-size:12px;font-weight:700;color:var(--gold)}
 .cl-cal-nav{background:none;border:none;color:var(--ink2);cursor:pointer;font-size:17px;padding:2px 8px;border-radius:var(--r);line-height:1}
 .cl-cal-nav:hover{background:rgba(255,255,255,.08)}
 .cl-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:3px}
-.cl-cal-weekdays span{font-size:9px;color:var(--ink3);font-weight:700;padding:2px 0}
-.cl-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
-.cl-cal-day{text-align:center;padding:4px 2px;font-size:10px;color:var(--ink2);cursor:pointer;border-radius:4px;position:relative;line-height:1.4}
+.cl-cal-weekdays span{font-size:11px;color:var(--ink3);font-weight:700;padding:4px 0}
+.cl-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cl-cal-day{text-align:center;padding:8px 4px;font-size:13px;color:var(--ink2);cursor:pointer;border-radius:6px;position:relative;line-height:1.2}
 .cl-cal-day:hover:not(.empty){background:rgba(255,255,255,.08)}
 .cl-cal-day.empty{cursor:default}
 .cl-cal-day.today{color:var(--gold);font-weight:700}
 .cl-cal-day.selected{background:rgba(212,168,83,.2);color:var(--gold)}
-.cl-dot{display:none;position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--gold)}
+.cl-dot{display:none;position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold)}
 .cl-cal-day.has-tasks .cl-dot{display:block}
 .cl-cal-tasks{border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px;min-height:36px}
 .cl-cal-task-item{font-size:10px;color:var(--ink2);padding:4px 6px;border-radius:4px;background:rgba(255,255,255,.04);margin-bottom:3px;line-height:1.4}
@@ -706,7 +714,7 @@ function blankPlan(){
       guestCount:0,adults:0,children:0,vipGuests:'',familySize:0,partySize:0,
       ceremonyType:'',ceremonyVenue:'',indoorOutdoor:'',ceremonyTime:'',
       receptionVenue:'',theme:'',colorPalette:'',entertainment:'',food:'',seatingStyle:'',
-      vendorsNeeded:[],
+      vendorsNeeded:[],vendorNotes:{},
       pinterest:'',instagram:'',sampleWeddings:'',favoriteColors:'',floralInspiration:'',inspirationImages:'',
       surprisePerf:'',culturalTrads:'',dietaryRestrictions:'',accessibility:'',
       kidsArea:false,petParticipation:false,otherRequests:'',
@@ -937,18 +945,20 @@ function showPlanLimitModal(){
   const ov=document.createElement('div');
   ov.id='plan-limit-ov';ov.className='guest-picker';
   ov.innerHTML=`<div class="guest-picker-box" style="max-width:440px;text-align:center">
-    <div style="font-size:36px;margin-bottom:12px">📋</div>
-    <h3 style="color:var(--gold);margin-bottom:10px">You Have ${PLANS.length} Active Plans</h3>
-    <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:10px">
-      Each active plan is proof of your experience.<br>
-      <strong style="color:var(--gold)">A coordinator with many clients served is a coordinator worth trusting.</strong>
-    </p>
-    <p style="font-size:12px;color:var(--ink3);line-height:1.6;margin-bottom:20px">
-      You may remove an existing plan from the dashboard if you really need room — but we strongly recommend keeping your plans. Your history is your credibility with future clients.
-    </p>
+    <div style="font-size:36px;margin-bottom:12px">⭐</div>
+    <h3 style="color:var(--gold);margin-bottom:6px">Free Plan Limit Reached</h3>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:16px">You're on the free plan — maximum ${FREE_LIMIT} active client plans.</p>
+    <div style="background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.25);border-radius:var(--r);padding:16px 20px;margin-bottom:18px;text-align:left">
+      <div style="font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.6px;margin-bottom:10px">PRO PLAN INCLUDES</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:2">
+        ✓ Unlimited client plans<br>
+        ✓ All current features<br>
+        ✓ Priority support
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:18px">A coordinator with many clients served is a coordinator worth trusting — keep your existing plans and go Pro to take on more.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn btn-gold" onclick="document.getElementById('plan-limit-ov').remove()">Keep My Plans ✓</button>
-      <button class="btn btn-ghost btn-sm" style="font-size:12px;color:var(--ink3)" onclick="document.getElementById('plan-limit-ov').remove()">Manage existing plans on the dashboard</button>
+      <button class="btn btn-gold" onclick="document.getElementById('plan-limit-ov').remove()">Got It — Manage Existing Plans</button>
     </div>
   </div>`;
   document.body.appendChild(ov);
@@ -1141,19 +1151,26 @@ const STEP_HTML=[
   // 6 — Vendors
   ()=>{
     const customCats=(CP.interview.vendorsNeeded||[]).filter(v=>!VENDOR_CATS.includes(v));
+    const notes=CP.interview.vendorNotes||{};
     return`<h2 class="step-title">Vendor Requirements</h2>
-    <p class="step-sub">Select every category the couple needs. You can add specific names later in the Plan.</p>
+    <p class="step-sub">Check every category the couple needs. If they already have someone in mind, add a note.</p>
     <div class="form-group-card">
       <div class="form-group-title"><span class="gi">🤝</span>Select All That Apply</div>
-      <div class="checkbox-grid">
-        ${[...VENDOR_CATS,...customCats].map(v=>{const s=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${s?' selected':''}">
-          <input type="checkbox" value="${v}" ${s?'checked':''} onchange="syncVendorCheck(this)">
-          <span>${v}</span></label>`;}).join('')}
+      <div class="vendor-check-list">
+        ${[...VENDOR_CATS,...customCats].map(v=>{
+          const s=(CP.interview.vendorsNeeded||[]).includes(v);
+          const vEsc=v.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          const noteVal=(notes[v]||'').replace(/"/g,'&quot;');
+          return`<div class="vchk-row${s?' selected':''}">
+            <label class="vchk-label"><input type="checkbox" value="${v}" ${s?'checked':''} onchange="syncVendorCheck(this)"><span>${v}</span></label>
+            <input class="inp-sm vchk-note" ${s?'':'disabled'} placeholder="Name or notes (optional)…" value="${noteVal}" onchange="setVendorNote('${vEsc}',this.value)">
+          </div>`;
+        }).join('')}
       </div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
         <div style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px">Add Custom Vendor Type</div>
         <div style="display:flex;gap:8px">
-          <input class="inp-sm" style="flex:1" id="custom-vendor-inp" placeholder="e.g. Fireworks, Live Painter…" onkeydown="if(event.key==='Enter')addCustomVendorType()">
+          <input class="inp-sm" style="flex:1" id="custom-vendor-inp" placeholder="e.g. Fireworks, Social Media Coverage…" onkeydown="if(event.key==='Enter')addCustomVendorType()">
           <button class="btn btn-outline btn-sm" onclick="addCustomVendorType()">+ Add</button>
         </div>
       </div>
@@ -1311,7 +1328,18 @@ function syncVendorCheck(el){
   const set=new Set(CP.interview.vendorsNeeded||[]);
   if(el.checked)set.add(el.value);else set.delete(el.value);
   CP.interview.vendorsNeeded=[...set];
-  el.closest('.chk-item').classList.toggle('selected',el.checked);
+  const row=el.closest('.vchk-row');
+  if(row){
+    row.classList.toggle('selected',el.checked);
+    const noteInp=row.querySelector('.vchk-note');
+    if(noteInp)noteInp.disabled=!el.checked;
+  }
+  syncCP();
+}
+function setVendorNote(cat,val){
+  if(!CP.interview.vendorNotes)CP.interview.vendorNotes={};
+  CP.interview.vendorNotes[cat]=val;
+  syncCP();
 }
 
 /* ══════════════════════════════════════════════
@@ -2446,7 +2474,11 @@ async function sharePres(){
     showShareModal(url);
   }catch(e){
     console.error('Share error:',e);
-    showShareModal(null,'Could not generate share link. Make sure you are signed in and have internet access.');
+    const isPermission=e.code==='permission-denied'||String(e).includes('permission');
+    showShareModal(null,isPermission
+      ?'Firestore permission denied. You need to add the <code>coord_shares</code> rule in your Firebase Console. Go to Firestore → Rules and add:<br><br><code style="font-size:10px">match /coord_shares/{id} { allow read: if true; allow write: if request.auth != null; }</code>'
+      :`Could not generate share link. ${e.message||e}`
+    );
   }
 }
 function showShareModal(url,err){
