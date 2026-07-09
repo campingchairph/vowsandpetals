@@ -1477,9 +1477,9 @@ const PANEL_HTML=[
     return`<h3 class="section-title">Vendor Recommendations</h3>
     <div class="vcat-tabs">${allCats.map(c=>{
       const cnt=vl.filter(v=>v.category===c).length;
-      return`<button class="vcat-tab${c===activeVendorCat?' active':''}" onclick="switchVendorCat(${JSON.stringify(c)})">${c}${cnt?`<span class="vcat-badge">${cnt}</span>`:''}</button>`;
+      return`<button class="vcat-tab${c===activeVendorCat?' active':''}" data-cat="${c.replace(/"/g,'&quot;')}" onclick="switchVendorCat(this.dataset.cat)">${c}${cnt?`<span class="vcat-badge">${cnt}</span>`:''}</button>`;
     }).join('')}</div>
-    <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="addVendorForCat(${JSON.stringify(catLabel)})">+ Add ${catLabel}</button>
+    <button class="btn btn-outline btn-sm" style="margin-bottom:16px" data-cat="${catLabel.replace(/"/g,'&quot;')}" onclick="addVendorForCat(this.dataset.cat)">+ Add ${catLabel}</button>
     ${catVendors.length===0?`<div class="empty-state" style="padding:24px"><div class="icon">🤝</div><p>No ${catLabel} vendor yet.</p></div>`:
     catVendors.map(v=>`<div class="vendor-card">
       <input class="inp vendor-name-inp" data-vid="${v.id}" data-field="name" value="${v.name||''}" placeholder="Vendor name" onchange="updateVF(this)">
