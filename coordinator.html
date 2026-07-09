@@ -157,6 +157,45 @@ select.inp option{background:#1a2d45}
 .cl-item input[type=checkbox]{accent-color:var(--gold);width:15px;height:15px;flex-shrink:0}
 .cl-item span{font-size:13px;color:var(--ink2)}
 .cl-item.done span{text-decoration:line-through;color:var(--ink3)}
+
+/* ── VENDOR SUB-TABS ── */
+.vcat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.vcat-tab{padding:5px 12px;border-radius:var(--r);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;font-size:11px;color:var(--ink2);font-family:var(--f);font-weight:500;transition:all .15s}
+.vcat-tab:hover{background:rgba(255,255,255,.08)}
+.vcat-tab.active{background:rgba(212,168,83,.15);border-color:rgba(212,168,83,.4);color:var(--gold);font-weight:700}
+.vcat-badge{display:inline-block;margin-left:4px;min-width:14px;height:14px;line-height:14px;text-align:center;border-radius:7px;font-size:9px;background:rgba(212,168,83,.3);color:var(--gold);padding:0 3px}
+.vendor-name-inp{width:100%;font-size:14px;font-weight:600;padding:8px 12px;margin-bottom:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);color:var(--ink);font-family:var(--f);outline:none}
+.vendor-name-inp:focus{border-color:var(--gold)}
+.vendor-row-2{display:flex;gap:10px;margin-bottom:4px;align-items:flex-end}
+.vendor-row-pc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── CHECKLIST CALENDAR ── */
+.cl-layout{display:grid;grid-template-columns:210px 1fr;gap:20px;align-items:start}
+@media(max-width:720px){.cl-layout{grid-template-columns:1fr}}
+.cl-cal-panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:12px;position:sticky;top:8px}
+.cl-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cl-cal-header span{font-size:12px;font-weight:700;color:var(--gold)}
+.cl-cal-nav{background:none;border:none;color:var(--ink2);cursor:pointer;font-size:17px;padding:2px 8px;border-radius:var(--r);line-height:1}
+.cl-cal-nav:hover{background:rgba(255,255,255,.08)}
+.cl-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:3px}
+.cl-cal-weekdays span{font-size:9px;color:var(--ink3);font-weight:700;padding:2px 0}
+.cl-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.cl-cal-day{text-align:center;padding:4px 2px;font-size:10px;color:var(--ink2);cursor:pointer;border-radius:4px;position:relative;line-height:1.4}
+.cl-cal-day:hover:not(.empty){background:rgba(255,255,255,.08)}
+.cl-cal-day.empty{cursor:default}
+.cl-cal-day.today{color:var(--gold);font-weight:700}
+.cl-cal-day.selected{background:rgba(212,168,83,.2);color:var(--gold)}
+.cl-dot{display:none;position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--gold)}
+.cl-cal-day.has-tasks .cl-dot{display:block}
+.cl-cal-tasks{border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px;min-height:36px}
+.cl-cal-task-item{font-size:10px;color:var(--ink2);padding:4px 6px;border-radius:4px;background:rgba(255,255,255,.04);margin-bottom:3px;line-height:1.4}
+.cl-cal-task-item.done{color:var(--ink3);text-decoration:line-through}
+.cl-cal-task-phase{font-size:9px;color:var(--ink3);display:block;margin-bottom:1px}
+.cl-right-panel{min-width:0}
+.cl-date-btn{background:none;border:1px solid transparent;cursor:pointer;padding:1px 5px;border-radius:4px;color:var(--ink3);font-size:9px;flex-shrink:0;white-space:nowrap;transition:all .12s;font-family:var(--f)}
+.cl-date-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.1);color:var(--ink2)}
+.cl-date-btn.has-date{color:var(--gold);border-color:rgba(212,168,83,.3);background:rgba(212,168,83,.06)}
+
 .fp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.fp-grid{grid-template-columns:1fr}}
 .summary-block{margin-bottom:20px}
@@ -479,7 +518,7 @@ const DB   = firebase.firestore();
 /* ══════════════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════════════ */
-const FREE_LIMIT=3;
+const FREE_LIMIT=2;
 const STEP_LABELS=['Couple','Vision','Budget','Guests','Ceremony','Reception','Vendors','Inspiration','Special'];
 const VENDOR_CATS=['Venue','Catering','Photographer','Videographer','Florist','Decorator','Host / MC','DJ or Band','Hair & Makeup','Wedding Gown','Suit','Transportation','Cake','Photo Booth','Invitation Designer','Souvenirs'];
 const BUDGET_CATS=[
@@ -650,6 +689,9 @@ const DEFAULT_JOURNEY=[
 let PROFILE=null, PLANS=[], CP=null, CURRENT_UID=null;
 let AUTH_MODE='signin'; // 'signin' | 'signup'
 let activePlanTab=0;
+let activeVendorCat=null;
+let clCalYear=null,clCalMonth=null,clCalSelected=null;
+let _isSharedView=false;
 
 function uid(){return Math.random().toString(36).slice(2,9)}
 
@@ -887,8 +929,30 @@ function renderDashboard(){
 }
 
 function newPlanFromDash(){
-  if(PLANS.length>=FREE_LIMIT){alert(`Free plan limit (${FREE_LIMIT}) reached.\nUpgrade to Pro for unlimited plans.`);return}
+  if(PLANS.length>=FREE_LIMIT){showPlanLimitModal();return}
   CP=blankPlan();PLANS.push(CP);savePlans();startInterview();
+}
+function showPlanLimitModal(){
+  document.getElementById('plan-limit-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='plan-limit-ov';ov.className='guest-picker';
+  ov.innerHTML=`<div class="guest-picker-box" style="max-width:440px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">📋</div>
+    <h3 style="color:var(--gold);margin-bottom:10px">You Have ${PLANS.length} Active Plans</h3>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:10px">
+      Each active plan is proof of your experience.<br>
+      <strong style="color:var(--gold)">A coordinator with many clients served is a coordinator worth trusting.</strong>
+    </p>
+    <p style="font-size:12px;color:var(--ink3);line-height:1.6;margin-bottom:20px">
+      You may remove an existing plan from the dashboard if you really need room — but we strongly recommend keeping your plans. Your history is your credibility with future clients.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-gold" onclick="document.getElementById('plan-limit-ov').remove()">Keep My Plans ✓</button>
+      <button class="btn btn-ghost btn-sm" style="font-size:12px;color:var(--ink3)" onclick="document.getElementById('plan-limit-ov').remove()">Manage existing plans on the dashboard</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
 }
 function deletePlan(id){
   if(!confirm('Delete this plan?'))return;
@@ -1075,16 +1139,26 @@ const STEP_HTML=[
     </div>`,
 
   // 6 — Vendors
-  ()=>`<h2 class="step-title">Vendor Requirements</h2>
+  ()=>{
+    const customCats=(CP.interview.vendorsNeeded||[]).filter(v=>!VENDOR_CATS.includes(v));
+    return`<h2 class="step-title">Vendor Requirements</h2>
     <p class="step-sub">Select every category the couple needs. You can add specific names later in the Plan.</p>
     <div class="form-group-card">
       <div class="form-group-title"><span class="gi">🤝</span>Select All That Apply</div>
       <div class="checkbox-grid">
-        ${VENDOR_CATS.map(v=>{const s=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${s?' selected':''}">
+        ${[...VENDOR_CATS,...customCats].map(v=>{const s=(CP.interview.vendorsNeeded||[]).includes(v);return`<label class="chk-item${s?' selected':''}">
           <input type="checkbox" value="${v}" ${s?'checked':''} onchange="syncVendorCheck(this)">
           <span>${v}</span></label>`;}).join('')}
       </div>
-    </div>`,
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px">Add Custom Vendor Type</div>
+        <div style="display:flex;gap:8px">
+          <input class="inp-sm" style="flex:1" id="custom-vendor-inp" placeholder="e.g. Fireworks, Live Painter…" onkeydown="if(event.key==='Enter')addCustomVendorType()">
+          <button class="btn btn-outline btn-sm" onclick="addCustomVendorType()">+ Add</button>
+        </div>
+      </div>
+    </div>`;
+  },
 
   // 7 — Inspiration
   ()=>`<h2 class="step-title">Inspiration &amp; Mood</h2>
@@ -1288,7 +1362,7 @@ function renderPanelContent(){
   bindPanelEvents(activePlanTab);
 }
 
-function fmt(n){return(+n||0).toLocaleString()}
+function fmt(n){return(+n||0).toLocaleString('en-PH')}
 function fmtP(n){return n?'₱'+fmt(n):'—'}
 
 const PANEL_HTML=[
@@ -1360,32 +1434,40 @@ const PANEL_HTML=[
   // 2 Vendors
   ()=>{
     const vl=CP.plan.vendors;
+    const needed=CP.interview.vendorsNeeded||[];
+    const customCats=needed.filter(c=>!VENDOR_CATS.includes(c));
+    const allCats=[...VENDOR_CATS,...customCats].filter((c,i,a)=>a.indexOf(c)===i);
+    if(!activeVendorCat||!allCats.includes(activeVendorCat))activeVendorCat=allCats[0]||VENDOR_CATS[0];
+    const catVendors=vl.filter(v=>v.category===activeVendorCat);
+    const catLabel=activeVendorCat||'Vendor';
     return`<h3 class="section-title">Vendor Recommendations</h3>
-    <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="addVendor()">+ Add Vendor</button>
-    ${vl.length===0?`<div class="empty-state"><div class="icon">🤝</div><p>No vendors yet.</p></div>`:
-    vl.map(v=>`<div class="vendor-card">
-      <h4>${v.category}</h4>
-      <div class="vendor-grid">
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Category</label>
-          <select class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="category" onchange="updateVF(this)">
-            ${VENDOR_CATS.map(c=>`<option value="${c}"${c===v.category?' selected':''}>${c}</option>`).join('')}
+    <div class="vcat-tabs">${allCats.map(c=>{
+      const cnt=vl.filter(v=>v.category===c).length;
+      return`<button class="vcat-tab${c===activeVendorCat?' active':''}" onclick="switchVendorCat(${JSON.stringify(c)})">${c}${cnt?`<span class="vcat-badge">${cnt}</span>`:''}</button>`;
+    }).join('')}</div>
+    <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="addVendorForCat(${JSON.stringify(catLabel)})">+ Add ${catLabel}</button>
+    ${catVendors.length===0?`<div class="empty-state" style="padding:24px"><div class="icon">🤝</div><p>No ${catLabel} vendor yet.</p></div>`:
+    catVendors.map(v=>`<div class="vendor-card">
+      <input class="inp vendor-name-inp" data-vid="${v.id}" data-field="name" value="${v.name||''}" placeholder="Vendor name" onchange="updateVF(this)">
+      <div class="vendor-row-2">
+        <div class="form-row" style="flex:0 0 160px"><label style="font-size:11px;color:var(--ink3)">Cost (₱)</label>
+          <input class="inp-sm" type="number" data-vid="${v.id}" data-field="cost" value="${v.cost||0}" onchange="updateVF(this)" style="width:100%"></div>
+        <div class="form-row" style="flex:1"><label style="font-size:11px;color:var(--ink3)">Availability</label>
+          <select class="inp-sm" data-vid="${v.id}" data-field="availability" onchange="updateVF(this)" style="width:100%">
+            ${['','Confirmed','Tentative / TBC','On Hold','Not Available'].map(a=>`<option value="${a}"${(v.availability||'')===a?' selected':''}>${a||'— Status —'}</option>`).join('')}
           </select></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Name</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="name" value="${v.name||''}" placeholder="Vendor name" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Cost (₱)</label>
-          <input class="inp-sm" style="width:100%" type="number" data-vid="${v.id}" data-field="cost" value="${v.cost||0}" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Availability</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="availability" value="${v.availability||''}" placeholder="Confirmed / TBC" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Portfolio / Contact</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="portfolio" value="${v.portfolio||''}" placeholder="URL or number" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Pros</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="pros" value="${v.pros||''}" placeholder="Strengths" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Cons</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="cons" value="${v.cons||''}" placeholder="Concerns" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Notes</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="notes" value="${v.notes||''}" placeholder="Additional notes" onchange="updateVF(this)"></div>
       </div>
-      <button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="removeVendor('${v.id}')">Remove</button>
+      <div class="form-row" style="margin-bottom:8px"><label style="font-size:11px;color:var(--ink3)">Portfolio / Contact</label>
+        <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="portfolio" value="${v.portfolio||''}" placeholder="URL or contact number" onchange="updateVF(this)"></div>
+      <div class="vendor-row-pc">
+        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Pros</label>
+          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="pros" value="${v.pros||''}" placeholder="Strengths…" onchange="updateVF(this)"></div>
+        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Cons</label>
+          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="cons" value="${v.cons||''}" placeholder="Concerns…" onchange="updateVF(this)"></div>
+      </div>
+      <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Notes</label>
+        <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="notes" value="${v.notes||''}" placeholder="Additional info…" onchange="updateVF(this)"></div>
+      <button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="removeVendor('${v.id}')">Remove</button>
     </div>`).join('')}`;
   },
 
@@ -1404,18 +1486,43 @@ const PANEL_HTML=[
     </div>`,
 
   // 4 Checklist
-  ()=>`<h3 class="section-title">Planning Checklist</h3>
-    ${Object.entries(CP.plan.checklist).map(([phase,items])=>{
-      const done=items.filter(i=>i.done).length;
-      return`<div class="checklist-section">
-        <h4>${phase} <span style="font-weight:400;color:var(--ink3)">(${done}/${items.length})</span></h4>
-        ${items.map(item=>`<div class="cl-item${item.done?' done':''}">
-          <input type="checkbox" ${item.done?'checked':''} onchange="toggleCL('${phase}','${item.id}',this.checked)">
-          <span>${item.task}</span>
-        </div>`).join('')}
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addCLItem('${phase}')">+ Add Item</button>
-      </div>`;
-    }).join('')}`,
+  ()=>{
+    const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const now=new Date();
+    if(clCalYear===null)clCalYear=now.getFullYear();
+    if(clCalMonth===null)clCalMonth=now.getMonth();
+    return`<h3 class="section-title">Planning Checklist</h3>
+    <div class="cl-layout">
+      <div class="cl-cal-panel">
+        <div class="cl-cal-header">
+          <button class="cl-cal-nav" onclick="clCalNav(-1)">‹</button>
+          <span id="cl-cal-title">${MONTHS[clCalMonth]} ${clCalYear}</span>
+          <button class="cl-cal-nav" onclick="clCalNav(1)">›</button>
+        </div>
+        <div class="cl-cal-weekdays"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cl-cal-grid" id="cl-cal-grid"></div>
+        <div id="cl-cal-tasks" class="cl-cal-tasks"><p style="font-size:11px;color:var(--ink3);text-align:center;padding:8px">Click a date to see tasks</p></div>
+      </div>
+      <div class="cl-right-panel">
+        ${Object.entries(CP.plan.checklist).map(([phase,items])=>{
+          const done=items.filter(i=>i.done).length;
+          const pk=phase.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return`<div class="checklist-section">
+            <h4>${phase} <span style="font-weight:400;color:var(--ink3)">(${done}/${items.length})</span></h4>
+            ${items.map(item=>{
+              const hasDate=!!item.dueDate;
+              return`<div class="cl-item${item.done?' done':''}" id="cl-item-${item.id}">
+                <input type="checkbox" ${item.done?'checked':''} onchange="toggleCL('${pk}','${item.id}',this.checked)">
+                <span style="flex:1">${item.task}</span>
+                <button class="cl-date-btn${hasDate?' has-date':''}" onclick="openCLDatePicker('${pk}','${item.id}',this)" title="${hasDate?'Due: '+item.dueDate:'Set due date'}">📅${hasDate?' '+item.dueDate.slice(5):''}</button>
+              </div>`;
+            }).join('')}
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addCLItem('${pk}')">+ Add Item</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  },
 
   // 5 Guests
   ()=>{
@@ -1439,17 +1546,7 @@ const PANEL_HTML=[
       <button class="btn btn-outline btn-sm" onclick="downloadGuestTemplate()">⬇ Download Excel Template</button>
       <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ Import Excel <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importGuestExcel(this)"></label>
     </div>
-    <div class="guest-add-bar">
-      <div><div class="guest-add-bar-label">Full Name *</div><input class="inp" id="g-name-inp" placeholder="Guest full name"></div>
-      <div><div class="guest-add-bar-label">Phone Number</div><input class="inp" id="g-phone-inp" placeholder="e.g. 0917 xxx xxxx" type="tel"></div>
-      <div><div class="guest-add-bar-label">Email</div><input class="inp" id="g-email-inp" placeholder="email@example.com" type="email"></div>
-      <div><div class="guest-add-bar-label">Entourage Role</div><select class="inp" id="g-role-inp">${ENTOURAGE_ROLES.map(r=>`<option value="${r}">${r||'— None —'}</option>`).join('')}</select></div>
-      <div style="grid-column:5;grid-row:1/3;display:flex;align-items:center"><button class="btn btn-gold" onclick="addGuest()" style="width:100%;padding:10px 18px;white-space:nowrap">+ Add Guest</button></div>
-      <div><div class="guest-add-bar-label">Seating Priority</div><select class="inp" id="g-prio-inp">${['','VIP','Priority','General'].map(p=>`<option value="${p}">${p||'—'}</option>`).join('')}</select></div>
-      <div><div class="guest-add-bar-label">Meal Preference</div><select class="inp" id="g-meal-inp">${MEAL_OPTIONS.map(m=>`<option value="${m}">${m||'Standard'}</option>`).join('')}</select></div>
-      <div><div class="guest-add-bar-label">Dietary Restrictions</div><input class="inp" id="g-dietary-inp" placeholder="Nuts, gluten-free…"></div>
-      <div><div class="guest-add-bar-label">Notes</div><input class="inp" id="g-notes-inp" placeholder="Special requests…"></div>
-    </div>
+    <button class="btn btn-gold btn-sm" style="margin-bottom:14px" onclick="openAddGuestModal()">+ Add Guest</button>
     ${total===0?`<div class="empty-state"><div class="icon">👥</div>
       <p>No guests yet.</p>
       <p style="font-size:12px;margin-top:8px">Download the Excel template, share it with your client to fill in, then import it here.</p>
@@ -1601,18 +1698,120 @@ function bindPanelEvents(i){
       });
     });
   }
+  if(i===4) setTimeout(renderCLCal,0);
   if(i===6) setTimeout(initCVS,50);
   if(i===7) document.querySelectorAll('[data-riskkey]').forEach(el=>el.addEventListener('input',()=>{CP.plan.risks[el.dataset.riskkey]=el.value;syncCP()}));
 }
 
 function addVendor(){CP.plan.vendors.push({id:uid(),category:'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:''});syncCP();renderPlanUI()}
 function removeVendor(id){CP.plan.vendors=CP.plan.vendors.filter(v=>v.id!==id);syncCP();renderPlanUI()}
-function updateVF(el){const v=CP.plan.vendors.find(v=>v.id===el.dataset.vid);if(!v)return;v[el.dataset.field]=el.type==='number'?parseFloat(el.value)||0:el.value;if(el.dataset.field==='category'){const h=el.closest('.vendor-card')?.querySelector('h4');if(h)h.textContent=el.value;}syncCP()}
+function updateVF(el){const v=CP.plan.vendors.find(v=>v.id===el.dataset.vid);if(!v)return;v[el.dataset.field]=el.type==='number'?parseFloat(el.value)||0:el.value;syncCP()}
+function addVendorForCat(cat){CP.plan.vendors.push({id:uid(),category:cat||'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:''});syncCP();renderPlanUI()}
+function switchVendorCat(cat){activeVendorCat=cat;renderPlanUI()}
+function addCustomVendorType(){
+  const inp=document.getElementById('custom-vendor-inp');if(!inp)return;
+  const val=inp.value.trim();if(!val)return;
+  const set=new Set(CP.interview.vendorsNeeded||[]);
+  set.add(val);CP.interview.vendorsNeeded=[...set];
+  inp.value='';renderStep();
+}
 function addTL(){CP.plan.timeline.push({id:uid(),time:'',event:'',note:''});syncCP();renderPlanUI()}
 function removeTL(id){CP.plan.timeline=CP.plan.timeline.filter(t=>t.id!==id);syncCP();renderPlanUI()}
 function updateTL(id,field,val){const t=CP.plan.timeline.find(t=>t.id===id);if(t){t[field]=val;syncCP()}}
-function toggleCL(phase,id,checked){const item=CP.plan.checklist[phase]?.find(i=>i.id===id);if(item){item.done=checked;syncCP()}}
-function addCLItem(phase){const task=prompt('New checklist item:');if(!task)return;CP.plan.checklist[phase]?.push({id:uid(),task,done:false});syncCP();renderPlanUI()}
+function toggleCL(phase,id,checked){const item=CP.plan.checklist[phase]?.find(i=>i.id===id);if(item){item.done=checked;syncCP();renderCLCal();}}
+function addCLItem(phase){const task=prompt('New checklist item:');if(!task)return;CP.plan.checklist[phase]?.push({id:uid(),task,done:false,dueDate:null});syncCP();renderPlanUI()}
+function setCLDueDate(phase,id,val){const item=CP.plan.checklist[phase]?.find(it=>it.id===id);if(item){item.dueDate=val||null;syncCP();}}
+function openCLDatePicker(phase,id,btn){
+  const item=CP.plan.checklist[phase]?.find(it=>it.id===id);if(!item)return;
+  const inp=document.createElement('input');
+  inp.type='date';inp.value=item.dueDate||'';
+  inp.className='inp-sm';inp.style.cssText='width:130px;font-size:10px;padding:2px 6px;flex-shrink:0';
+  btn.replaceWith(inp);inp.focus();inp.showPicker?.();
+  let committed=false;
+  inp.addEventListener('change',()=>{committed=true;setCLDueDate(phase,id,inp.value);renderPlanUI();});
+  inp.addEventListener('blur',()=>{setTimeout(()=>{if(!committed&&inp.parentNode)renderPlanUI();},200);});
+}
+function clCalNav(d){
+  clCalMonth+=d;
+  if(clCalMonth>11){clCalMonth=0;clCalYear++;}
+  if(clCalMonth<0){clCalMonth=11;clCalYear--;}
+  renderCLCal();
+}
+function renderCLCal(){
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now=new Date();
+  if(clCalYear===null)clCalYear=now.getFullYear();
+  if(clCalMonth===null)clCalMonth=now.getMonth();
+  const grid=document.getElementById('cl-cal-grid');const titleEl=document.getElementById('cl-cal-title');
+  if(!grid||!titleEl)return;
+  titleEl.textContent=`${MONTHS[clCalMonth]} ${clCalYear}`;
+  const dueDates=new Set();
+  Object.values(CP.plan.checklist).forEach(items=>items.forEach(it=>{if(it.dueDate)dueDates.add(it.dueDate);}));
+  const firstDay=new Date(clCalYear,clCalMonth,1).getDay();
+  const daysInMonth=new Date(clCalYear,clCalMonth+1,0).getDate();
+  const todayStr=now.toISOString().slice(0,10);
+  const startOffset=(firstDay+6)%7;
+  let cells='';
+  for(let i=0;i<startOffset;i++)cells+=`<div class="cl-cal-day empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${clCalYear}-${String(clCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasTasks=dueDates.has(ds);
+    cells+=`<div class="cl-cal-day${hasTasks?' has-tasks':''}${clCalSelected===ds?' selected':''}${ds===todayStr?' today':''}" onclick="clCalSelect('${ds}')">${d}${hasTasks?`<span class="cl-dot"></span>`:''}</div>`;
+  }
+  grid.innerHTML=cells;
+  renderCLCalTasks();
+}
+function clCalSelect(ds){clCalSelected=clCalSelected===ds?null:ds;renderCLCal();}
+function renderCLCalTasks(){
+  const el=document.getElementById('cl-cal-tasks');if(!el)return;
+  if(!clCalSelected){el.innerHTML='<p style="font-size:11px;color:var(--ink3);text-align:center;padding:8px">Click a date to see tasks</p>';return;}
+  const tasks=[];
+  Object.entries(CP.plan.checklist).forEach(([phase,items])=>{items.forEach(it=>{if(it.dueDate===clCalSelected)tasks.push({phase,it});});});
+  if(!tasks.length){el.innerHTML=`<p style="font-size:11px;color:var(--ink3);text-align:center;padding:8px">No tasks on ${clCalSelected.slice(5)}</p>`;return;}
+  el.innerHTML=tasks.map(({phase,it})=>`<div class="cl-cal-task-item${it.done?' done':''}"><span class="cl-cal-task-phase">${phase}</span>${it.task}</div>`).join('');
+}
+function openAddGuestModal(){
+  document.getElementById('add-guest-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='add-guest-ov';ov.className='guest-picker';
+  ov.innerHTML=`<div class="guest-picker-box" style="max-width:480px">
+    <h4>Add Guest</h4>
+    <div class="form-grid">
+      <div class="form-row"><label>Full Name *</label><input class="inp" id="ag-name" placeholder="Guest full name"></div>
+      <div class="form-row"><label>RSVP Status</label><select class="inp" id="ag-rsvp">${RSVP_OPTS.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Phone Number</label><div class="phone-wrap"><span class="phone-prefix">🇵🇭 +63</span><input class="phone-inp" id="ag-phone" type="tel" placeholder="917 xxx xxxx"></div></div>
+      <div class="form-row"><label>Email</label><input class="inp" id="ag-email" type="email" placeholder="email@example.com"></div>
+      <div class="form-row"><label>Entourage Role</label><select class="inp" id="ag-role">${ENTOURAGE_ROLES.map(r=>`<option value="${r}">${r||'— None —'}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Seating Priority</label><select class="inp" id="ag-prio">${['','VIP','Priority','General'].map(p=>`<option value="${p}">${p||'—'}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Meal Preference</label><select class="inp" id="ag-meal">${MEAL_OPTIONS.map(m=>`<option value="${m}">${m||'Standard'}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Dietary Restrictions</label><input class="inp" id="ag-dietary" placeholder="Nuts, shellfish, gluten-free…"></div>
+    </div>
+    <div class="form-row" style="margin-top:4px"><label>Notes</label><textarea class="inp textarea" id="ag-notes" rows="2" placeholder="Special requests…"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-gold" style="flex:1" onclick="submitAddGuest()">Add Guest</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('add-guest-ov').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  setTimeout(()=>document.getElementById('ag-name')?.focus(),50);
+}
+function submitAddGuest(){
+  const name=document.getElementById('ag-name')?.value.trim();
+  if(!name){alert('Please enter a guest name.');return}
+  const rsvp=document.getElementById('ag-rsvp')?.value||'pending';
+  const phone=document.getElementById('ag-phone')?.value.trim()||'';
+  const email=document.getElementById('ag-email')?.value.trim()||'';
+  const role=document.getElementById('ag-role')?.value||'';
+  const prio=document.getElementById('ag-prio')?.value||'';
+  const meal=document.getElementById('ag-meal')?.value||'';
+  const dietary=document.getElementById('ag-dietary')?.value.trim()||'';
+  const notes=document.getElementById('ag-notes')?.value.trim()||'';
+  gPlan().guests.push({id:uid(),name,rsvp,meal,entourageRole:role,contactNo:phone,email,seatingPriority:prio,dietary,notes,_chairId:null});
+  gPlan().nextGuestId=(gPlan().nextGuestId||1)+1;
+  document.getElementById('add-guest-ov')?.remove();
+  syncCP();renderPlanUI();
+}
 
 function toggleJourneyPhase(pi){
   CP.plan.journey[pi].collapsed=!CP.plan.journey[pi].collapsed;
@@ -2233,7 +2432,61 @@ function openPresentation(id){
 function closePres(){
   document.removeEventListener('keydown',presKey);
   document.exitFullscreen?.().catch(()=>{});
+  if(_isSharedView)return;
   openPlanningDirect();
+}
+async function sharePres(){
+  if(!CURRENT_UID){showShareModal(null,'Sign in required to generate a share link.');return}
+  const shareId='cs'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const data={interview:CP.interview,plan:CP.plan,profile:PROFILE,sharedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  try{
+    await DB.collection('coord_shares').doc(shareId).set(data);
+    const url=`${location.origin}${location.pathname}?share=${shareId}`;
+    try{await navigator.clipboard.writeText(url);}catch{}
+    showShareModal(url);
+  }catch(e){
+    console.error('Share error:',e);
+    showShareModal(null,'Could not generate share link. Make sure you are signed in and have internet access.');
+  }
+}
+function showShareModal(url,err){
+  document.getElementById('share-modal-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='share-modal-ov';ov.className='guest-picker';
+  ov.innerHTML=err
+    ?`<div class="guest-picker-box" style="max-width:420px;text-align:center">
+        <p style="color:#ff8080;margin-bottom:16px">${err}</p>
+        <button class="btn btn-ghost" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
+      </div>`
+    :`<div class="guest-picker-box" style="max-width:500px">
+        <h4>Share Presentation 🔗</h4>
+        <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Anyone with this link can view the full presentation (Q&amp;A slide excluded).</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input class="inp" id="share-url-inp" value="${url}" readonly style="flex:1;font-size:12px">
+          <button class="btn btn-gold" onclick="navigator.clipboard.writeText(document.getElementById('share-url-inp').value).then(()=>{this.textContent='Copied!'})">Copy</button>
+        </div>
+        <p style="font-size:11px;color:var(--ink3);margin-bottom:16px">Link copied to clipboard! Share with your client via chat, email, or QR code.</p>
+        <p style="font-size:10px;color:var(--ink3);padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--r)">⚠️ Add this Firestore rule to enable public access:<br><code style="font-size:9px">match /coord_shares/{shareId} { allow read: if true; allow write: if request.auth != null; }</code></p>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
+      </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+async function loadSharedPresentation(shareId){
+  try{
+    const doc=await DB.collection('coord_shares').doc(shareId).get();
+    if(!doc.exists){alert('Shared presentation not found or has expired.');show('s-auth');return;}
+    const data=doc.data();
+    CP={id:shareId,interview:data.interview||{},plan:Object.assign({vendors:[],timeline:[],checklist:{},guests:[],furniture:[],budget:{},risks:{},floorPlan:{},journey:[]},data.plan||{}),status:'presenting'};
+    PROFILE=data.profile||{name:'',biz:'',spec:'',contact:''};
+    buildSlides(true);
+    SIDX=0;show('s-presentation');drawSlide();
+    document.addEventListener('keydown',presKey);
+  }catch(e){
+    console.error('Load shared:',e);
+    alert('Could not load the shared presentation. The link may be invalid or access is not yet configured.');
+    show('s-auth');
+  }
 }
 function presKey(e){
   if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();presNav(1)}
@@ -2242,7 +2495,7 @@ function presKey(e){
 }
 function presNav(d){SIDX=Math.max(0,Math.min(SLIDES.length-1,SIDX+d));drawSlide()}
 
-function buildSlides(){
+function buildSlides(skipQA=false){
   const iv=CP.interview,plan=CP.plan;SLIDES=[];
   const p1=iv.p1Name||'Partner 1',p2=iv.p2Name||'Partner 2';
   const wdate=iv.weddingDate?new Date(iv.weddingDate).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}):'';
@@ -2273,7 +2526,7 @@ function buildSlides(){
   SLIDES.push({type:'risks',risks:plan.risks});
   // Coordinator journey
   if((plan.journey||[]).length)SLIDES.push({type:'journey',journey:plan.journey});
-  SLIDES.push({type:'qa'});
+  if(!skipQA)SLIDES.push({type:'qa'});
   SLIDES.push({type:'closing',profile:PROFILE});
 }
 
@@ -2281,8 +2534,8 @@ function drawSlide(){
   const s=SLIDES[SIDX];
   document.getElementById('pres-inner').innerHTML=slideHTML(s);
   document.getElementById('pres-slide-num').textContent=`${SIDX+1} / ${SLIDES.length}`;
-  document.getElementById('pres-counter').innerHTML=`${SIDX+1} of ${SLIDES.length}&nbsp;&nbsp;
-    <button onclick="closePres()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;padding:0">✕ Exit</button>`;
+  const _shareBtn=!_isSharedView?`<button onclick="sharePres()" style="background:rgba(212,168,83,.12);border:1px solid rgba(212,168,83,.3);color:var(--gold);cursor:pointer;font-size:11px;padding:3px 10px;border-radius:var(--r);margin-right:8px;font-family:var(--f);font-weight:600">🔗 Share</button>`:'';
+  document.getElementById('pres-counter').innerHTML=`${SIDX+1} of ${SLIDES.length}&nbsp;&nbsp;${_shareBtn}<button onclick="closePres()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;padding:0">✕ Exit</button>`;
   document.getElementById('pres-slide').scrollTop=0;
 }
 
@@ -2546,8 +2799,12 @@ function slideHTML(s){
 ══════════════════════════════════════════════ */
 // Show auth screen immediately while Firebase initialises
 show('s-auth');
+// Check for shared presentation link — bypass auth entirely
+const _shareParam=new URLSearchParams(location.search).get('share');
+if(_shareParam){_isSharedView=true;loadSharedPresentation(_shareParam);}
 
 AUTH.onAuthStateChanged(async user=>{
+  if(_isSharedView)return; // shared view doesn't need auth state
   if(!user){
     PROFILE=null;PLANS=[];CP=null;CURRENT_UID=null;
     show('s-auth');
