@@ -457,10 +457,48 @@ select.inp option{background:#1a2d45}
 /* ── VENDOR SLIDE WITH PHOTO ── */
 .vs-photo{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--r) var(--r) 0 0;display:block;margin-bottom:0}
 .vs-card.has-photo{padding:0;overflow:hidden}
-.vs-card.has-photo .vs-body{padding:10px 12px}
+.vs-card.has-photo .vs-card-body{padding:10px 14px}
 
 /* ── SHARE RULE MODAL ── */
 .rule-code-block{background:rgba(0,0,0,.4);border:1px solid rgba(212,168,83,.2);border-radius:var(--r);padding:10px 14px;font-family:monospace;font-size:11px;color:#80deb0;line-height:1.7;margin-bottom:8px;overflow-x:auto;white-space:pre}
+
+/* ── PIN GATE ── */
+#s-pin-gate{background:#050d18;display:flex;align-items:center;justify-content:center}
+.pin-gate-box{text-align:center;padding:52px 40px;max-width:420px;width:100%}
+.pin-lock-icon{font-size:60px;display:inline-block;margin-bottom:24px;filter:drop-shadow(0 0 24px rgba(212,168,83,.35));animation:pin-float 3.5s ease-in-out infinite}
+@keyframes pin-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.pin-gate-title{font-family:var(--f2);font-size:30px;color:var(--gold2);margin-bottom:8px;letter-spacing:.3px}
+.pin-gate-sub{font-size:13px;color:var(--ink3);margin-bottom:32px;line-height:1.65}
+.pin-inputs{display:flex;gap:10px;justify-content:center;margin-bottom:8px}
+.pin-digit{width:46px;height:58px;background:rgba(255,255,255,.05);border:1.5px solid rgba(212,168,83,.28);border-radius:var(--r);font-size:24px;font-weight:700;color:var(--gold);text-align:center;font-family:var(--f);transition:border-color .18s,background .18s;caret-color:var(--gold)}
+.pin-digit:focus{border-color:var(--gold);outline:none;background:rgba(212,168,83,.08);box-shadow:0 0 0 3px rgba(212,168,83,.1)}
+.pin-error{color:#ff8080;font-size:12px;min-height:18px;margin-bottom:16px}
+.pin-shake{animation:pin-shake .42s ease}
+@keyframes pin-shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-9px)}30%,60%,90%{transform:translateX(9px)}}
+.pin-hint{font-size:11px;color:var(--ink3);margin-top:18px;line-height:1.7}
+/* Welcome overlay */
+#pin-welcome-ov{position:fixed;inset:0;background:#050d18;z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;pointer-events:none}
+.welcome-ring{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,rgba(212,168,83,.18),rgba(212,168,83,.05));border:1.5px solid rgba(212,168,83,.5);display:flex;align-items:center;justify-content:center;font-size:44px;animation:wring .65s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes wring{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.welcome-couple{font-family:var(--f2);font-size:38px;color:var(--gold2);margin:20px 0 6px;text-align:center;animation:wfade .5s ease .35s both}
+.welcome-msg{font-size:14px;color:var(--ink2);text-align:center;max-width:300px;line-height:1.75;animation:wfade .5s ease .55s both}
+.welcome-stars{letter-spacing:14px;color:rgba(212,168,83,.7);margin-top:18px;font-size:17px;animation:wfade .5s ease .75s both}
+@keyframes wfade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── COORDINATOR RSVP (guest-facing) ── */
+#s-coord-rsvp{background:#050d18;display:flex;align-items:center;justify-content:center}
+.coord-rsvp-box{max-width:440px;width:100%;padding:52px 36px;text-align:center}
+.crsvp-header{font-family:var(--f2);font-size:28px;color:var(--gold2);margin-bottom:6px}
+.crsvp-sub{font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.6}
+.crsvp-name{font-size:20px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.crsvp-prompt{font-size:13px;color:var(--ink3);margin-bottom:24px}
+.crsvp-choices{display:flex;gap:14px;justify-content:center;margin-bottom:24px}
+.crsvp-choice{flex:1;max-width:160px;padding:22px 16px;border-radius:var(--r-lg);border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);cursor:pointer;transition:all .2s;text-align:center}
+.crsvp-choice:hover{border-color:rgba(212,168,83,.45);background:rgba(212,168,83,.07)}
+.crsvp-choice.selected{border-color:var(--gold);background:rgba(212,168,83,.12);box-shadow:0 0 0 3px rgba(212,168,83,.1)}
+.crsvp-choice-emoji{font-size:26px;margin-bottom:8px}
+.crsvp-choice-label{font-size:12px;font-weight:600;color:var(--ink2);line-height:1.4}
+.crsvp-thanks{animation:wfade .5s ease both}
 </style>
 </head>
 <body>
@@ -576,6 +614,56 @@ select.inp option{background:#1a2d45}
     <button class="pres-nav-btn" onclick="presNav(-1)">← Prev</button>
     <span class="pres-counter" id="pres-counter"></span>
     <button class="pres-nav-btn" onclick="presNav(1)">Next →</button>
+  </div>
+</div>
+
+<!-- PIN GATE (shared view) -->
+<div id="s-pin-gate" class="screen">
+  <div class="pin-gate-box">
+    <div class="pin-lock-icon" id="pin-lock-icon">🔐</div>
+    <div class="pin-gate-title">Private Presentation</div>
+    <div class="pin-gate-sub">This presentation was prepared exclusively for you.<br>Enter your wedding date to open it.</div>
+    <div class="pin-inputs" id="pin-inputs">
+      <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric">
+      <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric">
+      <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric">
+      <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric">
+      <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric">
+      <input class="pin-digit" type="tel" maxlength="1" inputmode="numeric">
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn btn-gold" style="width:100%;max-width:240px;justify-content:center;padding:11px 0;font-size:14px;letter-spacing:.4px" onclick="submitPin()">Open Presentation</button>
+    <div class="pin-hint">Format: YYMMDD &nbsp;·&nbsp; e.g. July 10, 2026 → <strong style="color:var(--gold)">260710</strong></div>
+  </div>
+</div>
+
+<!-- COORDINATOR RSVP (guest-facing, no auth) -->
+<div id="s-coord-rsvp" class="screen">
+  <div class="coord-rsvp-box">
+    <div style="font-size:42px;margin-bottom:16px">💌</div>
+    <div class="crsvp-header" id="crsvp-couple"></div>
+    <div class="crsvp-sub" id="crsvp-date-line"></div>
+    <div class="crsvp-name" id="crsvp-guest-name"></div>
+    <div class="crsvp-prompt" id="crsvp-prompt">Will you be attending?</div>
+    <div class="crsvp-choices" id="crsvp-choices">
+      <div class="crsvp-choice" id="crsvp-yes" onclick="selectRSVP('attending')">
+        <div class="crsvp-choice-emoji">🥂</div>
+        <div class="crsvp-choice-label">Joyfully<br>Accepts</div>
+      </div>
+      <div class="crsvp-choice" id="crsvp-no" onclick="selectRSVP('declined')">
+        <div class="crsvp-choice-emoji">💔</div>
+        <div class="crsvp-choice-label">Regretfully<br>Declines</div>
+      </div>
+    </div>
+    <div id="crsvp-dietary-wrap" style="display:none;margin-bottom:14px">
+      <textarea class="inp textarea" id="crsvp-dietary" placeholder="Any dietary restrictions or notes? (optional)" rows="2" style="text-align:left"></textarea>
+    </div>
+    <button class="btn btn-gold" id="crsvp-submit-btn" style="display:none;width:100%;max-width:280px;justify-content:center;padding:11px" onclick="submitCoordRSVP()">Confirm RSVP</button>
+    <div id="crsvp-thanks" style="display:none" class="crsvp-thanks">
+      <div style="font-size:52px;margin-bottom:16px">🎉</div>
+      <div class="crsvp-header">Thank You!</div>
+      <div class="crsvp-sub" id="crsvp-thanks-msg"></div>
+    </div>
   </div>
 </div>
 
@@ -815,6 +903,7 @@ function blankPlan(){
       checklist:Object.fromEntries(Object.entries(DEFAULT_CHECKLIST).map(([k,tasks])=>[k,tasks.map(t=>({id:uid(),task:t,done:false}))])),
       guests:[],
       furniture:[],
+      rsvpKey:uid(),
       nextGuestId:1,
       nextFurnitureId:1,
       selectedFurniture:null,
@@ -852,6 +941,7 @@ function loadPlans(){
     if(!p.plan.nextGuestId)p.plan.nextGuestId=1;
     if(!p.plan.nextFurnitureId)p.plan.nextFurnitureId=1;
     p.plan.vendors.forEach(v=>{if(!v.photos)v.photos=[];});
+    if(!p.plan.rsvpKey)p.plan.rsvpKey=uid();
   });
 }
 
@@ -1775,6 +1865,7 @@ const PANEL_HTML=[
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-outline btn-sm" onclick="downloadGuestTemplate()">⬇ Download Excel Template</button>
       <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ Import Excel <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importGuestExcel(this)"></label>
+      <button class="btn btn-ghost btn-sm" onclick="syncCoordRSVPs()" title="Pull RSVP responses from guests who used the link">🔄 Sync RSVPs</button>
     </div>
     <button class="btn btn-gold btn-sm" style="margin-bottom:14px" onclick="openAddGuestModal()">+ Add Guest</button>
     ${total===0?`<div class="empty-state"><div class="icon">👥</div>
@@ -1784,7 +1875,7 @@ const PANEL_HTML=[
     <div style="overflow-x:auto">
     <table class="guest-table">
       <thead><tr>
-        <th>#</th><th>Full Name</th><th>Phone Number</th><th>Email</th><th>Entourage Role</th><th>Seat</th><th>Seating Priority</th><th>Meal Preference</th><th>Dietary Restrictions</th><th>RSVP</th><th>Notes</th><th></th>
+        <th>#</th><th>Full Name</th><th>Phone Number</th><th>Email</th><th>Entourage Role</th><th>Seat</th><th>Seating Priority</th><th>Meal Preference</th><th>Dietary Restrictions</th><th>RSVP</th><th>Notes</th><th>Invite</th><th></th>
       </tr></thead>
       <tbody>
       ${guests.map((g,i)=>{
@@ -1807,6 +1898,7 @@ const PANEL_HTML=[
             ${RSVP_OPTS.map(o=>`<option value="${o}"${g.rsvp===o?' selected':''}>${o}</option>`).join('')}
           </select></td>
           <td style="font-size:12px;color:var(--ink3);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${g.notes||''}">${g.notes||'—'}</td>
+          <td><button class="btn btn-ghost btn-sm" style="${g._rsvpSent?'color:var(--gold)':''}" title="${g._rsvpSent?'RSVP sent — click to resend':'Send RSVP invite'}" onclick="sendGuestRSVP('${g.id}')">${g._rsvpSent?'📨':'📤'}</button></td>
           <td><div style="display:flex;gap:4px">
             <button class="btn btn-ghost btn-sm" onclick="editGuestModal('${g.id}')">✏️</button>
             <button class="btn btn-danger btn-sm" onclick="removeGuest('${g.id}')">✕</button>
@@ -2761,22 +2853,204 @@ function showShareModal(url,err){
   document.body.appendChild(ov);
   ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
 }
+let _sharedPresData=null;
+
 async function loadSharedPresentation(shareId){
   try{
     const doc=await DB.collection('coord_shares').doc(shareId).get();
     if(!doc.exists){alert('Shared presentation not found or has expired.');show('s-auth');return;}
-    const data=doc.data();
-    CP={id:shareId,interview:data.interview||{},plan:Object.assign({vendors:[],timeline:[],checklist:{},guests:[],furniture:[],budget:{},risks:{},floorPlan:{},journey:[]},data.plan||{}),status:'presenting'};
-    PROFILE=data.profile||{name:'',biz:'',spec:'',contact:''};
-    buildSlides(true);
-    SIDX=0;show('s-presentation');drawSlide();
-    document.addEventListener('keydown',presKey);
+    _sharedPresData=doc.data();
+    show('s-pin-gate');
+    setTimeout(()=>document.querySelector('.pin-digit')?.focus(),400);
+    _setupPinInputs();
   }catch(e){
     console.error('Load shared:',e);
     alert('Could not load the shared presentation. The link may be invalid or access is not yet configured.');
     show('s-auth');
   }
 }
+/* ── PIN GATE ── */
+function _setupPinInputs(){
+  const digits=[...document.querySelectorAll('.pin-digit')];
+  digits.forEach((inp,i)=>{
+    inp.value='';
+    inp.addEventListener('input',()=>{
+      inp.value=inp.value.replace(/\D/g,'').slice(-1);
+      if(inp.value&&i<digits.length-1)digits[i+1].focus();
+      if(digits.every(d=>d.value))submitPin();
+    });
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Backspace'&&!inp.value&&i>0){digits[i-1].focus();digits[i-1].value='';}
+      if(e.key==='Enter')submitPin();
+    });
+    inp.addEventListener('paste',e=>{
+      e.preventDefault();
+      const txt=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+      txt.split('').forEach((ch,j)=>{if(digits[j])digits[j].value=ch;});
+      if(txt.length===6)submitPin();
+      else if(digits[txt.length])digits[txt.length].focus();
+    });
+  });
+}
+function _pinFromDate(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr);if(isNaN(d))return null;
+  const yy=String(d.getFullYear()).slice(-2);
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return yy+mm+dd;
+}
+function submitPin(){
+  const digits=[...document.querySelectorAll('.pin-digit')];
+  const entered=digits.map(d=>d.value).join('');
+  if(entered.length<6)return;
+  const correct=_pinFromDate(_sharedPresData?.interview?.weddingDate);
+  if(!correct||entered===correct){
+    document.getElementById('pin-lock-icon').textContent='🔓';
+    document.getElementById('pin-lock-icon').style.animation='none';
+    setTimeout(()=>_launchSharedPresentation(),350);
+  }else{
+    const box=document.getElementById('pin-inputs');
+    box.classList.remove('pin-shake');void box.offsetWidth;box.classList.add('pin-shake');
+    document.getElementById('pin-error').textContent='Incorrect date — please try again.';
+    setTimeout(()=>{digits.forEach(d=>d.value='');digits[0].focus();document.getElementById('pin-error').textContent='';},520);
+  }
+}
+function _launchSharedPresentation(){
+  const data=_sharedPresData;
+  CP={id:'shared',interview:data.interview||{},plan:Object.assign({vendors:[],timeline:[],checklist:{},guests:[],furniture:[],budget:{},risks:{},floorPlan:{},journey:[]},data.plan||{}),status:'presenting'};
+  PROFILE=data.profile||{name:'',biz:'',spec:'',contact:''};
+  buildSlides(true);SIDX=0;
+  show('s-presentation');drawSlide();
+  document.addEventListener('keydown',presKey);
+  const iv=CP.interview;
+  _showWelcome([iv.p1Name,iv.p2Name].filter(Boolean).join(' & ')||'You');
+}
+function _showWelcome(names){
+  document.getElementById('pin-welcome-ov')?.remove();
+  const ov=document.createElement('div');ov.id='pin-welcome-ov';
+  ov.innerHTML=`<div class="welcome-ring">💍</div>
+    <div class="welcome-couple">${names}</div>
+    <div class="welcome-msg">We are honored to be part of your love story.<br>Welcome to your wedding proposal.</div>
+    <div class="welcome-stars">✦ &nbsp; ✦ &nbsp; ✦</div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{
+    ov.style.transition='opacity .9s ease';ov.style.opacity='0';
+    setTimeout(()=>ov.remove(),920);
+  },2900);
+}
+
+/* ── GUEST RSVP INVITES ── */
+function sendGuestRSVP(guestId){
+  const g=(CP.plan.guests||[]).find(g=>g.id===guestId);if(!g)return;
+  if(!CP.plan.rsvpKey)CP.plan.rsvpKey=uid();
+  const iv=CP.interview||{};
+  const base=location.origin+location.pathname;
+  const p=new URLSearchParams({crsvp:CP.plan.rsvpKey,gid:g.id,n:g.name,
+    p1:iv.p1Name||'',p2:iv.p2Name||'',date:iv.weddingDate||''});
+  const rsvpUrl=base+'?'+p;
+  const dateStr=iv.weddingDate?new Date(iv.weddingDate).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}):'';
+  const couple=[iv.p1Name,iv.p2Name].filter(Boolean).join(' & ')||'the couple';
+  const msg=`Dear ${g.name},\n\n${couple} joyfully invite you to their wedding${dateStr?' on '+dateStr:''}.\n\nPlease confirm your RSVP here:\n${rsvpUrl}`;
+  const waNum=(g.contactNo||'').replace(/\D/g,'');
+  const waLink=waNum?`https://wa.me/${waNum.startsWith('0')?'63'+waNum.slice(1):waNum}?text=${encodeURIComponent(msg)}`:null;
+  window._rsvpModal={msg,guestId:g.id};
+  const ov=document.createElement('div');ov.id='rsvp-invite-ov';ov.className='guest-picker';
+  ov.innerHTML=`<div class="guest-picker-box" style="max-width:480px">
+    <h4 style="margin-bottom:6px">Send RSVP — ${g.name}</h4>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:14px">Share this personalised RSVP link with your guest.</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input class="inp" id="rsvp-url-inp" readonly style="flex:1;font-size:11px">
+      <button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('rsvp-url-inp').value).then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
+    </div>
+    ${waLink?`<a class="btn btn-gold" style="width:100%;justify-content:center;text-decoration:none;display:flex;gap:8px;margin-bottom:8px" href="${waLink}" target="_blank" rel="noopener" onclick="markRSVPSent('${g.id}')">📲 Send via WhatsApp</a>`:''}
+    <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;margin-bottom:8px" onclick="copyRSVPMsg(this)">📋 Copy Full Message</button>
+    <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="closeRSVPModal()">Close</button>
+  </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('rsvp-url-inp').value=rsvpUrl;
+  ov.addEventListener('click',e=>{if(e.target===ov)closeRSVPModal();});
+}
+function copyRSVPMsg(btn){
+  if(!window._rsvpModal)return;
+  navigator.clipboard.writeText(window._rsvpModal.msg).then(()=>{
+    btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent='📋 Copy Full Message',1500);
+    markRSVPSent(window._rsvpModal.guestId);
+  });
+}
+function markRSVPSent(guestId){
+  const g=(CP.plan.guests||[]).find(g=>g.id===guestId);
+  if(g&&!g._rsvpSent){g._rsvpSent=true;syncCP();}
+}
+function closeRSVPModal(){
+  document.getElementById('rsvp-invite-ov')?.remove();
+  renderPlanUI();
+}
+async function syncCoordRSVPs(){
+  if(!CURRENT_UID){alert('Sign in to sync RSVPs.');return;}
+  if(!CP?.plan?.rsvpKey){alert('Send at least one RSVP invite first.');return;}
+  try{
+    const snap=await DB.collection('coord_rsvp').doc(CP.plan.rsvpKey).collection('responses').get();
+    if(snap.empty){alert('No RSVP responses yet.');return;}
+    let n=0;
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const g=(CP.plan.guests||[]).find(g=>g.id===d.guestId);
+      if(g&&d.rsvp){g.rsvp=d.rsvp;if(d.dietary)g.dietary=d.dietary;n++;}
+    });
+    syncCP();renderPlanUI();
+    alert(`Synced ${n} RSVP response${n!==1?'s':''}.`);
+  }catch(e){
+    console.error('Sync RSVP:',e);
+    alert('Could not sync. Add the coord_rsvp Firestore rule:\nmatch /coord_rsvp/{key}/responses/{id} {\n  allow create: if true;\n  allow read, write: if request.auth != null;\n}');
+  }
+}
+
+/* ── COORDINATOR RSVP FORM (guest-facing) ── */
+function _loadCoordRSVPForm(){
+  const p=new URLSearchParams(location.search);
+  const couple=[p.get('p1')||'',p.get('p2')||''].filter(Boolean).join(' & ')||'The Couple';
+  const dateStr=p.get('date')?new Date(p.get('date')).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}):'';
+  document.getElementById('crsvp-couple').textContent=couple;
+  document.getElementById('crsvp-date-line').textContent=dateStr?'Wedding: '+dateStr:'';
+  document.getElementById('crsvp-guest-name').textContent='Dear '+(p.get('n')||'Guest')+',';
+  window._crsvpState={rsvpKey:p.get('crsvp'),guestId:p.get('gid'),name:p.get('n'),choice:null};
+  show('s-coord-rsvp');
+}
+function selectRSVP(choice){
+  if(!window._crsvpState)return;
+  window._crsvpState.choice=choice;
+  document.getElementById('crsvp-yes').classList.toggle('selected',choice==='attending');
+  document.getElementById('crsvp-no').classList.toggle('selected',choice==='declined');
+  document.getElementById('crsvp-dietary-wrap').style.display=choice==='attending'?'block':'none';
+  document.getElementById('crsvp-submit-btn').style.display='block';
+}
+async function submitCoordRSVP(){
+  const s=window._crsvpState;
+  if(!s?.choice)return;
+  const btn=document.getElementById('crsvp-submit-btn');
+  btn.disabled=true;btn.textContent='Sending…';
+  const dietary=document.getElementById('crsvp-dietary').value||'';
+  try{
+    await DB.collection('coord_rsvp').doc(s.rsvpKey).collection('responses').doc(s.guestId).set({
+      guestId:s.guestId,name:s.name,rsvp:s.choice,dietary:dietary||null,
+      submittedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    document.getElementById('crsvp-choices').style.display='none';
+    document.getElementById('crsvp-dietary-wrap').style.display='none';
+    btn.style.display='none';
+    document.getElementById('crsvp-guest-name').style.display='none';
+    document.getElementById('crsvp-prompt')?document.getElementById('crsvp-prompt').style.display='none':null;
+    const thanks=document.getElementById('crsvp-thanks');thanks.style.display='block';
+    document.getElementById('crsvp-thanks-msg').textContent=s.choice==='attending'
+      ?'We look forward to celebrating with you! 🥂'
+      :'We will miss you, but thank you for letting us know. 💛';
+  }catch(e){
+    console.error(e);btn.disabled=false;btn.textContent='Confirm RSVP';
+    alert('Could not submit. Please try again or contact the coordinator.');
+  }
+}
+
 function presKey(e){
   if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();presNav(1)}
   else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();presNav(-1)}
@@ -3127,12 +3401,15 @@ function slideHTML(s){
 ══════════════════════════════════════════════ */
 // Show auth screen immediately while Firebase initialises
 show('s-auth');
-// Check for shared presentation link — bypass auth entirely
-const _shareParam=new URLSearchParams(location.search).get('share');
+// Check for special URL params — bypass auth entirely
+const _urlP=new URLSearchParams(location.search);
+const _shareParam=_urlP.get('share');
+const _crsvpParam=_urlP.get('crsvp');
 if(_shareParam){_isSharedView=true;loadSharedPresentation(_shareParam);}
+else if(_crsvpParam){_loadCoordRSVPForm();}
 
 AUTH.onAuthStateChanged(async user=>{
-  if(_isSharedView)return; // shared view doesn't need auth state
+  if(_isSharedView||_crsvpParam)return; // bypass auth for shared views
   if(!user){
     PROFILE=null;PLANS=[];CP=null;CURRENT_UID=null;
     show('s-auth');
