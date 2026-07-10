@@ -764,6 +764,12 @@ const DEFAULT_JOURNEY=[
 ];
 
 /* ══════════════════════════════════════════════
+   ADMIN
+══════════════════════════════════════════════ */
+const ADMIN_EMAILS=['joseph.albino1791@gmail.com'];
+function isAdmin(){return ADMIN_EMAILS.includes(AUTH?.currentUser?.email||PROFILE?.email||'');}
+
+/* ══════════════════════════════════════════════
    STATE
 ══════════════════════════════════════════════ */
 let PROFILE=null, PLANS=[], CP=null, CURRENT_UID=null;
@@ -2720,7 +2726,8 @@ function showShareModal(url,err){
   ov.id='share-modal-ov';ov.className='guest-picker';
   const ruleText=`match /coord_shares/{id} {\n  allow read: if true;\n  allow write: if request.auth != null;\n}`;
   ov.innerHTML=err
-    ?`<div class="guest-picker-box" style="max-width:500px">
+    ?(isAdmin()
+      ?`<div class="guest-picker-box" style="max-width:500px">
         <h4 style="color:#ff9090;margin-bottom:12px">⚠️ Firestore Rule Missing</h4>
         <p style="font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6">The <strong>coord_shares</strong> collection needs a public-read rule before sharing works. This is a one-time setup — takes 2 minutes.</p>
         <div style="font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px">How to Fix</div>
@@ -2736,6 +2743,11 @@ function showShareModal(url,err){
         <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="document.getElementById('share-modal-ov').remove();sharePres()">Try Again</button>
         <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
       </div>`
+      :`<div class="guest-picker-box" style="max-width:420px">
+        <h4 style="color:#ff9090;margin-bottom:12px">⚠️ Sharing Unavailable</h4>
+        <p style="font-size:13px;color:var(--ink2);margin-bottom:20px;line-height:1.6">Presentation sharing is not yet enabled. Please contact your administrator to activate it.</p>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
+      </div>`)
     :`<div class="guest-picker-box" style="max-width:500px">
         <h4>Share Presentation 🔗</h4>
         <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Anyone with this link can view the full presentation (Q&amp;A slide excluded).</p>
