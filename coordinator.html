@@ -394,6 +394,73 @@ select.inp option{background:#1a2d45}
 .jp-bar-wrap{height:5px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:6px;overflow:hidden}
 .jp-bar-fill{height:100%;background:linear-gradient(90deg,rgba(212,168,83,.6),var(--gold));border-radius:3px;transition:.3s}
 .jp-nums{font-size:11px;color:var(--ink3)}
+
+/* ── PROFILE LOGO ── */
+.logo-upload-ring{width:80px;height:80px;border-radius:50%;border:2px solid rgba(212,168,83,.4);background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;overflow:hidden;cursor:pointer;transition:border-color .15s;flex-shrink:0}
+.logo-upload-ring:hover{border-color:var(--gold)}
+.logo-upload-ring img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.logo-upload-hint{font-size:11px;color:var(--gold);text-align:center;margin-bottom:16px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+/* ── SUMMARY PANEL REDESIGN ── */
+.sum-hero{background:linear-gradient(135deg,rgba(212,168,83,.08),rgba(255,255,255,.02));border:1px solid rgba(212,168,83,.25);border-radius:var(--r2);padding:24px 28px;margin-bottom:20px;position:relative;overflow:hidden}
+.sum-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,83,.18),transparent 70%);pointer-events:none}
+.sum-couple{font-family:var(--f2);font-size:30px;color:var(--ink);letter-spacing:-.3px;margin-bottom:3px}
+.sum-date-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:rgba(212,168,83,.15);border:1px solid rgba(212,168,83,.3);border-radius:999px;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.4px;margin-bottom:6px}
+.sum-venue-row{font-size:12px;color:var(--ink3)}
+.sum-palette{display:flex;gap:0;height:10px;border-radius:5px;overflow:hidden;margin-top:12px;width:180px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.sum-pal-sw{flex:1;height:100%}
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:700px){.sum-grid{grid-template-columns:1fr 1fr}}
+.sum-block{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:14px 16px}
+.sum-block-title{font-size:10px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sum-kv{margin-bottom:7px}
+.sum-kv .sk{font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.sum-kv .sv{font-size:13px;color:var(--ink);margin-top:1px}
+.sum-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.sum-badge{padding:3px 9px;border-radius:999px;background:rgba(212,168,83,.1);border:1px solid rgba(212,168,83,.2);font-size:11px;color:var(--gold2)}
+.sum-budget-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.sum-budget-label{font-size:11px;color:var(--ink3)}
+.sum-budget-amt{font-size:13px;font-weight:700;color:var(--ink)}
+.sum-progress-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-top:3px}
+.sum-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold));border-radius:2px}
+.sum-note{font-size:12px;color:var(--ink2);line-height:1.5;padding:10px 12px;background:rgba(212,168,83,.05);border-left:2px solid rgba(212,168,83,.4);border-radius:0 var(--r) var(--r) 0;margin-top:4px}
+
+/* ── VENDOR PHOTOS ── */
+.vendor-photos-section{margin-bottom:10px}
+.vendor-photos-label{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.vendor-photo-row{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start}
+.vendor-photo-wrap{position:relative;display:inline-block;line-height:0}
+.vendor-photo-thumb{width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.12);cursor:pointer;display:block}
+.vendor-photo-del{position:absolute;top:-5px;right:-5px;background:rgba(200,60,60,.9);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;font-weight:900}
+.vendor-photo-add{width:80px;height:60px;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(212,168,83,.35);border-radius:6px;cursor:pointer;font-size:22px;color:var(--gold3);background:rgba(212,168,83,.04);flex-shrink:0;transition:all .15s}
+.vendor-photo-add:hover{background:rgba(212,168,83,.1);border-color:var(--gold)}
+
+/* ── PRESENTATION TITLE SLIDE ── */
+.pres-title-deco{display:flex;align-items:center;gap:14px;margin-bottom:18px;justify-content:center}
+.pres-title-line{flex:0 0 50px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,83,.6))}
+.pres-title-line.r{background:linear-gradient(90deg,rgba(212,168,83,.6),transparent)}
+.pres-title-eyebrow{font-size:10px;font-weight:800;color:var(--gold);letter-spacing:3.5px;text-transform:uppercase;margin-bottom:18px}
+.pres-title-names{font-family:var(--f2);font-size:clamp(42px,7vw,72px);color:#fff;line-height:1.05;margin-bottom:6px;letter-spacing:-1px}
+.pres-title-amp{color:var(--gold2);font-style:italic}
+.pres-title-sub{font-size:14px;color:rgba(255,255,255,.45);margin-bottom:6px;letter-spacing:.5px}
+.pres-title-venue{font-size:13px;color:rgba(255,255,255,.35);margin-bottom:28px}
+.pres-title-palette{display:flex;gap:0;height:4px;width:220px;border-radius:2px;overflow:hidden;margin:0 auto 32px}
+.pres-title-palette div{flex:1}
+.pres-title-badge{display:inline-block;padding:7px 20px;border:1px solid rgba(212,168,83,.35);border-radius:999px;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:2.5px;text-transform:uppercase}
+.pres-title-coord{margin-top:36px;display:flex;align-items:center;gap:12px;justify-content:center}
+.ptc-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(212,168,83,.4)}
+.ptc-logo-placeholder{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ptc-info{text-align:left}
+.ptc-name{font-size:13px;font-weight:700;color:var(--ink);line-height:1.2}
+.ptc-biz{font-size:11px;color:var(--gold2);line-height:1.3}
+
+/* ── VENDOR SLIDE WITH PHOTO ── */
+.vs-photo{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--r) var(--r) 0 0;display:block;margin-bottom:0}
+.vs-card.has-photo{padding:0;overflow:hidden}
+.vs-card.has-photo .vs-body{padding:10px 12px}
+
+/* ── SHARE RULE MODAL ── */
+.rule-code-block{background:rgba(0,0,0,.4);border:1px solid rgba(212,168,83,.2);border-radius:var(--r);padding:10px 14px;font-family:monospace;font-size:11px;color:#80deb0;line-height:1.7;margin-bottom:8px;overflow-x:auto;white-space:pre}
 </style>
 </head>
 <body>
@@ -434,7 +501,12 @@ select.inp option{background:#1a2d45}
 <div id="s-onboarding" class="screen">
   <div class="center-wrap">
     <div class="auth-box card card-gold">
-      <div class="logo-ring">🎀</div>
+      <div id="ob-logo-ring" class="logo-upload-ring" onclick="document.getElementById('ob-logo-inp').click()" title="Upload your logo or photo">
+        <span id="ob-logo-emoji">🎀</span>
+        <img id="ob-logo-preview" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
+      </div>
+      <div class="logo-upload-hint" onclick="document.getElementById('ob-logo-inp').click()">Upload logo or photo (optional)</div>
+      <input type="file" id="ob-logo-inp" accept="image/*" style="display:none" onchange="onLogoUpload(this,'ob-logo-preview','ob-logo-emoji')">
       <h2 style="font-family:var(--f2);font-size:26px;color:var(--gold2);text-align:center;margin-bottom:6px">Set Up Your Profile</h2>
       <p style="color:var(--ink3);text-align:center;font-size:13px;margin-bottom:22px">Just a few details so your clients know who they're working with.</p>
       <div class="form-row"><label>Your Name</label><input class="inp" id="ob-name" placeholder="e.g. Maria Santos"></div>
@@ -773,6 +845,7 @@ function loadPlans(){
     if(!p.plan.furniture)p.plan.furniture=[];
     if(!p.plan.nextGuestId)p.plan.nextGuestId=1;
     if(!p.plan.nextFurnitureId)p.plan.nextFurnitureId=1;
+    p.plan.vendors.forEach(v=>{if(!v.photos)v.photos=[];});
   });
 }
 
@@ -879,6 +952,7 @@ function show(id){
   const ta=document.getElementById('topbar-actions');
   if(id==='s-dashboard'){
     ta.innerHTML=`<span style="font-size:12px;color:var(--ink3)">👤 ${PROFILE?.name||''}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openProfileEdit()">Edit Profile</button>
       <button class="btn btn-ghost btn-sm" onclick="signOut()">Sign Out</button>`;
   } else if(id==='s-interview'||id==='s-planning'){
     ta.innerHTML=`<button class="btn btn-ghost btn-sm" onclick="goToDash()">Dashboard</button>`;
@@ -891,6 +965,7 @@ function show(id){
 async function saveProfile(){
   const name=document.getElementById('ob-name').value.trim();
   if(!name){alert('Please enter your name.');return}
+  const previewEl=document.getElementById('ob-logo-preview');
   PROFILE={
     name,
     biz:document.getElementById('ob-biz').value.trim(),
@@ -898,9 +973,78 @@ async function saveProfile(){
     contact:document.getElementById('ob-contact').value.trim(),
     email:AUTH.currentUser?.email||'',
     uid:CURRENT_UID,
+    logoUrl:(previewEl&&previewEl.style.display!=='none')?previewEl.src:(PROFILE?.logoUrl||''),
   };
   await saveProfileFirestore();
   renderDashboard();show('s-dashboard');
+}
+
+function onLogoUpload(input,previewId,emojiId){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const size=Math.min(img.width,img.height,240);
+      canvas.width=size;canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      const sx=(img.width-size)/2,sy=(img.height-size)/2;
+      ctx.beginPath();ctx.arc(size/2,size/2,size/2,0,Math.PI*2);ctx.clip();
+      ctx.drawImage(img,sx,sy,size,size,0,0,size,size);
+      const dataUrl=canvas.toDataURL('image/jpeg',.85);
+      const prev=document.getElementById(previewId);
+      const emoji=document.getElementById(emojiId);
+      if(prev){prev.src=dataUrl;prev.style.display='block';}
+      if(emoji)emoji.style.display='none';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function openProfileEdit(){
+  document.getElementById('profile-edit-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='profile-edit-ov';ov.className='guest-picker';
+  const logoHtml=PROFILE?.logoUrl
+    ?`<img id="pe-logo-preview" src="${PROFILE.logoUrl}" style="display:block;width:100%;height:100%;object-fit:cover;border-radius:50%"><span id="pe-logo-emoji" style="display:none">🎀</span>`
+    :`<span id="pe-logo-emoji">🎀</span><img id="pe-logo-preview" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  ov.innerHTML=`<div class="guest-picker-box" style="max-width:420px">
+    <h4>Edit Profile</h4>
+    <div id="pe-logo-ring" class="logo-upload-ring" style="margin:0 auto 8px" onclick="document.getElementById('pe-logo-inp').click()" title="Upload logo">${logoHtml}</div>
+    <div class="logo-upload-hint" onclick="document.getElementById('pe-logo-inp').click()">Change logo / photo</div>
+    <input type="file" id="pe-logo-inp" accept="image/*" style="display:none" onchange="onLogoUpload(this,'pe-logo-preview','pe-logo-emoji')">
+    <div class="form-row"><label>Your Name</label><input class="inp" id="pe-name" value="${PROFILE?.name||''}"></div>
+    <div class="form-row"><label>Business / Agency Name</label><input class="inp" id="pe-biz" value="${PROFILE?.biz||''}"></div>
+    <div class="form-row"><label>Specialization</label><input class="inp" id="pe-spec" value="${PROFILE?.spec||''}"></div>
+    <div class="form-row"><label>Contact / Phone</label><input class="inp" id="pe-contact" value="${PROFILE?.contact||''}"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-gold" style="flex:1" onclick="saveProfileEdit()">Save Profile</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('profile-edit-ov').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+
+async function saveProfileEdit(){
+  const name=document.getElementById('pe-name')?.value.trim();
+  if(!name){alert('Name is required.');return}
+  const prev=document.getElementById('pe-logo-preview');
+  PROFILE={
+    ...PROFILE,
+    name,
+    biz:document.getElementById('pe-biz')?.value.trim()||PROFILE?.biz||'',
+    spec:document.getElementById('pe-spec')?.value.trim()||PROFILE?.spec||'',
+    contact:document.getElementById('pe-contact')?.value.trim()||PROFILE?.contact||'',
+    logoUrl:(prev&&prev.style.display!=='none')?prev.src:(PROFILE?.logoUrl||''),
+  };
+  await saveProfileFirestore();
+  document.getElementById('profile-edit-ov')?.remove();
+  // Update topbar name
+  const ta=document.getElementById('topbar-actions');
+  if(ta)ta.querySelector('span')&&(ta.querySelector('span').textContent='👤 '+(PROFILE?.name||''));
 }
 
 /* ══════════════════════════════════════════════
@@ -1352,7 +1496,7 @@ function autofillPlanning(){
     BUDGET_CATS.forEach(c=>{plan.budget[c.key]=Math.round(iv.totalBudget*c.pct)});
   const existing=new Set(plan.vendors.map(v=>v.category));
   (iv.vendorsNeeded||[]).forEach(cat=>{
-    if(!existing.has(cat))plan.vendors.push({id:uid(),category:cat,name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:''});
+    if(!existing.has(cat))plan.vendors.push({id:uid(),category:cat,name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:'',photos:[]});
   });
 }
 
@@ -1399,46 +1543,75 @@ const PANEL_HTML=[
     const iv=CP.interview;
     const date=iv.weddingDate?new Date(iv.weddingDate).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}):'TBD';
     const vn=iv.vendorsNeeded||[];
-    return`<h3 class="section-title">Wedding Summary</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-      <div>
-        <div class="summary-block"><h4>The Couple</h4>
-          <div class="summary-kv"><span class="k">Partner 1</span><span class="v">${iv.p1Name||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Partner 2</span><span class="v">${iv.p2Name||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Wedding Date</span><span class="v">${date}</span></div>
-          <div class="summary-kv"><span class="k">Communication</span><span class="v">${iv.commMethod||'—'}</span></div>
+    const cols=(iv.colorPalette||'').split(',').map(c=>c.trim()).filter(Boolean);
+    const paletteStrip=cols.length?`<div class="sum-palette">${cols.map(c=>{const hex=COLOR_MAP[c.toLowerCase()]||'#888';return`<div class="sum-pal-sw" style="background:${hex}" title="${c}"></div>`;}).join('')}</div>`:'';
+    const totalBudget=iv.totalBudget||0;
+    const allocated=Object.values(CP.plan.budget).reduce((a,v)=>a+(+v||0),0);
+    const allocPct=totalBudget>0?Math.min(Math.round((allocated/totalBudget)*100),100):0;
+    const vendors=CP.plan.vendors||[];
+    const vendorsFilled=vendors.filter(v=>v.name).length;
+    return`<h3 class="section-title">Wedding Brief</h3>
+
+    <div class="sum-hero">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <div class="sum-couple">${iv.p1Name||'Partner 1'} &amp; ${iv.p2Name||'Partner 2'}</div>
+          ${iv.weddingDate?`<div class="sum-date-badge">📅 ${date}</div>`:''}
+          ${(iv.ceremonyVenue||iv.receptionVenue)?`<div class="sum-venue-row">📍 ${[iv.ceremonyVenue,iv.receptionVenue].filter(Boolean).join(' → ')}</div>`:''}
         </div>
-        <div class="summary-block"><h4>Venues</h4>
-          <div class="summary-kv"><span class="k">Ceremony</span><span class="v">${iv.ceremonyVenue||'TBD'}</span></div>
-          <div class="summary-kv"><span class="k">Reception</span><span class="v">${iv.receptionVenue||'TBD'}</span></div>
-          <div class="summary-kv"><span class="k">Ceremony Time</span><span class="v">${iv.ceremonyTime||'—'}</span></div>
-        </div>
-        <div class="summary-block"><h4>Guests</h4>
-          <div class="summary-kv"><span class="k">Total</span><span class="v">${iv.guestCount||0}</span></div>
-          <div class="summary-kv"><span class="k">Adults / Children</span><span class="v">${iv.adults||0} / ${iv.children||0}</span></div>
-          <div class="summary-kv"><span class="k">Wedding Party</span><span class="v">${iv.partySize||0}</span></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="tag tag-${CP.status}" style="font-size:11px">${{interview:'Interview',planning:'Planning',presenting:'Presenting',approved:'Approved'}[CP.status]||CP.status}</span>
+          ${iv.commMethod?`<span style="font-size:11px;color:var(--ink3)">via ${iv.commMethod}</span>`:''}
         </div>
       </div>
-      <div>
-        <div class="summary-block"><h4>Style & Vision</h4>
-          <div class="summary-kv"><span class="k">Style</span><span class="v">${iv.style||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Atmosphere</span><span class="v">${iv.atmosphere||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Theme</span><span class="v">${iv.theme||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Color Palette</span><span class="v">${iv.colorPalette||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Entertainment</span><span class="v">${iv.entertainment||'—'}</span></div>
-          <div class="summary-kv"><span class="k">Food</span><span class="v">${iv.food||'—'}</span></div>
-        </div>
-        <div class="summary-block"><h4>Budget</h4>
-          <div class="summary-kv"><span class="k">Total</span><span class="v">${fmtP(iv.totalBudget)}</span></div>
-          <div class="summary-kv"><span class="k">Ideal</span><span class="v">${fmtP(iv.idealBudget)}</span></div>
-          <div class="summary-kv"><span class="k">Maximum</span><span class="v">${fmtP(iv.maxBudget)}</span></div>
-        </div>
-        <div class="summary-block"><h4>Vendors Needed</h4>
-          <div class="badge-row">${vn.length?vn.map(v=>`<span class="badge">${v}</span>`).join(''):'<span style="color:var(--ink3);font-size:13px">None selected</span>'}</div>
-        </div>
-        ${iv.mustHaves?`<div class="summary-block"><h4>Must-Haves</h4><p style="font-size:13px;color:var(--ink2)">${iv.mustHaves}</p></div>`:''}
+      ${paletteStrip}
+    </div>
+
+    <div class="sum-grid">
+      <div class="sum-block">
+        <div class="sum-block-title">💍 Couple</div>
+        ${iv.p1Name?`<div class="sum-kv"><div class="sk">Partner 1</div><div class="sv">${iv.p1Name}${iv.p1Contact?' · +63'+iv.p1Contact:''}</div></div>`:''}
+        ${iv.p2Name?`<div class="sum-kv"><div class="sk">Partner 2</div><div class="sv">${iv.p2Name}${iv.p2Contact?' · +63'+iv.p2Contact:''}</div></div>`:''}
+        ${iv.engagementDate?`<div class="sum-kv"><div class="sk">Engaged</div><div class="sv">${new Date(iv.engagementDate).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'})}</div></div>`:''}
+        ${iv.guestCount?`<div class="sum-kv"><div class="sk">Guests</div><div class="sv">${iv.guestCount} total${iv.adults?' ('+iv.adults+' adults, '+(iv.children||0)+' children)':''}</div></div>`:''}
+        ${iv.partySize?`<div class="sum-kv"><div class="sk">Wedding Party</div><div class="sv">${iv.partySize} people</div></div>`:''}
       </div>
-    </div>`;
+      <div class="sum-block">
+        <div class="sum-block-title">🏛 Venues</div>
+        ${iv.ceremonyType?`<div class="sum-kv"><div class="sk">Ceremony Type</div><div class="sv">${iv.ceremonyType}${iv.indoorOutdoor?' · '+iv.indoorOutdoor:''}</div></div>`:''}
+        ${iv.ceremonyVenue?`<div class="sum-kv"><div class="sk">Ceremony</div><div class="sv">${iv.ceremonyVenue}${iv.ceremonyTime?' at '+iv.ceremonyTime:''}</div></div>`:''}
+        ${iv.receptionVenue?`<div class="sum-kv"><div class="sk">Reception</div><div class="sv">${iv.receptionVenue}</div></div>`:''}
+        ${iv.seatingStyle?`<div class="sum-kv"><div class="sk">Seating</div><div class="sv">${iv.seatingStyle}</div></div>`:''}
+        ${iv.food?`<div class="sum-kv"><div class="sk">Catering</div><div class="sv">${iv.food}</div></div>`:''}
+      </div>
+      <div class="sum-block">
+        <div class="sum-block-title">💰 Budget</div>
+        ${totalBudget?`<div class="sum-kv"><div class="sk">Total Budget</div><div class="sv" style="font-size:18px;font-weight:700;color:var(--gold)">${fmtP(totalBudget)}</div></div>`:''}
+        ${iv.idealBudget?`<div class="sum-kv"><div class="sk">Ideal</div><div class="sv">${fmtP(iv.idealBudget)}</div></div>`:''}
+        ${iv.maxBudget?`<div class="sum-kv"><div class="sk">Maximum</div><div class="sv">${fmtP(iv.maxBudget)}</div></div>`:''}
+        ${totalBudget&&allocated?`<div class="sum-kv"><div class="sk">Allocated — ${allocPct}%</div>
+          <div class="sum-progress-bar" style="margin-top:4px"><div class="sum-progress-fill" style="width:${allocPct}%"></div></div>
+          <div class="sv" style="font-size:11px;margin-top:2px;color:var(--ink3)">₱${fmt(allocated)} of ₱${fmt(totalBudget)}</div></div>`:''}
+      </div>
+    </div>
+
+    <div class="sum-grid">
+      <div class="sum-block">
+        <div class="sum-block-title">✨ Style & Vision</div>
+        ${iv.style?`<div class="sum-kv"><div class="sk">Style</div><div class="sv">${iv.style}</div></div>`:''}
+        ${iv.atmosphere?`<div class="sum-kv"><div class="sk">Atmosphere</div><div class="sv">${iv.atmosphere}</div></div>`:''}
+        ${iv.theme?`<div class="sum-kv"><div class="sk">Theme</div><div class="sv">${iv.theme}</div></div>`:''}
+        ${iv.entertainment?`<div class="sum-kv"><div class="sk">Entertainment</div><div class="sv">${iv.entertainment}</div></div>`:''}
+        ${cols.length?`<div class="sum-kv"><div class="sk">Color Palette</div><div class="sv">${cols.join(', ')}</div></div>`:''}
+      </div>
+      <div class="sum-block" style="grid-column:span 2">
+        <div class="sum-block-title">🤝 Vendors Needed <span style="font-weight:400;color:var(--ink3);text-transform:none;font-size:10px;letter-spacing:0">(${vendorsFilled}/${vn.length} filled)</span></div>
+        ${vn.length?`<div class="sum-badges">${vn.map(v=>{const filled=vendors.find(vd=>vd.category===v&&vd.name);return`<span class="sum-badge" style="${filled?'background:rgba(80,200,100,.12);border-color:rgba(80,200,100,.3);color:#80e090':''}">${filled?'✓ ':''} ${v}</span>`;}).join('')}</div>`:'<span style="color:var(--ink3);font-size:12px">None selected — complete the vendor interview step</span>'}
+      </div>
+    </div>
+
+    ${iv.mustHaves?`<div class="sum-block" style="margin-bottom:16px"><div class="sum-block-title">⭐ Must-Haves</div><div class="sum-note">${iv.mustHaves}</div></div>`:''}
+    ${iv.priorities?`<div class="sum-block"><div class="sum-block-title">🎯 Top Priorities</div><div class="sum-note">${iv.priorities}</div></div>`:''}`;
   },
 
   // 1 Budget
@@ -1481,28 +1654,45 @@ const PANEL_HTML=[
     }).join('')}</div>
     <button class="btn btn-outline btn-sm" style="margin-bottom:16px" data-cat="${catLabel.replace(/"/g,'&quot;')}" onclick="addVendorForCat(this.dataset.cat)">+ Add ${catLabel}</button>
     ${catVendors.length===0?`<div class="empty-state" style="padding:24px"><div class="icon">🤝</div><p>No ${catLabel} vendor yet.</p></div>`:
-    catVendors.map(v=>`<div class="vendor-card">
-      <input class="inp vendor-name-inp" data-vid="${v.id}" data-field="name" value="${v.name||''}" placeholder="Vendor name" onchange="updateVF(this)">
-      <div class="vendor-row-2">
-        <div class="form-row" style="flex:0 0 160px"><label style="font-size:11px;color:var(--ink3)">Cost (₱)</label>
-          <input class="inp-sm" type="number" data-vid="${v.id}" data-field="cost" value="${v.cost||0}" onchange="updateVF(this)" style="width:100%"></div>
-        <div class="form-row" style="flex:1"><label style="font-size:11px;color:var(--ink3)">Availability</label>
-          <select class="inp-sm" data-vid="${v.id}" data-field="availability" onchange="updateVF(this)" style="width:100%">
-            ${['','Confirmed','Tentative / TBC','On Hold','Not Available'].map(a=>`<option value="${a}"${(v.availability||'')===a?' selected':''}>${a||'— Status —'}</option>`).join('')}
-          </select></div>
-      </div>
-      <div class="form-row" style="margin-bottom:8px"><label style="font-size:11px;color:var(--ink3)">Portfolio / Contact</label>
-        <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="portfolio" value="${v.portfolio||''}" placeholder="URL or contact number" onchange="updateVF(this)"></div>
-      <div class="vendor-row-pc">
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Pros</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="pros" value="${v.pros||''}" placeholder="Strengths…" onchange="updateVF(this)"></div>
-        <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Cons</label>
-          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="cons" value="${v.cons||''}" placeholder="Concerns…" onchange="updateVF(this)"></div>
-      </div>
-      <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Notes</label>
-        <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="notes" value="${v.notes||''}" placeholder="Additional info…" onchange="updateVF(this)"></div>
-      <button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="removeVendor('${v.id}')">Remove</button>
-    </div>`).join('')}`;
+    catVendors.map(v=>{
+      const photos=v.photos||[];
+      const photoHtml=`<div class="vendor-photos-section">
+        <div class="vendor-photos-label">Photos</div>
+        <div class="vendor-photo-row">
+          ${photos.map((src,i)=>`<div class="vendor-photo-wrap">
+            <img class="vendor-photo-thumb" src="${src}" alt="Photo ${i+1}" onclick="previewVendorPhoto('${v.id}',${i})">
+            <button class="vendor-photo-del" onclick="removeVendorPhoto('${v.id}',${i})" title="Remove">✕</button>
+          </div>`).join('')}
+          ${photos.length<4?`<label class="vendor-photo-add" title="Add photo">
+            <span>＋</span>
+            <input type="file" accept="image/*" style="display:none" onchange="uploadVendorPhoto('${v.id}',this)">
+          </label>`:''}
+        </div>
+      </div>`;
+      return`<div class="vendor-card">
+        <input class="inp vendor-name-inp" data-vid="${v.id}" data-field="name" value="${v.name||''}" placeholder="Vendor / supplier name" onchange="updateVF(this)">
+        <div class="vendor-row-2">
+          <div class="form-row" style="flex:0 0 160px"><label style="font-size:11px;color:var(--ink3)">Cost (₱)</label>
+            <input class="inp-sm" type="number" data-vid="${v.id}" data-field="cost" value="${v.cost||0}" onchange="updateVF(this)" style="width:100%"></div>
+          <div class="form-row" style="flex:1"><label style="font-size:11px;color:var(--ink3)">Availability</label>
+            <select class="inp-sm" data-vid="${v.id}" data-field="availability" onchange="updateVF(this)" style="width:100%">
+              ${['','Confirmed','Tentative / TBC','On Hold','Not Available'].map(a=>`<option value="${a}"${(v.availability||'')===a?' selected':''}>${a||'— Status —'}</option>`).join('')}
+            </select></div>
+        </div>
+        <div class="form-row" style="margin-bottom:8px"><label style="font-size:11px;color:var(--ink3)">Portfolio / Contact</label>
+          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="portfolio" value="${v.portfolio||''}" placeholder="URL or contact number" onchange="updateVF(this)"></div>
+        <div class="vendor-row-pc">
+          <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Pros</label>
+            <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="pros" value="${v.pros||''}" placeholder="Strengths…" onchange="updateVF(this)"></div>
+          <div class="form-row"><label style="font-size:11px;color:var(--ink3)">Cons</label>
+            <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="cons" value="${v.cons||''}" placeholder="Concerns…" onchange="updateVF(this)"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px"><label style="font-size:11px;color:var(--ink3)">Notes</label>
+          <input class="inp-sm" style="width:100%" data-vid="${v.id}" data-field="notes" value="${v.notes||''}" placeholder="Additional info…" onchange="updateVF(this)"></div>
+        ${photoHtml}
+        <button class="btn btn-danger btn-sm" style="margin-top:6px" onclick="removeVendor('${v.id}')">Remove</button>
+      </div>`;
+    }).join('')}`;
   },
 
   // 3 Timeline
@@ -1737,10 +1927,47 @@ function bindPanelEvents(i){
   if(i===7) document.querySelectorAll('[data-riskkey]').forEach(el=>el.addEventListener('input',()=>{CP.plan.risks[el.dataset.riskkey]=el.value;syncCP()}));
 }
 
-function addVendor(){CP.plan.vendors.push({id:uid(),category:'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:''});syncCP();renderPlanUI()}
+function addVendor(){CP.plan.vendors.push({id:uid(),category:'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:'',photos:[]});syncCP();renderPlanUI()}
 function removeVendor(id){CP.plan.vendors=CP.plan.vendors.filter(v=>v.id!==id);syncCP();renderPlanUI()}
 function updateVF(el){const v=CP.plan.vendors.find(v=>v.id===el.dataset.vid);if(!v)return;v[el.dataset.field]=el.type==='number'?parseFloat(el.value)||0:el.value;syncCP()}
-function addVendorForCat(cat){CP.plan.vendors.push({id:uid(),category:cat||'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:''});syncCP();renderPlanUI()}
+function addVendorForCat(cat){CP.plan.vendors.push({id:uid(),category:cat||'Venue',name:'',cost:0,availability:'',portfolio:'',notes:'',pros:'',cons:'',photos:[]});syncCP();renderPlanUI()}
+function uploadVendorPhoto(vid,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const maxW=480,maxH=360;
+      let w=img.width,h=img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=canvas.toDataURL('image/jpeg',.75);
+      const v=CP.plan.vendors.find(v=>v.id===vid);
+      if(!v)return;
+      if(!v.photos)v.photos=[];
+      if(v.photos.length>=4){alert('Maximum 4 photos per vendor.');return;}
+      v.photos.push(dataUrl);
+      syncCP();renderPlanUI();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function removeVendorPhoto(vid,idx){
+  const v=CP.plan.vendors.find(v=>v.id===vid);
+  if(v&&v.photos){v.photos.splice(idx,1);syncCP();renderPlanUI();}
+}
+function previewVendorPhoto(vid,idx){
+  const v=CP.plan.vendors.find(v=>v.id===vid);if(!v||!v.photos[idx])return;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.innerHTML=`<img src="${v.photos[idx]}" style="max-width:90vw;max-height:85vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)">`;
+  ov.onclick=()=>ov.remove();document.body.appendChild(ov);
+}
 function switchVendorCat(cat){activeVendorCat=cat;renderPlanUI()}
 function addCustomVendorType(){
   const inp=document.getElementById('custom-vendor-inp');if(!inp)return;
@@ -2491,21 +2718,33 @@ function showShareModal(url,err){
   document.getElementById('share-modal-ov')?.remove();
   const ov=document.createElement('div');
   ov.id='share-modal-ov';ov.className='guest-picker';
+  const ruleText=`match /coord_shares/{id} {\n  allow read: if true;\n  allow write: if request.auth != null;\n}`;
   ov.innerHTML=err
-    ?`<div class="guest-picker-box" style="max-width:420px;text-align:center">
-        <p style="color:#ff8080;margin-bottom:16px">${err}</p>
-        <button class="btn btn-ghost" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
+    ?`<div class="guest-picker-box" style="max-width:500px">
+        <h4 style="color:#ff9090;margin-bottom:12px">⚠️ Firestore Rule Missing</h4>
+        <p style="font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.6">The <strong>coord_shares</strong> collection needs a public-read rule before sharing works. This is a one-time setup — takes 2 minutes.</p>
+        <div style="font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px">How to Fix</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;color:var(--ink2)">
+          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--gold);font-weight:700;flex-shrink:0">1.</span> Go to <strong>console.firebase.google.com</strong></div>
+          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--gold);font-weight:700;flex-shrink:0">2.</span> Open project <strong>weddingthings</strong></div>
+          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--gold);font-weight:700;flex-shrink:0">3.</span> Click <strong>Firestore Database → Rules</strong></div>
+          <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--gold);font-weight:700;flex-shrink:0">4.</span> Add this rule inside the <code>match /databases/{database}/documents</code> block:</div>
+        </div>
+        <div class="rule-code-block" id="share-rule-code">${ruleText}</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;margin-bottom:16px;justify-content:center" onclick="navigator.clipboard.writeText(document.getElementById('share-rule-code').textContent).then(()=>{this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Rule',1500)})">Copy Rule</button>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink2);margin-bottom:16px"><span style="color:var(--gold);font-weight:700;flex-shrink:0">5.</span> Click <strong>Publish</strong>, then try sharing again.</div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="document.getElementById('share-modal-ov').remove();sharePres()">Try Again</button>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
       </div>`
     :`<div class="guest-picker-box" style="max-width:500px">
         <h4>Share Presentation 🔗</h4>
         <p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Anyone with this link can view the full presentation (Q&amp;A slide excluded).</p>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <input class="inp" id="share-url-inp" value="${url}" readonly style="flex:1;font-size:12px">
-          <button class="btn btn-gold" onclick="navigator.clipboard.writeText(document.getElementById('share-url-inp').value).then(()=>{this.textContent='Copied!'})">Copy</button>
+          <button class="btn btn-gold" onclick="navigator.clipboard.writeText(document.getElementById('share-url-inp').value).then(()=>{this.textContent='✓ Copied!'})">Copy</button>
         </div>
         <p style="font-size:11px;color:var(--ink3);margin-bottom:16px">Link copied to clipboard! Share with your client via chat, email, or QR code.</p>
-        <p style="font-size:10px;color:var(--ink3);padding:8px 10px;background:rgba(255,255,255,.04);border-radius:var(--r)">⚠️ Add this Firestore rule to enable public access:<br><code style="font-size:9px">match /coord_shares/{shareId} { allow read: if true; allow write: if request.auth != null; }</code></p>
-        <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="document.getElementById('share-modal-ov').remove()">Close</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('share-modal-ov').remove()">Done</button>
       </div>`;
   document.body.appendChild(ov);
   ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
@@ -2556,7 +2795,7 @@ function buildSlides(skipQA=false){
   const furniture=plan.furniture||[];
   const seatedGuests=(plan.guests||[]).filter(g=>g._chairId);
   if(seatedGuests.length)SLIDES.push({type:'seatplan',furniture,guests:plan.guests||[]});
-  if(Object.values(plan.floorPlan).some(v=>v&&v.trim()))SLIDES.push({type:'floorplan',fp:plan.floorPlan});
+  if(plan.floorPlan&&Object.values(plan.floorPlan).some(v=>v&&v.trim()))SLIDES.push({type:'floorplan',fp:plan.floorPlan});
   // Special requirements slide
   const specFields=['surprisePerf','culturalTrads','dietaryRestrictions','accessibility','otherRequests','includeTrads','avoidTrads'];
   if(specFields.some(k=>iv[k]&&String(iv[k]).trim()))SLIDES.push({type:'special',iv});
@@ -2581,11 +2820,41 @@ function kv(k,v){if(!v&&v!==0)return'';return`<div class="slide-kv"><span class=
 
 function slideHTML(s){
   switch(s.type){
-    case 'title':
-      return`<div class="slide-title">${s.p1} &amp; ${s.p2}</div>
-        ${s.date?`<div class="slide-sub">${s.date}</div>`:''}
-        ${s.venue?`<div style="font-size:16px;color:var(--ink3);margin-bottom:24px">📍 ${s.venue}</div>`:''}
-        <div style="font-size:28px;color:var(--gold);font-family:var(--f2);letter-spacing:1px;margin-top:16px">Wedding Coordination Proposal</div>`;
+    case 'title':{
+      const iv=CP?.interview||{};
+      const palCols=(iv.colorPalette||'').split(',').map(c=>c.trim()).filter(Boolean);
+      const paletteBar=palCols.length?`<div class="pres-title-palette">${palCols.map(c=>{const hex=COLOR_MAP[c.toLowerCase()]||'#888';return`<div style="background:${hex}"></div>`;}).join('')}</div>`:'<div style="height:4px;width:220px;margin:0 auto 32px"></div>';
+      const coordLogo=PROFILE?.logoUrl
+        ?`<img class="ptc-logo" src="${PROFILE.logoUrl}" alt="">`
+        :`<div class="ptc-logo-placeholder">🎀</div>`;
+      const coordBlock=(PROFILE?.name||PROFILE?.biz)?`<div class="pres-title-coord">
+        ${coordLogo}
+        <div class="ptc-info">
+          ${PROFILE?.name?`<div class="ptc-name">${PROFILE.name}</div>`:''}
+          ${PROFILE?.biz?`<div class="ptc-biz">${PROFILE.biz}</div>`:''}
+        </div>
+      </div>`:'';
+      return`<div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+          <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,83,.14),transparent 70%);top:-150px;left:-100px;filter:blur(60px)"></div>
+          <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(120,80,200,.08),transparent 70%);bottom:-100px;right:-80px;filter:blur(50px)"></div>
+          <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:100px;background:linear-gradient(to bottom,transparent,rgba(212,168,83,.35),transparent)"></div>
+          <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:1px;height:80px;background:linear-gradient(to top,transparent,rgba(212,168,83,.2),transparent)"></div>
+        </div>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;max-width:680px">
+          <div class="pres-title-eyebrow">Wedding Coordination Proposal</div>
+          <div class="pres-title-deco">
+            <div class="pres-title-line"></div>
+            <div style="font-size:13px;color:rgba(212,168,83,.6)">✦</div>
+            <div class="pres-title-line r"></div>
+          </div>
+          <div class="pres-title-names">${s.p1}<br><span class="pres-title-amp">&amp;</span><br>${s.p2}</div>
+          ${s.date?`<div class="pres-title-sub">📅 ${s.date}</div>`:''}
+          ${s.venue?`<div class="pres-title-venue">📍 ${s.venue}</div>`:''}
+          ${paletteBar}
+          <div class="pres-title-badge">Begin</div>
+          ${coordBlock}
+        </div>`;
+    }
     case 'overview':{
       const iv=s.iv;
       return`<div class="slide-h2">Wedding Overview</div>
@@ -2673,14 +2942,23 @@ function slideHTML(s){
         </div>`;
     }
     case 'vendors':
-      return`<div class="slide-h2">Vendor Recommendations${s.total>1?` (${s.page}/${s.total})`:''}</div>
+      return`<div class="slide-h2">Vendors &amp; Suppliers${s.total>1?` (${s.page}/${s.total})`:''}</div>
         <div class="vendor-slides-grid">
-          ${s.vendors.map(v=>`<div class="vs-card">
-            <div class="vs-cat">${v.category}</div><div class="vs-name">${v.name||'TBD'}</div>
-            ${v.cost?`<div class="vs-cost">₱${fmt(v.cost)}</div>`:''}
-            ${v.availability?`<div style="font-size:11px;color:var(--gold);margin-top:4px">${v.availability}</div>`:''}
-            ${v.pros?`<div style="font-size:11px;color:var(--ink3);margin-top:4px">✅ ${v.pros}</div>`:''}
-          </div>`).join('')}
+          ${s.vendors.map(v=>{
+            const photo=(v.photos||[])[0];
+            const avColor={'Confirmed':'#80e090','Tentative / TBC':'var(--gold)','On Hold':'#ff9090','Not Available':'#ff6060'}[v.availability]||'var(--ink3)';
+            return`<div class="vs-card${photo?' has-photo':''}">
+              ${photo?`<img class="vs-photo" src="${photo}" alt="${v.name||v.category}" onerror="this.style.display='none'">`:''}
+              <div class="${photo?'vs-card-body':''}">
+                <div class="vs-cat">${v.category}</div>
+                <div class="vs-name">${v.name||'TBD'}</div>
+                ${v.cost?`<div class="vs-cost">₱${fmt(v.cost)}</div>`:''}
+                ${v.availability?`<div style="font-size:11px;color:${avColor};margin-top:4px;font-weight:600">${v.availability}</div>`:''}
+                ${v.pros?`<div style="font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.4">✅ ${v.pros}</div>`:''}
+                ${v.notes?`<div style="font-size:10px;color:var(--ink3);margin-top:4px;font-style:italic">${v.notes}</div>`:''}
+              </div>
+            </div>`;
+          }).join('')}
         </div>`;
     case 'timeline':
       return`<div class="slide-h2">Wedding Day Timeline${s.total>1?` (${s.page}/${s.total})`:''}</div>
