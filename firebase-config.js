@@ -915,9 +915,9 @@ async function sendMainPasswordReset(btn) {
   if (!email) { msgEl.style.color = 'var(--rose)'; msgEl.textContent = 'Please enter your email address.'; return; }
   btn.textContent = 'Sending…'; btn.disabled = true;
   try {
-    await AUTH.sendPasswordResetEmail(email);
+    await AUTH.sendPasswordResetEmail(email, { url: location.protocol + '//' + location.host + location.pathname, handleCodeInApp: true });
     msgEl.style.color = '#3a9e5f';
-    msgEl.textContent = '✓ Reset link sent! Check your inbox (and spam folder).';
+    msgEl.textContent = '✓ Reset link sent! Check your inbox and open it within 1 hour.';
     btn.textContent = '✓ Sent';
   } catch(e) {
     btn.textContent = 'Send Link'; btn.disabled = false;
@@ -1447,3 +1447,44 @@ window._showAlreadySubmitted      = _showAlreadySubmitted;
 window._showFlushConfirm      = _showFlushConfirm;
 window._showFlushConfirm2     = _showFlushConfirm2;
 window.flushAllData           = flushAllData;
+
+// Handle Firebase password reset action links (mode=resetPassword in URL)
+;(function(){
+  const _p=new URLSearchParams(location.search);
+  if(_p.get('mode')!=='resetPassword')return;
+  const _oob=_p.get('oobCode');
+  if(!_oob)return;
+  function _showPRM(){
+    const ov=document.getElementById('prm-overlay');
+    if(!ov)return;
+    ov.style.display='flex';
+    AUTH.verifyPasswordResetCode(_oob).then(function(email){
+      const el=document.getElementById('prm-email');
+      if(el)el.textContent='for '+email;
+      document.getElementById('prm-form').style.display='';
+      document.getElementById('prm-expired').style.display='none';
+    }).catch(function(){
+      document.getElementById('prm-form').style.display='none';
+      document.getElementById('prm-expired').style.display='';
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',_showPRM);}
+  else{_showPRM();}
+  window._doPRM=async function(btn){
+    const pw=document.getElementById('prm-pw').value;
+    const pw2=document.getElementById('prm-pw2').value;
+    const err=document.getElementById('prm-err');
+    if(pw.length<6){err.textContent='Password must be at least 6 characters.';return;}
+    if(pw!==pw2){err.textContent='Passwords do not match.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await AUTH.confirmPasswordReset(_oob,pw);
+      document.getElementById('prm-form').style.display='none';
+      document.getElementById('prm-success').style.display='';
+      history.replaceState({},'',location.pathname);
+    }catch(e){
+      btn.disabled=false;btn.textContent='Set Password';
+      err.textContent=e.code==='auth/weak-password'?'Password too weak (min. 6 chars).':'Link expired or already used — please request a new one below.';
+    }
+  };
+})();

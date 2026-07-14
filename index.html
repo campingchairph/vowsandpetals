@@ -1161,5 +1161,33 @@ function shareInvitation() {
 })();
 </script>
 
+<!-- Password Reset Action Handler Modal -->
+<div id="prm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div style="background:var(--ivory);border-radius:20px;padding:32px 28px;width:min(400px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="text-align:center;margin-bottom:20px">
+      <span style="font-size:36px">🔐</span>
+      <h2 style="font-family:var(--f2);font-size:1.6rem;margin:8px 0 4px;color:var(--ink)">Set New Password</h2>
+      <p id="prm-email" style="font-size:13px;color:var(--ink-3);margin:0"></p>
+    </div>
+    <div id="prm-form">
+      <input id="prm-pw" type="password" placeholder="New password (min. 6 characters)" class="glass-input" style="width:100%;margin-bottom:10px;box-sizing:border-box">
+      <input id="prm-pw2" type="password" placeholder="Confirm new password" class="glass-input" style="width:100%;margin-bottom:6px;box-sizing:border-box">
+      <div id="prm-err" style="font-size:12px;color:#c0392b;min-height:18px;margin-bottom:12px"></div>
+      <button onclick="window._doPRM(this)" style="width:100%;padding:13px;background:var(--gold);border:none;border-radius:12px;font-size:15px;font-weight:600;color:#fff;cursor:pointer">Set Password</button>
+    </div>
+    <div id="prm-expired" style="display:none;text-align:center">
+      <div style="font-size:40px;margin-bottom:14px">⏱</div>
+      <p style="font-weight:700;color:var(--ink);margin-bottom:8px">Link expired or already used</p>
+      <p style="font-size:13px;color:var(--ink-3);margin-bottom:20px;line-height:1.5">Reset links expire after 1 hour and can only be clicked once. Request a new one — it only takes a second.</p>
+      <button onclick="document.getElementById('prm-overlay').style.display='none';history.replaceState({},'',location.pathname)" style="width:100%;padding:12px;background:var(--gold);border:none;border-radius:12px;font-size:14px;font-weight:600;color:#fff;cursor:pointer">Request a New Link</button>
+    </div>
+    <div id="prm-success" style="display:none;text-align:center">
+      <div style="font-size:40px;margin-bottom:14px">✅</div>
+      <p style="font-weight:700;color:var(--ink);margin-bottom:8px">Password updated!</p>
+      <p style="font-size:13px;color:var(--ink-3);margin-bottom:20px">You can now sign in with your new password.</p>
+      <button onclick="document.getElementById('prm-overlay').style.display='none';history.replaceState({},'',location.pathname)" style="width:100%;padding:12px;background:var(--gold);border:none;border-radius:12px;font-size:14px;font-weight:600;color:#fff;cursor:pointer">Sign In</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

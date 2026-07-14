@@ -1015,7 +1015,7 @@ async function sendPasswordReset(btn){
   if(!email){msgEl.style.color='#ff8080';msgEl.textContent='Please enter your email address.';return;}
   btn.textContent='Sending…';btn.disabled=true;
   try{
-    await AUTH.sendPasswordResetEmail(email);
+    await AUTH.sendPasswordResetEmail(email,{url:location.protocol+'//'+location.host+location.pathname,handleCodeInApp:true});
     msgEl.style.color='#80e090';
     msgEl.textContent='✓ Reset link sent! Check your inbox (and spam folder).';
     btn.textContent='✓ Sent';
@@ -3478,6 +3478,76 @@ AUTH.onAuthStateChanged(async user=>{
     show('s-onboarding');
   }
 });
+
+// Handle Firebase password reset action links (mode=resetPassword in URL)
+;(function(){
+  const _p=new URLSearchParams(location.search);
+  if(_p.get('mode')!=='resetPassword')return;
+  const _oob=_p.get('oobCode');
+  if(!_oob)return;
+  function _showPRM(){
+    const ov=document.getElementById('prm-overlay');
+    if(!ov)return;
+    ov.style.display='flex';
+    AUTH.verifyPasswordResetCode(_oob).then(function(email){
+      const el=document.getElementById('prm-email');
+      if(el)el.textContent='for '+email;
+      document.getElementById('prm-form').style.display='';
+      document.getElementById('prm-expired').style.display='none';
+    }).catch(function(){
+      document.getElementById('prm-form').style.display='none';
+      document.getElementById('prm-expired').style.display='';
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',_showPRM);}
+  else{_showPRM();}
+  window._doPRM=async function(btn){
+    const pw=document.getElementById('prm-pw').value;
+    const pw2=document.getElementById('prm-pw2').value;
+    const err=document.getElementById('prm-err');
+    if(pw.length<6){err.textContent='Password must be at least 6 characters.';return;}
+    if(pw!==pw2){err.textContent='Passwords do not match.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await AUTH.confirmPasswordReset(_oob,pw);
+      document.getElementById('prm-form').style.display='none';
+      document.getElementById('prm-success').style.display='';
+      history.replaceState({},'',location.pathname);
+    }catch(e){
+      btn.disabled=false;btn.textContent='Set Password';
+      err.textContent=e.code==='auth/weak-password'?'Password too weak (min. 6 chars).':'Link expired or already used — please request a new one below.';
+    }
+  };
+})();
 </script>
+
+<!-- Password Reset Action Handler Modal -->
+<div id="prm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div style="background:#1a1420;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px 28px;width:min(400px,100%);box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="text-align:center;margin-bottom:20px">
+      <span style="font-size:36px">🔐</span>
+      <h2 style="font-family:var(--f2);font-size:1.6rem;margin:8px 0 4px;color:#f5f0e8">Set New Password</h2>
+      <p id="prm-email" style="font-size:13px;color:rgba(245,240,232,.55);margin:0"></p>
+    </div>
+    <div id="prm-form">
+      <input id="prm-pw" type="password" placeholder="New password (min. 6 characters)" class="inp" style="width:100%;margin-bottom:10px;box-sizing:border-box">
+      <input id="prm-pw2" type="password" placeholder="Confirm new password" class="inp" style="width:100%;margin-bottom:6px;box-sizing:border-box">
+      <div id="prm-err" style="font-size:12px;color:#ff8080;min-height:18px;margin-bottom:12px"></div>
+      <button onclick="window._doPRM(this)" class="btn btn-gold" style="width:100%;justify-content:center">Set Password</button>
+    </div>
+    <div id="prm-expired" style="display:none;text-align:center">
+      <div style="font-size:40px;margin-bottom:14px">⏱</div>
+      <p style="font-weight:700;color:#f5f0e8;margin-bottom:8px">Link expired or already used</p>
+      <p style="font-size:13px;color:rgba(245,240,232,.6);margin-bottom:20px;line-height:1.5">Reset links expire after 1 hour and can only be clicked once. Request a new one — it only takes a second.</p>
+      <button onclick="document.getElementById('prm-overlay').style.display='none';history.replaceState({},'',location.pathname)" class="btn btn-gold" style="width:100%;justify-content:center">Request a New Link</button>
+    </div>
+    <div id="prm-success" style="display:none;text-align:center">
+      <div style="font-size:40px;margin-bottom:14px">✅</div>
+      <p style="font-weight:700;color:#f5f0e8;margin-bottom:8px">Password updated!</p>
+      <p style="font-size:13px;color:rgba(245,240,232,.6);margin-bottom:20px">You can now sign in with your new password.</p>
+      <button onclick="document.getElementById('prm-overlay').style.display='none';history.replaceState({},'',location.pathname)" class="btn btn-gold" style="width:100%;justify-content:center">Sign In</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
