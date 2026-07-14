@@ -1015,7 +1015,7 @@ async function sendPasswordReset(btn){
   if(!email){msgEl.style.color='#ff8080';msgEl.textContent='Please enter your email address.';return;}
   btn.textContent='Sending…';btn.disabled=true;
   try{
-    await AUTH.sendPasswordResetEmail(email,{url:location.protocol+'//'+location.host+location.pathname,handleCodeInApp:true});
+    await AUTH.sendPasswordResetEmail(email,{url:location.protocol+'//'+location.host+location.pathname});
     msgEl.style.color='#80e090';
     msgEl.textContent='✓ Reset link sent! Check your inbox (and spam folder).';
     btn.textContent='✓ Sent';

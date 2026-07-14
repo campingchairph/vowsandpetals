@@ -915,7 +915,7 @@ async function sendMainPasswordReset(btn) {
   if (!email) { msgEl.style.color = 'var(--rose)'; msgEl.textContent = 'Please enter your email address.'; return; }
   btn.textContent = 'Sending…'; btn.disabled = true;
   try {
-    await AUTH.sendPasswordResetEmail(email, { url: location.protocol + '//' + location.host + location.pathname, handleCodeInApp: true });
+    await AUTH.sendPasswordResetEmail(email, { url: location.protocol + '//' + location.host + location.pathname });
     msgEl.style.color = '#3a9e5f';
     msgEl.textContent = '✓ Reset link sent! Check your inbox and open it within 1 hour.';
     btn.textContent = '✓ Sent';
