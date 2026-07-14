@@ -530,7 +530,8 @@ select.inp option{background:#1a2d45}
       </div>
       <div id="auth-reset-wrap" style="display:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:14px;margin-bottom:14px">
         <p style="font-size:12px;color:var(--ink3);margin-bottom:4px;line-height:1.55">We'll email you a secure reset link.</p>
-        <p style="font-size:11px;color:rgba(212,168,83,.65);margin-bottom:12px">Signed up with Google? Use <em>Continue with Google</em> instead — Google accounts don't use a password here.</p>
+        <p style="font-size:11px;color:#c9943a;font-weight:600;margin-bottom:4px;line-height:1.5">⏱ The link expires in 1 hour and can only be used once — open it right away.</p>
+        <p style="font-size:11px;color:rgba(212,168,83,.65);margin-bottom:12px">If it expired, just request a new one here. &nbsp;·&nbsp; Signed up with Google? Use <em>Continue with Google</em> instead.</p>
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <input class="inp" id="auth-reset-email" type="email" placeholder="your@email.com" style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter')sendPasswordReset(document.getElementById('auth-reset-send'))">
           <button class="btn btn-outline btn-sm" id="auth-reset-send" style="white-space:nowrap" onclick="sendPasswordReset(this)">Send Link</button>
