@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password — Vows & Petals</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:#1a1118;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      padding:24px 16px;
+    }
+    .card{
+      background:#231820;
+      border:1px solid rgba(201,148,58,.18);
+      border-radius:20px;
+      padding:40px 36px;
+      width:min(420px,100%);
+      box-shadow:0 32px 80px rgba(0,0,0,.5);
+    }
+    .logo{
+      text-align:center;
+      font-family:Georgia,'Times New Roman',serif;
+      font-size:13px;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      color:#C9943A;
+      margin-bottom:6px;
+    }
+    .ornament{
+      text-align:center;
+      color:#C9943A;
+      opacity:.45;
+      font-size:11px;
+      letter-spacing:.3em;
+      margin-bottom:28px;
+    }
+    h1{
+      font-family:Georgia,'Times New Roman',serif;
+      font-size:1.55rem;
+      font-weight:normal;
+      color:#F5EFE4;
+      text-align:center;
+      margin-bottom:8px;
+    }
+    .subtitle{
+      font-size:13px;
+      color:rgba(245,239,228,.45);
+      text-align:center;
+      margin-bottom:28px;
+      line-height:1.5;
+    }
+    .field{
+      margin-bottom:14px;
+    }
+    .field label{
+      display:block;
+      font-size:11px;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:rgba(201,148,58,.7);
+      margin-bottom:6px;
+    }
+    .field input{
+      width:100%;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:12px 14px;
+      font-size:15px;
+      color:#F5EFE4;
+      outline:none;
+      transition:border-color .2s;
+    }
+    .field input:focus{
+      border-color:rgba(201,148,58,.5);
+    }
+    .err{
+      font-size:12px;
+      color:#ff8080;
+      min-height:18px;
+      margin-bottom:12px;
+      line-height:1.4;
+    }
+    .btn{
+      width:100%;
+      padding:14px;
+      background:linear-gradient(135deg,#C9943A,#A87828);
+      border:none;
+      border-radius:12px;
+      font-size:15px;
+      font-weight:600;
+      color:#fff;
+      cursor:pointer;
+      letter-spacing:.03em;
+      transition:opacity .2s;
+    }
+    .btn:disabled{opacity:.5;cursor:default}
+    .btn:not(:disabled):hover{opacity:.88}
+
+    /* States */
+    #s-loading,#s-form,#s-expired,#s-success{display:none}
+    #s-loading.show,#s-form.show,#s-expired.show,#s-success.show{display:block}
+
+    .spinner{
+      text-align:center;
+      padding:20px 0;
+      color:rgba(201,148,58,.5);
+      font-size:13px;
+      letter-spacing:.08em;
+    }
+
+    .state-icon{
+      font-size:44px;
+      text-align:center;
+      margin-bottom:16px;
+    }
+    .state-title{
+      font-family:Georgia,serif;
+      font-size:1.25rem;
+      font-weight:normal;
+      color:#F5EFE4;
+      text-align:center;
+      margin-bottom:10px;
+    }
+    .state-body{
+      font-size:13px;
+      color:rgba(245,239,228,.55);
+      text-align:center;
+      line-height:1.65;
+      margin-bottom:24px;
+    }
+    .btn-outline{
+      width:100%;
+      padding:13px;
+      background:transparent;
+      border:1px solid rgba(201,148,58,.35);
+      border-radius:12px;
+      font-size:14px;
+      color:#C9943A;
+      cursor:pointer;
+      transition:border-color .2s,background .2s;
+    }
+    .btn-outline:hover{background:rgba(201,148,58,.08);border-color:rgba(201,148,58,.6)}
+
+    .rule{
+      border:none;
+      border-top:1px solid rgba(255,255,255,.07);
+      margin:24px 0;
+    }
+
+    .back-link{
+      display:block;
+      text-align:center;
+      margin-top:20px;
+      font-size:12px;
+      color:rgba(201,148,58,.5);
+      text-decoration:none;
+      transition:color .2s;
+    }
+    .back-link:hover{color:#C9943A}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Vows &amp; Petals</div>
+  <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+
+  <!-- Loading -->
+  <div id="s-loading" class="show">
+    <div class="spinner">Verifying link…</div>
+  </div>
+
+  <!-- Form: valid code -->
+  <div id="s-form">
+    <h1>Set New Password</h1>
+    <p class="subtitle" id="form-email"></p>
+    <div class="field">
+      <label>New password</label>
+      <input type="password" id="pw1" placeholder="At least 6 characters"
+        onkeydown="if(event.key==='Enter')document.getElementById('pw2').focus()">
+    </div>
+    <div class="field">
+      <input type="password" id="pw2" placeholder="Confirm new password"
+        onkeydown="if(event.key==='Enter')doReset()">
+    </div>
+    <div class="err" id="form-err"></div>
+    <button class="btn" id="reset-btn" onclick="doReset()">Set Password</button>
+    <a class="back-link" href="https://www.vows-and-petals.com/">← Back to Vows &amp; Petals</a>
+  </div>
+
+  <!-- Expired / already used -->
+  <div id="s-expired">
+    <div class="state-icon">⏱</div>
+    <div class="state-title">Link expired or already used</div>
+    <div class="state-body">
+      Reset links are single-use and expire after 1 hour.<br>
+      Return to the app and request a fresh one — it takes a second.
+    </div>
+    <a href="https://www.vows-and-petals.com/" class="btn" style="display:block;text-align:center;text-decoration:none;line-height:1.6">Request a New Link</a>
+    <hr class="rule">
+    <div class="state-body" style="font-size:12px;margin-bottom:0">
+      Coordinator? <a href="https://campingchairph.github.io/vowsandpetals/coordinator.html" style="color:#C9943A">Go to coordinator login →</a>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="s-success">
+    <div class="state-icon">✅</div>
+    <div class="state-title">Password updated!</div>
+    <div class="state-body">You can now sign in with your new password.</div>
+    <a href="https://www.vows-and-petals.com/" class="btn" style="display:block;text-align:center;text-decoration:none;line-height:1.6">Sign In</a>
+  </div>
+</div>
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:            "AIzaSyBAYda6M_n4BwVcMwN0V4PaC4g5POiiaBs",
+  authDomain:        "weddingthings.firebaseapp.com",
+  projectId:         "weddingthings",
+  storageBucket:     "weddingthings.firebasestorage.app",
+  messagingSenderId: "732042029649",
+  appId:             "1:732042029649:web:21bbe63214e8b36770e670"
+});
+const AUTH = firebase.auth();
+
+const p    = new URLSearchParams(location.search);
+const mode = p.get('mode');
+const oob  = p.get('oobCode');
+
+function show(id){
+  ['s-loading','s-form','s-expired','s-success'].forEach(s=>{
+    document.getElementById(s).classList.remove('show');
+  });
+  document.getElementById(id).classList.add('show');
+}
+
+if(mode === 'resetPassword' && oob){
+  AUTH.verifyPasswordResetCode(oob)
+    .then(email=>{
+      document.getElementById('form-email').textContent = 'for ' + email;
+      show('s-form');
+      document.getElementById('pw1').focus();
+    })
+    .catch(()=> show('s-expired'));
+} else {
+  // Not a reset link — redirect to app
+  location.replace('https://www.vows-and-petals.com/');
+}
+
+async function doReset(){
+  const pw1 = document.getElementById('pw1').value;
+  const pw2 = document.getElementById('pw2').value;
+  const err = document.getElementById('form-err');
+  const btn = document.getElementById('reset-btn');
+  err.textContent = '';
+  if(pw1.length < 6){ err.textContent = 'Password must be at least 6 characters.'; return; }
+  if(pw1 !== pw2){ err.textContent = 'Passwords do not match.'; return; }
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    await AUTH.confirmPasswordReset(oob, pw1);
+    show('s-success');
+  } catch(e){
+    btn.disabled = false; btn.textContent = 'Set Password';
+    err.textContent = e.code === 'auth/weak-password'
+      ? 'Password too weak — try something longer.'
+      : 'Link expired or already used. Please request a new one.';
+    if(e.code === 'auth/invalid-action-code') show('s-expired');
+  }
+}
+</script>
+</body>
+</html>
