@@ -891,6 +891,45 @@ function _setAuthTab(mode) {
   regTab.style.cssText     += mode === 'register' ? activeStyle : inactiveStyle;
   signinForm.style.display  = mode === 'signin'   ? 'block' : 'none';
   regForm.style.display     = mode === 'register' ? 'block' : 'none';
+  const rw = document.getElementById('main-reset-wrap');
+  if (rw) rw.style.display = 'none';
+}
+
+function toggleMainForgot() {
+  const wrap = document.getElementById('main-reset-wrap');
+  if (!wrap) return;
+  const opening = wrap.style.display === 'none';
+  wrap.style.display = opening ? 'block' : 'none';
+  if (opening) {
+    const emailVal = document.getElementById('auth-email')?.value.trim();
+    if (emailVal) document.getElementById('main-reset-email').value = emailVal;
+    document.getElementById('main-reset-msg').textContent = '';
+    document.getElementById('main-reset-email').focus();
+  }
+}
+
+async function sendMainPasswordReset(btn) {
+  const email = document.getElementById('main-reset-email')?.value.trim();
+  const msgEl = document.getElementById('main-reset-msg');
+  msgEl.textContent = '';
+  if (!email) { msgEl.style.color = 'var(--rose)'; msgEl.textContent = 'Please enter your email address.'; return; }
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    await AUTH.sendPasswordResetEmail(email);
+    msgEl.style.color = '#3a9e5f';
+    msgEl.textContent = '✓ Reset link sent! Check your inbox (and spam folder).';
+    btn.textContent = '✓ Sent';
+  } catch(e) {
+    btn.textContent = 'Send Link'; btn.disabled = false;
+    const msgs = {
+      'auth/user-not-found':    'No account with that email. If you use Google, click "Continue with Google" above.',
+      'auth/invalid-email':     'Please enter a valid email address.',
+      'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
+      'auth/invalid-credential':'No account found with that email.',
+    };
+    msgEl.style.color = 'var(--rose)';
+    msgEl.textContent = msgs[e.code] || e.message;
+  }
 }
 
 function submitAuthSignIn() {
@@ -1381,6 +1420,8 @@ window.triggerImportTemplate  = triggerImportTemplate;
 window.importTemplate         = importTemplate;
 window.openAuthModal          = openAuthModal;
 window.setAuthMode            = setAuthMode;
+window.toggleMainForgot       = toggleMainForgot;
+window.sendMainPasswordReset  = sendMainPasswordReset;
 window.submitAuthSignIn       = submitAuthSignIn;
 window.submitAuthRegister     = submitAuthRegister;
 window.signInWithGoogle       = signInWithGoogle;

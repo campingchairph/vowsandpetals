@@ -931,6 +931,18 @@
         <div class="input-label">Password</div>
         <input type="password" id="auth-password" class="glass-input" placeholder="Password" autocomplete="current-password">
       </div>
+      <div style="text-align:right;margin:-4px 0 12px">
+        <a onclick="toggleMainForgot()" style="font-size:12px;color:var(--tan-dark);cursor:pointer;text-decoration:underline;text-underline-offset:2px;opacity:.8">Forgot password?</a>
+      </div>
+      <div id="main-reset-wrap" style="display:none;background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.25);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px">
+        <p style="font-size:12px;color:var(--ink-3);margin:0 0 4px;line-height:1.5">We'll email you a secure reset link.</p>
+        <p style="font-size:11px;color:var(--tan-dark);opacity:.75;margin:0 0 10px;line-height:1.5">Signed up with Google? Use <em>Continue with Google</em> — no password needed.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="email" id="main-reset-email" class="glass-input" placeholder="your@email.com" style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter')sendMainPasswordReset(document.getElementById('main-reset-send'))">
+          <button id="main-reset-send" onclick="sendMainPasswordReset(this)" style="padding:9px 14px;border-radius:var(--r-md);border:1.5px solid rgba(201,169,110,.4);background:rgba(201,169,110,.12);color:var(--tan-dark);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f);white-space:nowrap">Send Link</button>
+        </div>
+        <div id="main-reset-msg" style="font-size:12px;line-height:1.5;min-height:16px"></div>
+      </div>
       <button class="cta-btn" onclick="submitAuthSignIn()">Sign In →</button>
     </div>
 
@@ -1077,7 +1089,7 @@ function shareInvitation() {
 <script src="kasalko-app.js"></script>
 
 <!-- Firebase Config & Cloud Sync (loads after app JS so WED is defined) -->
-<script src="firebase-config.js"></script>
+<script src="firebase-config.js?v=2"></script>
 
 <!-- ── Visit tracker (runs once per session, excludes admin) ── -->
 <script>
